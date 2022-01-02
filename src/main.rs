@@ -1,10 +1,14 @@
 #![allow(clippy::field_reassign_with_default)]
+#[cfg(test)]
+extern crate tempfile;
 extern crate toml;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid_rs;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 extern crate fnv;
 
 mod config;

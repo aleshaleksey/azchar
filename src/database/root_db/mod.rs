@@ -15,6 +15,7 @@ mod tests;
 
 pub use characters::{CharacterDbRef, NewCharacterDbRef};
 
+use diesel::result::Error as DError;
 use diesel::{RunQueryDsl, SqliteConnection};
 use uuid_rs::v4;
 
@@ -24,33 +25,6 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use crate::database::MIGRATIONS_MAIN;
-
-/// This functions grabs migrations from a migration directory and creates
-/// the tables from the desired migration directory.
-pub(crate) fn run_migrations(
-    migrations_path: &str,
-    sheet_conn: &SqliteConnection,
-) -> Result<(), String> {
-    let entries = std::fs::read_dir(migrations_path)
-        .map_err(ma)?
-        .map(|e| e.map(|e| e.path()))
-        .filter(|e| match e {
-            Ok(e) => e.is_file() && e.extension() == Some(OsStr::new("sql")),
-            Err(_) => true,
-        })
-        .collect::<Vec<_>>();
-
-    for entry in entries {
-        let entry = entry.map_err(ma)?;
-        let mut q = String::new();
-        std::fs::File::open(entry)
-            .map_err(ma)?
-            .read_to_string(&mut q)
-            .map_err(ma)?;
-        diesel::sql_query(&q).execute(sheet_conn).map_err(ma)?;
-    }
-    Ok(())
-}
 
 /// A structure that stores the root database connection and the character
 /// files it refers to.
@@ -84,6 +58,19 @@ impl LoadedDbs {
         Ok(LoadedDbs {
             root_db,
             connections,
+            attribute_keys: 0,
+            permitted_parts: 0,
+            root_path: path.to_string(),
+        })
+    }
+
+    /// A special case for creating a new system.
+    pub fn new_system(path: &str) -> Result<Self, String> {
+        let mut root_db = BasicConnection::new(path);
+        root_db.connect()?;
+        Ok(LoadedDbs {
+            root_db,
+            connections: FnvHashMap::default(),
             attribute_keys: 0,
             permitted_parts: 0,
             root_path: path.to_string(),
@@ -153,7 +140,8 @@ impl LoadedDbs {
         let sheet_conn = sheet_conn_outer.connect()?;
 
         // Create all needed tables
-        run_migrations(MIGRATIONS_MAIN, sheet_conn)?;
+        embed_migrations!("/home/alesha/Code/rustcodes/azchar/migrations_main");
+        embedded_migrations::run_with_output(sheet_conn);
 
         // Create all obligatory parts.
         PermittedPart::create_basic(root_conn, sheet_conn)?;

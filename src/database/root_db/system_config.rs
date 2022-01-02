@@ -1,17 +1,17 @@
 //! This file deals with encoding and decoing the TOML files needed for the root db.
 // TODO: test conversion into a new system.
+use crate::database::root_db::run_migrations;
 use crate::database::root_db::system::{NewPermittedAttribute, NewPermittedPart};
 use crate::database::shared::*;
+use crate::database::MIGRATIONS_ROOT;
 use crate::error::ma;
 use crate::LoadedDbs;
-use crate::database::MIGRATIONS_ROOT;
-use crate::database::root_db::run_migrations;
 
 use diesel::RunQueryDsl;
 
-use std::path::PathBuf;
 use std::fs::File;
 use std::io::Read;
+use std::path::PathBuf;
 
 /// This represents a part that is permitted and that will be created on a new sheet.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -87,40 +87,44 @@ impl SystemConfig {
 
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
         let file_path_string = file_path.to_string_lossy();
+        println!("path: {:?}", file_path_string);
 
-        let mut loaded_dbs = LoadedDbs::custom(&file_path_string)?;
+        let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;
 
         // Create all needed tables
-        run_migrations(MIGRATIONS_ROOT, new_root)?;
+        embed_migrations!("/home/alesha/Code/rustcodes/azchar/migrations_root_db");
+        embedded_migrations::run_with_output(new_root);
 
-        let Self { permitted_parts, permitted_attributes } = self;
-        let permitted_attributes: Vec<NewPermittedAttribute> = permitted_attributes
-            .into_iter()
-            .map(Into::into)
-            .collect();
-        let permitted_parts: Vec<NewPermittedPart> = permitted_parts
-            .into_iter()
-            .map(Into::into)
-            .collect();
+        let Self {
+            permitted_parts,
+            permitted_attributes,
+        } = self;
+        let permitted_attributes: Vec<NewPermittedAttribute> =
+            permitted_attributes.into_iter().map(Into::into).collect();
+        let permitted_parts: Vec<NewPermittedPart> =
+            permitted_parts.into_iter().map(Into::into).collect();
 
         // Insert values as needed.
-        diesel::insert_into(pa_dsl::permitted_attributes)
-            .values(&permitted_attributes)
-            .execute(new_root)
-            .map_err(ma)?;
+        println!("PP:{:?}", permitted_parts.len());
+        println!("PA:{:?}", permitted_attributes.len());
         diesel::insert_into(pp_dsl::permitted_parts)
             .values(&permitted_parts)
             .execute(new_root)
             .map_err(ma)?;
+        println!("created parts");
+        diesel::insert_into(pa_dsl::permitted_attributes)
+            .values(&permitted_attributes)
+            .execute(new_root)
+            .map_err(ma)?;
+        println!("created attributes");
 
         Ok(loaded_dbs)
     }
 }
 
-
 mod system_config_tests {
-    use super::{PermittedPart, PermittedAttribute, SystemConfig};
+    use super::{PermittedAttribute, PermittedPart, SystemConfig};
 
     use crate::database::shared::*;
 

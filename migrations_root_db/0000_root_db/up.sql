@@ -6,14 +6,13 @@ create table character_dbs(
 	db_path TEXT NOT NULL
 );
 
-
 create table permitted_attributes(
-	key TEXT NOT NULL primary key AUTOINCREMENT,
+	key TEXT NOT NULL primary key,
 	attribute_type INTEGER NOT NULL,
 	attribute_description TEXT NOT NULL,
 	part_name TEXT NOT NULL,
-	part_type INTEGER NOT NULL,
-	UNIQUE(part_name, part_type)
+	part_type INTEGER NOT NULL
+	-- UNIQUE(part_name, part_type)
 );
 
 create table permitted_parts(

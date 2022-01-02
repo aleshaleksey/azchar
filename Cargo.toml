@@ -9,8 +9,10 @@ edition = "2018"
 fnv = "*"
 serde_derive = "*"
 serde = "*"
+tempfile = "*"
 toml = "0.5.8"
 uuid-rs = { version = "*", features = ["random"] }
+diesel_migrations = "1.4.0"
 
 [dependencies.libazdice]
 git = "https://github.com/aleshaleksey/libazdice.git"
