@@ -12,8 +12,7 @@ use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 use std::default::Default;
 
 table!(
-    permitted_attributes(id) {
-        id -> BigInt,
+    permitted_attributes(key) {
         key -> Text,
         attribute_type -> Integer,
         attribute_description -> Text,
@@ -41,10 +40,9 @@ pub(crate) struct PermittedPart {
 }
 
 /// This represents a permitted attribute, to be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Identifiable, Queryable)]
-#[table_name = "permitted_attributes"]
+#[derive(Debug, Clone, PartialEq, Queryable)]
+// #[table_name = "permitted_attributes"]
 pub(crate) struct PermittedAttribute {
-    id: i64,
     key: String,
     attribute_type: i32,
     attribute_description: String,

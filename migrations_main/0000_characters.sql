@@ -5,7 +5,7 @@ create table characters(
   -- The basic fields.
   id INTEGER primary key AUTOINCREMENT,
   name TEXT NOT NULL,
-  uuid TEXT NOT NULL,
+  uuid TEXT NOT NULL UNIQUE,
   character_type TEXT NOT NULL, -- NB: Text for maximum flexibility.
   -- Basic, vital attributes for characters.
   -- NB: Might not be relevant to all things.
@@ -18,7 +18,7 @@ create table characters(
   -- What, if anything does this character belong to?
   belongs_to BIGINT references characters(id),
   -- What kind of part is it. See appropriate type.
-  part_type INTEGER,
+  part_type INTEGER
 );
 
 -- A basic set of keys and values.
@@ -27,6 +27,7 @@ create table attributes(
   key TEXT NOT NULL,
   value_num INTEGER,
   value_text TEXT,
-  description TEXT
-  of BIGINT NOT NULL references characters(id)
+  description TEXT,
+  of BIGINT NOT NULL references characters(id),
+  UNIQUE(key, of)
 );
