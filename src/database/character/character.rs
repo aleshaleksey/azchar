@@ -93,34 +93,36 @@ impl NewCharacter {
 }
 
 /// exists to make working with CompleteCharacter simpler.
+#[derive(Clone, Debug)]
 pub struct CharacterPart {
     id: Option<i64>,
-    name: String,
+    pub(crate) name: String,
     uuid: String,
-    character_type: String,
-    speed: i32,
-    weight: Option<i32>,
-    size: Option<String>,
-    hp_total: Option<i32>,
-    hp_current: Option<i32>,
+    pub(crate) character_type: String,
+    pub(crate) speed: i32,
+    pub(crate) weight: Option<i32>,
+    pub(crate) size: Option<String>,
+    pub(crate) hp_total: Option<i32>,
+    pub(crate) hp_current: Option<i32>,
     part_type: Part,
-    belongs_to: Option<i64>,
-    attributes: super::attribute::Attributes,
+    pub(crate) belongs_to: Option<i64>,
+    pub(crate) attributes: super::attribute::Attributes,
 }
 
 /// This represents a complete character.
+#[derive(Clone, Debug)]
 pub struct CompleteCharacter {
     id: Option<i64>,
-    name: String,
+    pub(crate) name: String,
     uuid: String,
-    character_type: String,
-    speed: i32,
-    weight: Option<i32>,
-    size: Option<String>,
-    hp_total: Option<i32>,
-    hp_current: Option<i32>,
-    parts: Vec<CharacterPart>,
-    attributes: super::attribute::Attributes,
+    pub(crate) character_type: String,
+    pub(crate) speed: i32,
+    pub(crate) weight: Option<i32>,
+    pub(crate) size: Option<String>,
+    pub(crate) hp_total: Option<i32>,
+    pub(crate) hp_current: Option<i32>,
+    pub(crate) parts: Vec<CharacterPart>,
+    pub(crate) attributes: super::attribute::Attributes,
 }
 
 impl CompleteCharacter {

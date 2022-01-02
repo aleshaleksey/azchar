@@ -1,14 +1,15 @@
-use super::system_config::SystemConfig;
+//! This file contains the basic setup for most tests.
+use crate::database::root_db::system_config::SystemConfig;
 use crate::LoadedDbs;
+
 use tempfile::TempDir;
 
-/// The basic setup used.
-struct TestSetup {
-    root_dir: TempDir,
-    loaded_dbs: LoadedDbs,
+pub(crate) struct TestSetup {
+    pub(crate) root_dir: TempDir,
+    pub(crate) loaded_dbs: LoadedDbs,
 }
 /// Setup the test.
-fn setup() -> TestSetup {
+pub(crate) fn setup() -> TestSetup {
     let system_name = "Memory Sphere";
     let root_dir = tempfile::Builder::new()
         .prefix("system_dir")
@@ -38,9 +39,4 @@ permitted_attributes = [\
         root_dir,
         loaded_dbs: system,
     }
-}
-
-#[test]
-fn test_system_setup() {
-    setup();
 }

@@ -51,3 +51,63 @@ impl NewCharacterDbRef {
         }
     }
 }
+
+#[cfg(test)]
+mod character_tests {
+    use crate::database::character::character::CompleteCharacter;
+    use crate::database::root_db::tests::*;
+    use crate::database::BasicConnection;
+
+    const NAME1: &str = "Test Character";
+    const NAME2: &str = "Test Character 2";
+    const NAME3: &str = "Test Character 3";
+
+    fn create_char_with_name<'a>(setup: &'a mut TestSetup, name: &str) -> &'a BasicConnection {
+        let (name, uuid) = setup
+            .loaded_dbs
+            .create_sheet(name)
+            .expect("Could not create a character.");
+        setup
+            .loaded_dbs
+            .character_connections()
+            .get(&(name, uuid))
+            .expect("The character exists. We inserted it.")
+    }
+
+    #[test]
+    fn create_character() {
+        let mut setup = setup();
+        create_char_with_name(&mut setup, NAME1);
+    }
+
+    #[test]
+    fn create_and_load_character() {
+        let mut setup = setup();
+        let conn = create_char_with_name(&mut setup, NAME1);
+        if let Some(ref conn) = conn.connection {
+            let c = CompleteCharacter::load(conn).expect("I'm here.");
+            println!("char:{:?}", c);
+            assert_eq!(&c.name, NAME1);
+        }
+    }
+
+    #[test]
+    fn create_multiple_characters() {
+        let mut setup = setup();
+        create_char_with_name(&mut setup, NAME1);
+        create_char_with_name(&mut setup, NAME2);
+        create_char_with_name(&mut setup, NAME3);
+        let char_conns = setup.loaded_dbs.character_connections();
+        assert_eq!(char_conns.len(), 3);
+    }
+
+    #[test]
+    fn create_multiple_characters_same_name() {
+        let mut setup = setup();
+        create_char_with_name(&mut setup, NAME1);
+        create_char_with_name(&mut setup, NAME1);
+        create_char_with_name(&mut setup, NAME1);
+        let char_conns = setup.loaded_dbs.character_connections();
+        assert_eq!(char_conns.len(), 3);
+    }
+}

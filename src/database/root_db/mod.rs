@@ -89,10 +89,10 @@ impl LoadedDbs {
     }
 
     /// Create a new character sheet database.
-    pub fn create_sheet(&mut self, name: &str) -> Result<(), String> {
+    /// Returns the character name and uuid.
+    pub fn create_sheet(&mut self, name: &str) -> Result<(String, String), String> {
         use crate::database::root_db::characters::character_dbs::dsl::character_dbs;
         let uuid = v4!();
-
         // Sanity check.
         if self
             .connections
@@ -102,7 +102,10 @@ impl LoadedDbs {
             return Err(format!("{} already exists as a file! Try again.", name));
         }
         let file_name = format!("{}_{}.db", name, uuid);
-        let file_path = PathBuf::from(&self.root_path).join(&file_name);
+        let file_path = PathBuf::from(&self.root_path)
+            .parent()
+            .expect("Root path is file. Has parent.")
+            .join(&file_name);
         if file_path.exists() {
             return Err(format!(
                 "{:?} already exists as a file! Try again.",
@@ -112,10 +115,9 @@ impl LoadedDbs {
 
         // Create the file.
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
-        let reference = NewCharacterDbRef::new(name.to_owned(), file_name, uuid);
+        let reference = NewCharacterDbRef::new(name.to_owned(), file_name, uuid.clone());
 
         // Clean up if we can't create the character sheet.
-
         let root_conn = self.get_inner_root()?;
         match diesel::insert_into(character_dbs)
             .values(&vec![reference])
@@ -133,14 +135,13 @@ impl LoadedDbs {
         let file_path = file_path.to_string_lossy();
         let mut sheet_conn_outer = BasicConnection::new(&file_path);
         let sheet_conn = sheet_conn_outer.connect()?;
-
         // Create all needed tables
         embed_migrations!("migrations_main");
         embedded_migrations::run(sheet_conn).map_err(ma)?;
-
         // Create all obligatory parts.
-        PermittedPart::create_basic(root_conn, sheet_conn)?;
-
-        Ok(())
+        PermittedPart::create_basic(root_conn, sheet_conn, name)?;
+        self.connections
+            .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);
+        Ok((name.to_string(), uuid))
     }
 }

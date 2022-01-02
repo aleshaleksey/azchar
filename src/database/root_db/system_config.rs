@@ -121,6 +121,7 @@ impl SystemConfig {
     }
 }
 
+#[cfg(test)]
 mod system_config_tests {
     use super::{PermittedAttribute, PermittedPart, SystemConfig};
 
