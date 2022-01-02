@@ -1,9 +1,7 @@
 //! This file deals with encoding and decoing the TOML files needed for the root db.
 // TODO: test conversion into a new system.
-use crate::database::root_db::run_migrations;
 use crate::database::root_db::system::{NewPermittedAttribute, NewPermittedPart};
 use crate::database::shared::*;
-use crate::database::MIGRATIONS_ROOT;
 use crate::error::ma;
 use crate::LoadedDbs;
 
@@ -93,8 +91,8 @@ impl SystemConfig {
         let new_root = loaded_dbs.get_inner_root()?;
 
         // Create all needed tables
-        embed_migrations!("/home/alesha/Code/rustcodes/azchar/migrations_root_db");
-        embedded_migrations::run_with_output(new_root);
+        embed_migrations!("migrations_root_db");
+        embedded_migrations::run(new_root).map_err(ma)?;
 
         let Self {
             permitted_parts,

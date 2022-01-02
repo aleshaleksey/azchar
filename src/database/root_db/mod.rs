@@ -15,16 +15,11 @@ mod tests;
 
 pub use characters::{CharacterDbRef, NewCharacterDbRef};
 
-use diesel::result::Error as DError;
 use diesel::{RunQueryDsl, SqliteConnection};
 use uuid_rs::v4;
 
-use std::ffi::OsStr;
 use std::fs::File;
-use std::io::Read;
 use std::path::PathBuf;
-
-use crate::database::MIGRATIONS_MAIN;
 
 /// A structure that stores the root database connection and the character
 /// files it refers to.
@@ -140,8 +135,8 @@ impl LoadedDbs {
         let sheet_conn = sheet_conn_outer.connect()?;
 
         // Create all needed tables
-        embed_migrations!("/home/alesha/Code/rustcodes/azchar/migrations_main");
-        embedded_migrations::run_with_output(sheet_conn);
+        embed_migrations!("migrations_main");
+        embedded_migrations::run(sheet_conn).map_err(ma)?;
 
         // Create all obligatory parts.
         PermittedPart::create_basic(root_conn, sheet_conn)?;

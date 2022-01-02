@@ -1,13 +1,14 @@
 use super::system_config::SystemConfig;
-use crate::config::Config;
+use crate::LoadedDbs;
+use tempfile::TempDir;
 
 /// The basic setup used.
 struct TestSetup {
-    root_dir: String,
+    root_dir: TempDir,
     loaded_dbs: LoadedDbs,
 }
 /// Setup the test.
-fn setup() {
+fn setup() -> TestSetup {
     let system_name = "Memory Sphere";
     let root_dir = tempfile::Builder::new()
         .prefix("system_dir")
@@ -30,9 +31,13 @@ permitted_attributes = [\
 { key = \"memory_sphere_alignment\", attribute_type = 0, attribute_description = \"The alignment of the memory sphere determines the kind of memories it prefers.\", part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
 ]";
     let sys_config: SystemConfig = toml::from_str(&a).expect("Could not toml");
-    sys_config
+    let system = sys_config
         .into_system(&root_path, system_name)
-        .expect("Could not create system.")
+        .expect("Could not create system.");
+    TestSetup {
+        root_dir,
+        loaded_dbs: system,
+    }
 }
 
 #[test]
