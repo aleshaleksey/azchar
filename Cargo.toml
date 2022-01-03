@@ -6,13 +6,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+diesel_migrations = "1.4.0"
 fnv = "*"
-serde_derive = "*"
 serde = "*"
+serde_derive = "*"
+serde_json = "*"
 tempfile = "*"
 toml = "0.5.8"
 uuid-rs = { version = "*", features = ["random"] }
-diesel_migrations = "1.4.0"
 
 [dependencies.libazdice]
 git = "https://github.com/aleshaleksey/libazdice.git"

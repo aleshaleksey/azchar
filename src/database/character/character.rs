@@ -93,7 +93,7 @@ impl NewCharacter {
 }
 
 /// exists to make working with CompleteCharacter simpler.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CharacterPart {
     id: Option<i64>,
     pub(crate) name: String,
@@ -110,7 +110,7 @@ pub struct CharacterPart {
 }
 
 /// This represents a complete character.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CompleteCharacter {
     id: Option<i64>,
     pub(crate) name: String,
@@ -126,6 +126,14 @@ pub struct CompleteCharacter {
 }
 
 impl CompleteCharacter {
+    pub(crate) fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    pub(crate) fn uuid(&self) -> &str {
+        &self.uuid
+    }
+
     pub fn load(conn: &SqliteConnection) -> Result<CompleteCharacter, String> {
         use self::characters::dsl::*;
 
@@ -266,4 +274,10 @@ impl CompleteCharacter {
         })
         .map_err(ma)
     }
+}
+
+#[cfg(test)]
+mod character_tests {
+    // use crate::database::root_db::tests::*;
+    // use crate:;database::root_db::characters::character_tests;
 }

@@ -1,6 +1,7 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
 use crate::database::root_db::system::PermittedPart;
+use crate::database::character::character::CompleteCharacter;
 use crate::database::Config;
 use crate::error::ma;
 
@@ -143,5 +144,53 @@ impl LoadedDbs {
         self.connections
             .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);
         Ok((name.to_string(), uuid))
+    }
+
+    /// Create or update character.
+    /// Take a JSON and either a) create a character or b) update a character
+    /// Depending on whether the character exists in the current instance.
+    pub fn create_or_update_character(&mut self, c: String) -> Result<(), String> {
+        // Create a character.
+        let character: CompleteCharacter = match toml::from_str(&c) {
+            Err(_) => serde_json::from_str(&c).map_err(ma)?,
+            Ok(c) => c,
+        };
+        let key = (character.name.to_owned(), character.uuid().to_owned());
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            character.save(conn.connect()?)?;
+        } else {
+            let key = self.create_sheet(&key.0)?;
+            let conn = self.connections.get_mut(&key).expect("Just created");
+            character.save(conn.connect()?)?;
+        }
+        Ok(())
+    }
+
+    /// This is used to get a list of characters.
+    /// These are the keys to the database.
+    pub fn list_characters(&mut self) -> Result<Vec<CharacterDbRef>, String> {
+        CharacterDbRef::get_all(self.root_db.connect()?)
+    }
+
+    /// This is used to get the character list as a JSON string.
+    pub fn list_characters_json(&mut self) -> Result<String, String> {
+        serde_json::to_string(&self.list_characters()?).map_err(ma)
+    }
+
+    /// A function to load a character.
+    pub fn load_character(&mut self, key: (String, String)) -> Result<CompleteCharacter, String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            CompleteCharacter::load(conn.connect()?)
+        } else {
+            Err(format!(
+                "Character ({}, uuid = {}) not found in this database",
+                key.0, key.1
+            ))
+        }
+    }
+
+    /// Load a character as a string. Ready for consumption.
+    pub fn load_character_as_json(&mut self, key: (String, String)) -> Result<String, String> {
+        serde_json::to_string(&self.load_character(key)?).map_err(ma)
     }
 }

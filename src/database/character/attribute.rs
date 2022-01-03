@@ -40,7 +40,7 @@ pub struct NewAttribute {
     pub(crate) of: i64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AttributeValue {
     id: Option<i64>,
     value_num: Option<i64>,
@@ -48,13 +48,13 @@ pub struct AttributeValue {
     description: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AttributeKey {
     key: String,
     of: i64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Attributes(pub FnvHashMap<AttributeKey, AttributeValue>);
 
 impl Attributes {

@@ -14,7 +14,7 @@ table! {
 }
 
 /// A structure to store a db ref.
-#[derive(Debug, Clone, PartialEq, Queryable, Identifiable)]
+#[derive(Debug, Clone, PartialEq, Queryable, Identifiable, Serialize, Deserialize)]
 #[table_name = "character_dbs"]
 pub struct CharacterDbRef {
     id: i64,
@@ -62,7 +62,10 @@ mod character_tests {
     const NAME2: &str = "Test Character 2";
     const NAME3: &str = "Test Character 3";
 
-    fn create_char_with_name<'a>(setup: &'a mut TestSetup, name: &str) -> &'a BasicConnection {
+    pub(crate) fn create_char_with_name<'a>(
+        setup: &'a mut TestSetup,
+        name: &str,
+    ) -> &'a BasicConnection {
         let (name, uuid) = setup
             .loaded_dbs
             .create_sheet(name)
