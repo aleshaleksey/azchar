@@ -16,6 +16,7 @@ mod config;
 mod database;
 mod error;
 mod roller;
+mod server;
 
 use crate::database::LoadedDbs;
 

@@ -5,8 +5,8 @@ use crate::config::Config;
 use crate::error::ma;
 use diesel::{Connection, SqliteConnection};
 
-mod character;
-mod root_db;
+pub(crate) mod character;
+pub(crate) mod root_db;
 mod shared;
 
 pub use root_db::{CharacterDbRef, LoadedDbs};
