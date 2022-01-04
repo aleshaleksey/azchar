@@ -1,6 +1,8 @@
 //! This deals with requests.
 use super::main_loop::MainLoop;
+use crate::database::character::character::CompleteCharacter;
 use crate::database::root_db::system_config::SystemConfig;
+use crate::database::CharacterDbRef;
 use crate::LoadedDbs;
 
 /// A request.
@@ -18,10 +20,34 @@ pub(crate) enum Request {
     ListCharacters,
     /// The string a name and UUID.
     LoadCharacter(String, String),
+    /// Represents a request to parse and run a roll.
+    Roll(String),
     /// Represents an invalid request.
     Invalid(String),
 }
 
+/// A request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) enum Response {
+    /// Returns a useless message.
+    CreateSystem(String),
+    /// Returns a list of characters, because what else?
+    InitialiseFromPath(Vec<CharacterDbRef>),
+    /// Returns an updated list of characters
+    CreateCharacterSheet(Vec<CharacterDbRef>),
+    /// Returns updated list of characters.
+    CreateUpdateCharacter(Vec<CharacterDbRef>),
+    /// Returns a list of characters.
+    ListCharacters(Vec<CharacterDbRef>),
+    /// The Complete Character.
+    LoadCharacter(CompleteCharacter),
+    /// The roll for each dice group and the total.
+    Roll(Vec<i64>, i64),
+    /// Represents an invalid request.
+    Invalid(String),
+    /// Represents an error.
+    Err(String),
+}
 
 impl Request {
     /// Converts an incoming JSON string into a bona-fide request.
@@ -31,62 +57,68 @@ impl Request {
             Err(_) => match serde_json::from_str(&input) {
                 Ok(r) => r,
                 Err(_) => Self::Invalid(input),
-            }
+            },
         }
     }
 
-    /// Run the request.
-    pub(crate) fn execute(self, main_loop: &mut MainLoop) -> Result<String, String> {
-        match self {
+    /// Run the request and give a response.
+    /// NB: An error case should be unwrapped
+    pub(crate) fn execute(self, main_loop: &mut MainLoop) -> Result<Response, String> {
+        let res = match self {
             Self::CreateSystem(name, path, system) => {
                 let sys = SystemConfig::from_config(&system)?;
                 let dbs = sys.into_system(&path, &name)?;
                 main_loop.dbs = Some(dbs);
-                Ok(format!("Created \"{}\" in \"{}\"", name, path))
+                Response::CreateSystem(format!("Created \"{}\" in \"{}\"", name, path))
             }
             Self::InitialiseFromPath(path) => {
-                let dbs = LoadedDbs::custom(&path)?;
+                let mut dbs = LoadedDbs::custom(&path)?;
+                let chars = dbs.list_characters()?;
                 main_loop.dbs = Some(dbs);
-                Ok(format!("Opened system from \"{}\"", path))
+                Response::InitialiseFromPath(chars)
             }
-            Self::CreateCharacterSheet(name) => {
-                match main_loop.dbs {
-                    Some(ref mut dbs) => {
-                        dbs.create_sheet(&name)?;
-                        Ok(String::new())
-                    }
-                    None => Err(String::from("Load system first.")),
+            Self::CreateCharacterSheet(name) => match main_loop.dbs {
+                Some(ref mut dbs) => {
+                    dbs.create_sheet(&name)?;
+                    let chars = dbs.list_characters()?;
+                    Response::CreateCharacterSheet(chars)
                 }
-
-            }
-            Self::CreateUpdateCharacter(sheet) => {
-                match main_loop.dbs {
-                    Some(ref mut dbs) => {
-                        dbs.create_or_update_character(sheet)?;
-                        Ok(String::new())
-                    }
-                    None => Err(String::from("Load system first.")),
+                None => Response::Err(String::from("Load system first.")),
+            },
+            Self::CreateUpdateCharacter(sheet) => match main_loop.dbs {
+                Some(ref mut dbs) => {
+                    dbs.create_or_update_character(sheet)?;
+                    let chars = dbs.list_characters()?;
+                    Response::CreateUpdateCharacter(chars)
                 }
-            }
-            Self::ListCharacters => {
-                match main_loop.dbs {
-                    Some(ref mut dbs) => {
-                        let chars = dbs.list_characters_json()?;
-                        Ok(chars)
-                    }
-                    None => Err(String::from("Load system first.")),
+                None => Response::Err(String::from("Load system first.")),
+            },
+            Self::ListCharacters => match main_loop.dbs {
+                Some(ref mut dbs) => {
+                    let chars = dbs.list_characters()?;
+                    Response::ListCharacters(chars)
                 }
-            }
-            Self::LoadCharacter(name, uuid) => {
-                match main_loop.dbs {
-                    Some(ref mut dbs) => {
-                        let char = dbs.load_character_as_json((name, uuid))?;
-                        Ok(char)
-                    }
-                    None => Err(String::from("Load system first.")),
+                None => Response::Err(String::from("Load system first.")),
+            },
+            Self::LoadCharacter(name, uuid) => match main_loop.dbs {
+                Some(ref mut dbs) => {
+                    let char = dbs.load_character((name, uuid))?;
+                    Response::LoadCharacter(char)
                 }
+                None => Response::Err(String::from("Load system first.")),
+            },
+            Self::Roll(dice) => {
+                let roll = libazdice::parse::parse(dice)?.roll();
+                let totals = roll
+                    .get_dice_groups()
+                    .iter()
+                    .map(|r| r.total())
+                    .collect::<Vec<_>>();
+                let bonus = roll.get_bonus().total();
+                Response::Roll(totals, bonus)
             }
-            Self::Invalid(x) => Err(format!("Invalid request received:({})", x)),
-        }
+            Self::Invalid(x) => Response::Invalid(format!("Invalid request received:({})", x)),
+        };
+        Ok(res)
     }
 }

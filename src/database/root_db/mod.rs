@@ -1,7 +1,7 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
-use crate::database::root_db::system::PermittedPart;
 use crate::database::character::character::CompleteCharacter;
+use crate::database::root_db::system::PermittedPart;
 use crate::database::Config;
 use crate::error::ma;
 
