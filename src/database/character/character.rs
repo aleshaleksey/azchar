@@ -1,12 +1,15 @@
 //! This deals with the character columns.
+use crate::database::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::database::shared::Part;
 use crate::error::ma;
 
 use diesel::OptionalExtension;
 use diesel::{Connection, SqliteConnection};
 use diesel::{ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl};
+use diesel::result::Error as DbError;
+use fnv::{FnvHashMap, FnvHashSet};
 
-use super::attribute::Attributes;
+use super::attribute::{AttributeKey, AttributeValue, Attributes};
 
 table! {
     characters(id) {
@@ -106,7 +109,7 @@ pub struct CharacterPart {
     pub(crate) hp_current: Option<i32>,
     part_type: Part,
     pub(crate) belongs_to: Option<i64>,
-    pub(crate) attributes: super::attribute::Attributes,
+    pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
 }
 
 /// This represents a complete character.
@@ -122,7 +125,7 @@ pub struct CompleteCharacter {
     pub(crate) hp_total: Option<i32>,
     pub(crate) hp_current: Option<i32>,
     pub(crate) parts: Vec<CharacterPart>,
-    pub(crate) attributes: super::attribute::Attributes,
+    pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
 }
 
 impl CompleteCharacter {
@@ -151,13 +154,13 @@ impl CompleteCharacter {
         // This should speed up sorting by character.
         attributes.sort_by(|a, b| a.of.cmp(&b.of));
         let attrs = attributes.iter().filter(|a| a.of == core_char.id).cloned();
-        let main_attributes = Attributes::from_vec(attrs.collect::<Vec<_>>());
+        let main_attributes = Attributes::key_val_vec(attrs.collect::<Vec<_>>());
 
         let subchars: Vec<CharacterPart> = bare_chars
             .into_iter()
             .map(|c| {
                 let attrs = attributes.iter().filter(|a| a.of == c.id).cloned();
-                let attributes = Attributes::from_vec(attrs.collect::<Vec<_>>());
+                let attributes = Attributes::key_val_vec(attrs.collect::<Vec<_>>());
                 CharacterPart {
                     id: Some(c.id),
                     name: c.name,
@@ -193,7 +196,8 @@ impl CompleteCharacter {
     /// Store a character in an existing sheet.
     /// If the sheet is empty a new character is created, otherwise it is updated.
     /// NB: The sheet should already exist.
-    pub fn save(&self, conn: &SqliteConnection) -> Result<(), String> {
+    /// NB2: We disallow characters lacking obligatory parts, or that have parts that are disallowed.
+    pub fn save(&self, conn: &SqliteConnection, root: &SqliteConnection) -> Result<(), String> {
         use self::characters::dsl::*;
 
         let existing: Option<Character> = characters
@@ -210,11 +214,57 @@ impl CompleteCharacter {
                 ));
             }
         }
+        let permitted_parts = PermittedPart::load_all(root)?
+            .into_iter()
+            .map(|p| ((p.part_name, p.part_type), p.obligatory))
+            .collect::<FnvHashMap<(String, Part), bool>>();
+
+        let permitted_attrs = PermittedAttribute::load_all(root)?
+            .into_iter()
+            .map(|a| (a.key, (a.obligatory, a.part_type, a.part_name)))
+            .collect::<FnvHashMap<String, (bool, Part, String)>>();
+        let obligatory_attrs = PermittedAttribute::load_all_obligatory(root)?;
 
         // Do the work.
-        conn.transaction::<_, diesel::result::Error, _>(|| {
+        let mut error_string = "DbError::NotFound".to_string();
+        let res = conn.transaction::<_, diesel::result::Error, _>(|| {
+            if permitted_parts
+                .get(&(self.character_type.clone(), Part::Main))
+                .is_none()
+            {
+                error_string = "Main part type is not permitted in the system".to_owned();
+                return Err(DbError::NotFound);
+            }
+            let mut own_oblig_part_count = 1;
+            for p in self.parts.iter() {
+                if let Some(val) = permitted_parts.get(&(p.character_type.clone(), p.part_type)) {
+                    if *val {
+                        own_oblig_part_count += 1;
+                    }
+                } else {
+                    error_string = format!("Forbidden part found: '{}'", p.character_type);
+                    return Err(DbError::NotFound);
+                }
+            }
+
+            let opc = permitted_parts.into_iter().filter(|(_, ob)| *ob).count();
+            if own_oblig_part_count < opc {
+                error_string = "Obligatory part missing.".to_string();
+                return Err(DbError::NotFound);
+            }
+
+            if let Err(e) = check_attributes_vs_db(
+                &self.attributes,
+                &permitted_attrs,
+                (&self.character_type, Part::Main),
+                &obligatory_attrs
+            ) {
+                error_string = e;
+                return Err(DbError::NotFound);
+            };
+
             // Insert or update attributes for main character.
-            self.attributes.insert_update(conn)?;
+            Attributes::from_key_val_vec(&self.attributes).insert_update(conn)?;
             let mut new_chars = Vec::new();
             let mut uuids = vec![&self.uuid];
             // Insert or update main character.
@@ -240,7 +290,16 @@ impl CompleteCharacter {
             // Insert or update sub-characters.
             for sub_char in self.parts.iter() {
                 uuids.push(&sub_char.uuid);
-                sub_char.attributes.insert_update(conn)?;
+                if let Err(e) = check_attributes_vs_db(
+                    &sub_char.attributes,
+                    &permitted_attrs,
+                    (&sub_char.character_type, sub_char.part_type),
+                    &obligatory_attrs) {
+                    error_string = e;
+                    return Err(DbError::NotFound);
+                };
+                Attributes::from_key_val_vec(&sub_char.attributes).insert_update(conn)?;
+
                 if let Some(part_id) = sub_char.id {
                     diesel::update(characters.filter(id.eq(part_id)))
                         .set((
@@ -271,9 +330,47 @@ impl CompleteCharacter {
             }
 
             Ok(())
-        })
-        .map_err(ma)
+        });
+        match res {
+            Ok(r) => Ok(r),
+            Err(DbError::NotFound) => Err(error_string),
+            Err(e) => Err(e.to_string()),
+        }
     }
+}
+
+fn check_attributes_vs_db(
+    own_attributes: &[(AttributeKey, AttributeValue)],
+    permitted: &FnvHashMap<String, (bool, Part, String)>,
+    (part_name, part_type): (&str, Part),
+    obligatory: &[PermittedAttribute],
+) -> Result<(), String> {
+    // First attribute check.
+    for (ak, _) in own_attributes.iter() {
+        if let Some(v) = permitted.get(&ak.key) {
+            if (part_type != v.1) && (part_name != v.2) {
+                let msg = format!(
+                    "Can't save sheet: Attribute '{}' not allowed for '{}'",
+                    ak.key, part_name
+                );
+                return Err(msg);
+            }
+        } else {
+            let msg = format!("Can't save sheet: Illegal attribute '{}'.", ak.key);
+            return Err(msg);
+        }
+    }
+    let attrs = own_attributes
+        .iter()
+        .map(|a| &a.0.key)
+        .collect::<FnvHashSet<_>>();
+    for a in obligatory.iter() {
+        if !attrs.contains(&a.key) {
+            let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
+            return Err(m);
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

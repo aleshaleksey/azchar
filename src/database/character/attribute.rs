@@ -50,11 +50,11 @@ pub struct AttributeValue {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AttributeKey {
-    key: String,
+    pub(crate) key: String,
     of: i64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct Attributes(pub FnvHashMap<AttributeKey, AttributeValue>);
 
 impl Attributes {
@@ -101,6 +101,29 @@ impl Attributes {
                 })
                 .collect::<FnvHashMap<_, _>>(),
         )
+    }
+
+    pub fn key_val_vec(vector: Vec<Attribute>) -> Vec<(AttributeKey, AttributeValue)> {
+        vector
+            .into_iter()
+            .map(|a: Attribute| {
+                let att_key = AttributeKey {
+                    key: a.key,
+                    of: a.of,
+                };
+                let att_value = AttributeValue {
+                    id: Some(a.id),
+                    value_num: a.value_num,
+                    value_text: a.value_text,
+                    description: a.description,
+                };
+                (att_key, att_value)
+            })
+            .collect::<Vec<_>>()
+    }
+
+    pub fn from_key_val_vec(x: &[(AttributeKey, AttributeValue)]) -> Self {
+        Self(x.iter().cloned().collect::<FnvHashMap<_, _>>())
     }
 
     /// Get existing attributes for a list of characters.

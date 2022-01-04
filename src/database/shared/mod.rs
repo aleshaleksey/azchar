@@ -4,9 +4,10 @@ use diesel::serialize::{Output, Result as SrlResult, ToSql};
 use diesel::types::Integer;
 
 use std::io::Write;
+use std::hash::Hash;
 
 #[repr(i32)]
-#[derive(Debug, Clone, Copy, PartialEq, AsExpression, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, AsExpression, Serialize, Deserialize)]
 #[sql_type = "Integer"]
 /// This is used for both the character and system
 /// database and is convertable to i16 to be storable

@@ -79,24 +79,43 @@ mod character_tests {
 
     #[test]
     fn create_character() {
-        let mut setup = setup();
+        let mut setup = setup(TestSystem::MemorySphere);
+        create_char_with_name(&mut setup, NAME1);
+    }
+
+    #[test]
+    fn create_character_dnd5e() {
+        let mut setup = setup(TestSystem::DnD5);
         create_char_with_name(&mut setup, NAME1);
     }
 
     #[test]
     fn create_and_load_character() {
-        let mut setup = setup();
+        let mut setup = setup(TestSystem::MemorySphere);
         let conn = create_char_with_name(&mut setup, NAME1);
         if let Some(ref conn) = conn.connection {
             let c = CompleteCharacter::load(conn).expect("I'm here.");
             println!("char:{:?}", c);
+            println!("char:{:?}", serde_json::to_string(&c).expect("yes"));
+            assert_eq!(&c.name, NAME1);
+        }
+    }
+
+    #[test]
+    fn create_and_load_character_dnd5() {
+        let mut setup = setup(TestSystem::DnD5);
+        let conn = create_char_with_name(&mut setup, NAME1);
+        if let Some(ref conn) = conn.connection {
+            let c = CompleteCharacter::load(conn).expect("I'm here.");
+            println!("char:{:?}", c);
+            println!("char:{:?}", serde_json::to_string(&c).expect("yes"));
             assert_eq!(&c.name, NAME1);
         }
     }
 
     #[test]
     fn create_multiple_characters() {
-        let mut setup = setup();
+        let mut setup = setup(TestSystem::MemorySphere);
         create_char_with_name(&mut setup, NAME1);
         create_char_with_name(&mut setup, NAME2);
         create_char_with_name(&mut setup, NAME3);
@@ -106,7 +125,7 @@ mod character_tests {
 
     #[test]
     fn create_multiple_characters_same_name() {
-        let mut setup = setup();
+        let mut setup = setup(TestSystem::MemorySphere);
         create_char_with_name(&mut setup, NAME1);
         create_char_with_name(&mut setup, NAME1);
         create_char_with_name(&mut setup, NAME1);

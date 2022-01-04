@@ -1,0 +1,1493 @@
+{
+  "id": 1,
+  "name": "Test Character",
+  "uuid": "5ca0f230-6c9f-4e11-19af-eb9d40bcfab5",
+  "character_type": "main",
+  "speed": 0,
+  "weight": null,
+  "size": null,
+  "hp_total": null,
+  "hp_current": null,
+  "parts": [
+    {
+      "id": 2,
+      "name": "",
+      "uuid": "5d3f6a52-f9b2-46f4-1243-f32ee47b81c7",
+      "character_type": "spell",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "Ability",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "spell_range",
+            "of": 2
+          },
+          {
+            "id": 15,
+            "value_num": null,
+            "value_text": null,
+            "description": "Spell range (ft)."
+          }
+        ],
+        [
+          {
+            "key": "spell_target",
+            "of": 2
+          },
+          {
+            "id": 16,
+            "value_num": null,
+            "value_text": null,
+            "description": "Who, what and how the spell targets."
+          }
+        ],
+        [
+          {
+            "key": "spell_school",
+            "of": 2
+          },
+          {
+            "id": 17,
+            "value_num": null,
+            "value_text": null,
+            "description": "Good school bad school."
+          }
+        ],
+        [
+          {
+            "key": "spell_level",
+            "of": 2
+          },
+          {
+            "id": 18,
+            "value_num": null,
+            "value_text": null,
+            "description": "It's over 9000!!"
+          }
+        ],
+        [
+          {
+            "key": "spell_casting_time",
+            "of": 2
+          },
+          {
+            "id": 19,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it takes."
+          }
+        ],
+        [
+          {
+            "key": "spell_damage",
+            "of": 2
+          },
+          {
+            "id": 20,
+            "value_num": null,
+            "value_text": null,
+            "description": "You roll HOW MANY d6s!?"
+          }
+        ],
+        [
+          {
+            "key": "spell_damage_duration",
+            "of": 2
+          },
+          {
+            "id": 21,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it keeps hurting"
+          }
+        ],
+        [
+          {
+            "key": "spell_healing",
+            "of": 2
+          },
+          {
+            "id": 22,
+            "value_num": null,
+            "value_text": null,
+            "description": "Un-screw"
+          }
+        ],
+        [
+          {
+            "key": "spell_healing_duration",
+            "of": 2
+          },
+          {
+            "id": 23,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it feels good for"
+          }
+        ],
+        [
+          {
+            "key": "spell_effect1",
+            "of": 2
+          },
+          {
+            "id": 24,
+            "value_num": null,
+            "value_text": null,
+            "description": "First side effect."
+          }
+        ],
+        [
+          {
+            "key": "spell_effect2",
+            "of": 2
+          },
+          {
+            "id": 25,
+            "value_num": null,
+            "value_text": null,
+            "description": "Second side effect."
+          }
+        ],
+        [
+          {
+            "key": "spell_effect3",
+            "of": 2
+          },
+          {
+            "id": 26,
+            "value_num": null,
+            "value_text": null,
+            "description": "Third side effect."
+          }
+        ],
+        [
+          {
+            "key": "spell_duration",
+            "of": 2
+          },
+          {
+            "id": 27,
+            "value_num": null,
+            "value_text": null,
+            "description": "Overall duration."
+          }
+        ],
+        [
+          {
+            "key": "spell_components",
+            "of": 2
+          },
+          {
+            "id": 28,
+            "value_num": null,
+            "value_text": null,
+            "description": "Babies, always dead babies."
+          }
+        ],
+        [
+          {
+            "key": "spell_concentration",
+            "of": 2
+          },
+          {
+            "id": 29,
+            "value_num": null,
+            "value_text": null,
+            "description": "Babies, always dead babies."
+          }
+        ],
+        [
+          {
+            "key": "spell_text",
+            "of": 2
+          },
+          {
+            "id": 30,
+            "value_num": null,
+            "value_text": null,
+            "description": "Detailed description."
+          }
+        ],
+        [
+          {
+            "key": "spell_ritual",
+            "of": 2
+          },
+          {
+            "id": 31,
+            "value_num": null,
+            "value_text": null,
+            "description": "Is it a ritual?"
+          }
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "name": "",
+      "uuid": "45153042-c19b-4b28-1f28-853bbfec8c36",
+      "character_type": "weapon",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "InventoryItem",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "weapon_range",
+            "of": 3
+          },
+          {
+            "id": 32,
+            "value_num": null,
+            "value_text": null,
+            "description": "I throw my sword (ft)."
+          }
+        ],
+        [
+          {
+            "key": "weapon_handedness",
+            "of": 3
+          },
+          {
+            "id": 33,
+            "value_num": null,
+            "value_text": null,
+            "description": "I throw my sword with both hands."
+          }
+        ],
+        [
+          {
+            "key": "weapon_categories",
+            "of": 3
+          },
+          {
+            "id": 34,
+            "value_num": null,
+            "value_text": null,
+            "description": "My light, ranged, reach, special."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage_type1",
+            "of": 3
+          },
+          {
+            "id": 35,
+            "value_num": null,
+            "value_text": null,
+            "description": "My bludgeoning sword."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage_type2",
+            "of": 3
+          },
+          {
+            "id": 36,
+            "value_num": null,
+            "value_text": null,
+            "description": "My burning bludgeoning sword."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage_type3",
+            "of": 3
+          },
+          {
+            "id": 37,
+            "value_num": null,
+            "value_text": null,
+            "description": "My burning acid bludgeoning sword."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage1",
+            "of": 3
+          },
+          {
+            "id": 38,
+            "value_num": null,
+            "value_text": null,
+            "description": "My 1d4 does 1d4 damage."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage2",
+            "of": 3
+          },
+          {
+            "id": 39,
+            "value_num": null,
+            "value_text": null,
+            "description": "My 1d4 does 1d4 damage."
+          }
+        ],
+        [
+          {
+            "key": "weapon_damage3",
+            "of": 3
+          },
+          {
+            "id": 40,
+            "value_num": null,
+            "value_text": null,
+            "description": "My 1d4 does 1d4 damage."
+          }
+        ],
+        [
+          {
+            "key": "weapon_attack_bonus",
+            "of": 3
+          },
+          {
+            "id": 41,
+            "value_num": null,
+            "value_text": null,
+            "description": "My +X sword."
+          }
+        ],
+        [
+          {
+            "key": "weapon_description",
+            "of": 3
+          },
+          {
+            "id": 42,
+            "value_num": null,
+            "value_text": null,
+            "description": "My sword has a sworded story."
+          }
+        ],
+        [
+          {
+            "key": "weapon_kind",
+            "of": 3
+          },
+          {
+            "id": 43,
+            "value_num": null,
+            "value_text": null,
+            "description": "Simple/Martial."
+          }
+        ],
+        [
+          {
+            "key": "weapon_material",
+            "of": 3
+          },
+          {
+            "id": 44,
+            "value_num": null,
+            "value_text": null,
+            "description": "Wooden sword."
+          }
+        ],
+        [
+          {
+            "key": "weapon_curse",
+            "of": 3
+          },
+          {
+            "id": 45,
+            "value_num": null,
+            "value_text": null,
+            "description": "Wooden sword of suicide."
+          }
+        ],
+        [
+          {
+            "key": "weapon_history",
+            "of": 3
+          },
+          {
+            "id": 46,
+            "value_num": null,
+            "value_text": null,
+            "description": "My sword has a sworded story."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "name": "",
+      "uuid": "d9b656c5-3f39-40a7-10bc-c23365f96f06",
+      "character_type": "armour",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "InventoryItem",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "weapon_value",
+            "of": 4
+          },
+          {
+            "id": 47,
+            "value_num": null,
+            "value_text": null,
+            "description": "..And has done for ages."
+          }
+        ],
+        [
+          {
+            "key": "armour_ac",
+            "of": 4
+          },
+          {
+            "id": 48,
+            "value_num": null,
+            "value_text": null,
+            "description": "The base AC of the armour."
+          }
+        ],
+        [
+          {
+            "key": "armour_max_dex",
+            "of": 4
+          },
+          {
+            "id": 49,
+            "value_num": null,
+            "value_text": null,
+            "description": "Can't touch yor toes?"
+          }
+        ],
+        [
+          {
+            "key": "armour_dex_disadvantage",
+            "of": 4
+          },
+          {
+            "id": 50,
+            "value_num": null,
+            "value_text": null,
+            "description": "Can only clang your toes."
+          }
+        ],
+        [
+          {
+            "key": "amour_ac_bonus",
+            "of": 4
+          },
+          {
+            "id": 51,
+            "value_num": null,
+            "value_text": null,
+            "description": "Magical bikini mail."
+          }
+        ],
+        [
+          {
+            "key": "armour_material",
+            "of": 4
+          },
+          {
+            "id": 52,
+            "value_num": null,
+            "value_text": null,
+            "description": "My burning bludgeoning sword."
+          }
+        ],
+        [
+          {
+            "key": "armour_dr1",
+            "of": 4
+          },
+          {
+            "id": 53,
+            "value_num": null,
+            "value_text": null,
+            "description": "Resist X."
+          }
+        ],
+        [
+          {
+            "key": "armour_dr2",
+            "of": 4
+          },
+          {
+            "id": 54,
+            "value_num": null,
+            "value_text": null,
+            "description": "Resist Y."
+          }
+        ],
+        [
+          {
+            "key": "armour_dr3",
+            "of": 4
+          },
+          {
+            "id": 55,
+            "value_num": null,
+            "value_text": null,
+            "description": "Resist Z."
+          }
+        ],
+        [
+          {
+            "key": "armour_immunity1",
+            "of": 4
+          },
+          {
+            "id": 56,
+            "value_num": null,
+            "value_text": null,
+            "description": "Immune to X."
+          }
+        ],
+        [
+          {
+            "key": "armour_immunity2",
+            "of": 4
+          },
+          {
+            "id": 57,
+            "value_num": null,
+            "value_text": null,
+            "description": "Immune to Y."
+          }
+        ],
+        [
+          {
+            "key": "armour_immunity3",
+            "of": 4
+          },
+          {
+            "id": 58,
+            "value_num": null,
+            "value_text": null,
+            "description": "Immune to Z."
+          }
+        ],
+        [
+          {
+            "key": "armour_vulnerability1",
+            "of": 4
+          },
+          {
+            "id": 59,
+            "value_num": null,
+            "value_text": null,
+            "description": "Armour of stubbing my toe"
+          }
+        ],
+        [
+          {
+            "key": "armour_vulnerability2",
+            "of": 4
+          },
+          {
+            "id": 60,
+            "value_num": null,
+            "value_text": null,
+            "description": "Armour of stubbing my toe"
+          }
+        ],
+        [
+          {
+            "key": "armour_vulnerability3",
+            "of": 4
+          },
+          {
+            "id": 61,
+            "value_num": null,
+            "value_text": null,
+            "description": "Armour of stubbing my toe"
+          }
+        ],
+        [
+          {
+            "key": "armour_special1",
+            "of": 4
+          },
+          {
+            "id": 62,
+            "value_num": null,
+            "value_text": null,
+            "description": "It glows."
+          }
+        ],
+        [
+          {
+            "key": "armour_special2",
+            "of": 4
+          },
+          {
+            "id": 63,
+            "value_num": null,
+            "value_text": null,
+            "description": "And keeps you warm."
+          }
+        ],
+        [
+          {
+            "key": "armour_curse",
+            "of": 4
+          },
+          {
+            "id": 64,
+            "value_num": null,
+            "value_text": null,
+            "description": "..A little too warm."
+          }
+        ],
+        [
+          {
+            "key": "armour_description",
+            "of": 4
+          },
+          {
+            "id": 65,
+            "value_num": null,
+            "value_text": null,
+            "description": "It arms."
+          }
+        ],
+        [
+          {
+            "key": "armour_history",
+            "of": 4
+          },
+          {
+            "id": 66,
+            "value_num": null,
+            "value_text": null,
+            "description": "..And has done for ages."
+          }
+        ],
+        [
+          {
+            "key": "armour_value",
+            "of": 4
+          },
+          {
+            "id": 67,
+            "value_num": null,
+            "value_text": null,
+            "description": "50 (gp)."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "name": "",
+      "uuid": "1ee32378-2f6d-425e-1347-00789d9929ac",
+      "character_type": "consumable",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "InventoryItem",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "consumable_kind",
+            "of": 5
+          },
+          {
+            "id": 68,
+            "value_num": null,
+            "value_text": null,
+            "description": "Food/water/spell-components"
+          }
+        ],
+        [
+          {
+            "key": "consumable_value",
+            "of": 5
+          },
+          {
+            "id": 69,
+            "value_num": null,
+            "value_text": null,
+            "description": "50 (gp)."
+          }
+        ],
+        [
+          {
+            "key": "consumable_description",
+            "of": 5
+          },
+          {
+            "id": 70,
+            "value_num": null,
+            "value_text": null,
+            "description": "A fine, fine paper-clip."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "name": "",
+      "uuid": "c4eeaaf1-35d4-49cb-198d-4f734e5cdab1",
+      "character_type": "wealth",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "InventoryItem",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "wealth_kind",
+            "of": 6
+          },
+          {
+            "id": 71,
+            "value_num": null,
+            "value_text": null,
+            "description": "Gold/silver/toe-nails."
+          }
+        ],
+        [
+          {
+            "key": "wealth_value",
+            "of": 6
+          },
+          {
+            "id": 72,
+            "value_num": null,
+            "value_text": null,
+            "description": "50 (gp)."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "name": "",
+      "uuid": "30ad5c84-cc32-4a1f-1a13-c97f1753b6aa",
+      "character_type": "feat",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "Ability",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "feat_prerequisite",
+            "of": 7
+          },
+          {
+            "id": 73,
+            "value_num": null,
+            "value_text": null,
+            "description": "You must be this tall to dwarf."
+          }
+        ],
+        [
+          {
+            "key": "feat_stat_bonus_type",
+            "of": 7
+          },
+          {
+            "id": 74,
+            "value_num": null,
+            "value_text": null,
+            "description": "Bonus to dex etc."
+          }
+        ],
+        [
+          {
+            "key": "feat_stat_bonus_value",
+            "of": 7
+          },
+          {
+            "id": 75,
+            "value_num": null,
+            "value_text": null,
+            "description": "One or two."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit1",
+            "of": 7
+          },
+          {
+            "id": 76,
+            "value_num": null,
+            "value_text": null,
+            "description": "I can sleep upside down."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit2",
+            "of": 7
+          },
+          {
+            "id": 77,
+            "value_num": null,
+            "value_text": null,
+            "description": "In the dark."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit1_value",
+            "of": 7
+          },
+          {
+            "id": 78,
+            "value_num": null,
+            "value_text": null,
+            "description": "Over 9000."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit2_value",
+            "of": 7
+          },
+          {
+            "id": 79,
+            "value_num": null,
+            "value_text": null,
+            "description": "Over 9000."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit1_recharge",
+            "of": 7
+          },
+          {
+            "id": 80,
+            "value_num": null,
+            "value_text": null,
+            "description": "Once."
+          }
+        ],
+        [
+          {
+            "key": "feat_benefit2_recharge",
+            "of": 7
+          },
+          {
+            "id": 81,
+            "value_num": null,
+            "value_text": null,
+            "description": "Forever."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "name": "",
+      "uuid": "09ba15bc-677b-47ff-1be0-29962c6a22d6",
+      "character_type": "special",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "Ability",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "special_range",
+            "of": 8
+          },
+          {
+            "id": 82,
+            "value_num": null,
+            "value_text": null,
+            "description": "Ability range (ft)."
+          }
+        ],
+        [
+          {
+            "key": "special_action_type",
+            "of": 8
+          },
+          {
+            "id": 83,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it takes."
+          }
+        ],
+        [
+          {
+            "key": "special_damage",
+            "of": 8
+          },
+          {
+            "id": 84,
+            "value_num": null,
+            "value_text": null,
+            "description": "You roll HOW MANY d6s!?"
+          }
+        ],
+        [
+          {
+            "key": "special_damage_duration",
+            "of": 8
+          },
+          {
+            "id": 85,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it keeps hurting"
+          }
+        ],
+        [
+          {
+            "key": "special_healing",
+            "of": 8
+          },
+          {
+            "id": 86,
+            "value_num": null,
+            "value_text": null,
+            "description": "Un-screw"
+          }
+        ],
+        [
+          {
+            "key": "special_healing_duration",
+            "of": 8
+          },
+          {
+            "id": 87,
+            "value_num": null,
+            "value_text": null,
+            "description": "How long it feels good for"
+          }
+        ],
+        [
+          {
+            "key": "special_effect1",
+            "of": 8
+          },
+          {
+            "id": 88,
+            "value_num": null,
+            "value_text": null,
+            "description": "First side effect."
+          }
+        ],
+        [
+          {
+            "key": "special_effect2",
+            "of": 8
+          },
+          {
+            "id": 89,
+            "value_num": null,
+            "value_text": null,
+            "description": "Second side effect."
+          }
+        ],
+        [
+          {
+            "key": "special_effect3",
+            "of": 8
+          },
+          {
+            "id": 90,
+            "value_num": null,
+            "value_text": null,
+            "description": "Third side effect."
+          }
+        ],
+        [
+          {
+            "key": "special_duration",
+            "of": 8
+          },
+          {
+            "id": 91,
+            "value_num": null,
+            "value_text": null,
+            "description": "Overall duration."
+          }
+        ],
+        [
+          {
+            "key": "special_components",
+            "of": 8
+          },
+          {
+            "id": 92,
+            "value_num": null,
+            "value_text": null,
+            "description": "Babies, always dead babies."
+          }
+        ],
+        [
+          {
+            "key": "special_concentration",
+            "of": 8
+          },
+          {
+            "id": 93,
+            "value_num": null,
+            "value_text": null,
+            "description": "Babies, always dead babies."
+          }
+        ],
+        [
+          {
+            "key": "special_text",
+            "of": 8
+          },
+          {
+            "id": 94,
+            "value_num": null,
+            "value_text": null,
+            "description": "Detailed description."
+          }
+        ],
+        [
+          {
+            "key": "special_ritual",
+            "of": 8
+          },
+          {
+            "id": 95,
+            "value_num": null,
+            "value_text": null,
+            "description": "Is it a ritual?"
+          }
+        ],
+        [
+          {
+            "key": "special_recast",
+            "of": 8
+          },
+          {
+            "id": 96,
+            "value_num": null,
+            "value_text": null,
+            "description": "Short rest/long rest?"
+          }
+        ],
+        [
+          {
+            "key": "special_count",
+            "of": 8
+          },
+          {
+            "id": 97,
+            "value_num": null,
+            "value_text": null,
+            "description": "How many explosions before I rest?"
+          }
+        ],
+        [
+          {
+            "key": "special_source",
+            "of": 8
+          },
+          {
+            "id": 98,
+            "value_num": null,
+            "value_text": null,
+            "description": "Tentacle Monsters Inside(tm)"
+          }
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "name": "",
+      "uuid": "10cbb691-45dc-4238-163b-3b5ee1b8d10d",
+      "character_type": "current_mount",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "Ability",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "mount_now_movements",
+            "of": 9
+          },
+          {
+            "id": 99,
+            "value_num": null,
+            "value_text": null,
+            "description": "Flies/swims/wiggles."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_type",
+            "of": 9
+          },
+          {
+            "id": 100,
+            "value_num": null,
+            "value_text": null,
+            "description": "I ride 3 dwarves in a trenchcoat."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_alignment",
+            "of": 9
+          },
+          {
+            "id": 101,
+            "value_num": null,
+            "value_text": null,
+            "description": "Good, evil, chaotic, lawful, neutral? Do you eat babies?"
+          }
+        ],
+        [
+          {
+            "key": "mount_now_str",
+            "of": 9
+          },
+          {
+            "id": 102,
+            "value_num": null,
+            "value_text": null,
+            "description": "I. Is. Stronk."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_dex",
+            "of": 9
+          },
+          {
+            "id": 103,
+            "value_num": null,
+            "value_text": null,
+            "description": "Dodging fireballs and threading needles."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_con",
+            "of": 9
+          },
+          {
+            "id": 104,
+            "value_num": null,
+            "value_text": null,
+            "description": "Hardiness. Eating contest rank."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_int",
+            "of": 9
+          },
+          {
+            "id": 105,
+            "value_num": null,
+            "value_text": null,
+            "description": "Mathematical brilliance."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_wis",
+            "of": 9
+          },
+          {
+            "id": 106,
+            "value_num": null,
+            "value_text": null,
+            "description": "Knowing when to go to bed."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_char",
+            "of": 9
+          },
+          {
+            "id": 107,
+            "value_num": null,
+            "value_text": null,
+            "description": "Persuading someone to go to bed with you."
+          }
+        ],
+        [
+          {
+            "key": "mount_now_ac",
+            "of": 9
+          },
+          {
+            "id": 108,
+            "value_num": null,
+            "value_text": null,
+            "description": "But can you hit me?"
+          }
+        ],
+        [
+          {
+            "key": "mount_now_value",
+            "of": 9
+          },
+          {
+            "id": 109,
+            "value_num": null,
+            "value_text": null,
+            "description": "50 (gp)."
+          }
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "name": "",
+      "uuid": "3165a57a-dc85-4592-18f0-cdc740c2c21a",
+      "character_type": "background",
+      "speed": 0,
+      "weight": null,
+      "size": null,
+      "hp_total": null,
+      "hp_current": null,
+      "part_type": "Other",
+      "belongs_to": 1,
+      "attributes": [
+        [
+          {
+            "key": "background_birthplace",
+            "of": 10
+          },
+          {
+            "id": 110,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_bonds",
+            "of": 10
+          },
+          {
+            "id": 111,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_flaws",
+            "of": 10
+          },
+          {
+            "id": 112,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_ideals",
+            "of": 10
+          },
+          {
+            "id": 113,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_skill1",
+            "of": 10
+          },
+          {
+            "id": 114,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_skill2",
+            "of": 10
+          },
+          {
+            "id": 115,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_skill3",
+            "of": 10
+          },
+          {
+            "id": 116,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_language1",
+            "of": 10
+          },
+          {
+            "id": 117,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_language2",
+            "of": 10
+          },
+          {
+            "id": 118,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_language3",
+            "of": 10
+          },
+          {
+            "id": 119,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_benefit1",
+            "of": 10
+          },
+          {
+            "id": 120,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_benefit2",
+            "of": 10
+          },
+          {
+            "id": 121,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_benefit3",
+            "of": 10
+          },
+          {
+            "id": 122,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_drawback1",
+            "of": 10
+          },
+          {
+            "id": 123,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_drawback2",
+            "of": 10
+          },
+          {
+            "id": 124,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_drawback3",
+            "of": 10
+          },
+          {
+            "id": 125,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ],
+        [
+          {
+            "key": "background_blurb",
+            "of": 10
+          },
+          {
+            "id": 126,
+            "value_num": null,
+            "value_text": null,
+            "description": "Always Bethlehem."
+          }
+        ]
+      ]
+    }
+  ],
+  "attributes": []
+}

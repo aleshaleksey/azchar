@@ -16,6 +16,7 @@ use std::path::PathBuf;
 pub(super) struct PermittedPart {
     part_name: String,
     part_type: Part,
+    obligatory: bool,
 }
 
 impl From<PermittedPart> for NewPermittedPart {
@@ -23,6 +24,7 @@ impl From<PermittedPart> for NewPermittedPart {
         Self {
             part_name: p.part_name,
             part_type: p.part_type,
+            obligatory: p.obligatory,
         }
     }
 }
@@ -35,6 +37,7 @@ pub(super) struct PermittedAttribute {
     attribute_description: String,
     part_name: String,
     part_type: Part,
+    obligatory: bool,
 }
 
 impl From<PermittedAttribute> for NewPermittedAttribute {
@@ -45,6 +48,7 @@ impl From<PermittedAttribute> for NewPermittedAttribute {
             attribute_description: a.attribute_description,
             part_name: a.part_name,
             part_type: a.part_type,
+            obligatory: a.obligatory,
         }
     }
 }
@@ -124,7 +128,7 @@ impl SystemConfig {
 #[cfg(test)]
 mod system_config_tests {
     use super::{PermittedAttribute, PermittedPart, SystemConfig};
-
+    use crate::database::root_db::tests::MEMORY_SPHERE;
     use crate::database::shared::*;
 
     #[test]
@@ -132,10 +136,12 @@ mod system_config_tests {
         let a = "\
     part_name = \"Test Part\"
     part_type = \"Body\"
+    obligatory = true
     ";
         let expected = PermittedPart {
             part_name: String::from("Test Part"),
             part_type: Part::Body,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -145,10 +151,12 @@ mod system_config_tests {
         let a = "\
     part_name = \"Spellbook\"
     part_type = \"InventoryItem\"
+    obligatory = false
     ";
         let expected = PermittedPart {
             part_name: String::from("Spellbook"),
             part_type: Part::InventoryItem,
+            obligatory: false,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -158,10 +166,12 @@ mod system_config_tests {
         let a = "\
     part_name = \"Giant Cupcake\"
     part_type = \"Summon\"
+    obligatory = true
     ";
         let expected = PermittedPart {
             part_name: String::from("Giant Cupcake"),
             part_type: Part::Summon,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -174,6 +184,7 @@ mod system_config_tests {
     attribute_description = \"The level of the spell.\"
     part_name = \"spell\"
     part_type = \"Ability\"
+    obligatory = true
     ";
         let expected = PermittedAttribute {
             key: String::from("spell_level"),
@@ -181,6 +192,7 @@ mod system_config_tests {
             attribute_description: String::from("The level of the spell."),
             part_name: String::from("spell"),
             part_type: Part::Ability,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -193,6 +205,7 @@ mod system_config_tests {
     attribute_description = \"The giant cupcake's attack power.\"
     part_name = \"Giant Cupcake\"
     part_type = \"Summon\"
+    obligatory = true
     ";
         let expected = PermittedAttribute {
             key: String::from("attack_power"),
@@ -200,6 +213,7 @@ mod system_config_tests {
             attribute_description: String::from("The giant cupcake's attack power."),
             part_name: String::from("Giant Cupcake"),
             part_type: Part::Summon,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -212,6 +226,7 @@ mod system_config_tests {
     attribute_description = \"The range of the weapon, in hexes.\"
     part_name = \"ranged_weapon\"
     part_type = \"InventoryItem\"
+    obligatory = true
     ";
         let expected = PermittedAttribute {
             key: String::from("range"),
@@ -219,6 +234,7 @@ mod system_config_tests {
             attribute_description: String::from("The range of the weapon, in hexes."),
             part_name: String::from("ranged_weapon"),
             part_type: Part::InventoryItem,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
@@ -231,6 +247,7 @@ mod system_config_tests {
     attribute_description = \"The coordinates of the base.\"
     part_name = \"base\"
     part_type = \"Asset\"
+    obligatory = true
     ";
         let expected = PermittedAttribute {
             key: String::from("coordinates"),
@@ -238,35 +255,25 @@ mod system_config_tests {
             attribute_description: String::from("The coordinates of the base."),
             part_name: String::from("base"),
             part_type: Part::Asset,
+            obligatory: true,
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
     }
 
     #[test]
     fn system_config_from_toml1() {
-        let a = "\
-permitted_parts = [\
-    { part_name = \"main\", part_type = \"Main\" },\
-    { part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
-]
-permitted_attributes = [\
-    { key = \"race\", attribute_type = 0, attribute_description = \"The character's race.\", part_name = \"main\", part_type = \"Main\" },\
-    { key = \"class\", attribute_type = 0, attribute_description = \"The character's class.\", part_name = \"main\", part_type = \"Main\" },\
-    { key = \"character_alignment\", attribute_type = 0, attribute_description = \"The character's alignment.\", part_name = \"main\", part_type = \"Main\" },\
-    { key = \"mana_type\", attribute_type = 0, attribute_description = \"The type of mana that the memory sphere consumes.\", part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
-    { key = \"mana_consumption\", attribute_type = 0, attribute_description = \"The amount of mana the memory sphere consumes per recollection.\", part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
-    { key = \"memory_capacity\", attribute_type = 0, attribute_description = \"The number of memories that the memory sphere can hold before it breaks.\", part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
-    { key = \"memory_sphere_alignment\", attribute_type = 0, attribute_description = \"The alignment of the memory sphere determines the kind of memories it prefers.\", part_name = \"Memory Sphere\", part_type = \"InventoryItem\" },\
-]";
+        let a = MEMORY_SPHERE;
         let expected = SystemConfig {
             permitted_parts: vec![
                 PermittedPart {
                     part_name: String::from("main"),
                     part_type: Part::Main,
+                    obligatory: true,
                 },
                 PermittedPart {
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
+                    obligatory: true,
                 },
             ],
             permitted_attributes: vec![
@@ -276,6 +283,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The character's race."),
                     part_name: String::from("main"),
                     part_type: Part::Main,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("class"),
@@ -283,6 +291,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The character's class."),
                     part_name: String::from("main"),
                     part_type: Part::Main,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("character_alignment"),
@@ -290,6 +299,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The character's alignment."),
                     part_name: String::from("main"),
                     part_type: Part::Main,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("mana_type"),
@@ -297,6 +307,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The type of mana that the memory sphere consumes."),
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("mana_consumption"),
@@ -304,6 +315,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The amount of mana the memory sphere consumes per recollection."),
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("memory_capacity"),
@@ -311,6 +323,7 @@ permitted_attributes = [\
                     attribute_description: String::from("The number of memories that the memory sphere can hold before it breaks."),
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
+                    obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("memory_sphere_alignment"),
@@ -318,9 +331,19 @@ permitted_attributes = [\
                     attribute_description: String::from("The alignment of the memory sphere determines the kind of memories it prefers."),
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
+                    obligatory: true,
                 },
             ],
         };
         assert_eq!(expected, toml::from_str(&a).expect("Could not toml"));
+    }
+
+    #[test]
+    fn dnd5_config_from_toml() {
+        let text = std::fs::read_to_string("examples/dnd5e.toml").expect("Yes.");
+        let dnd5toml: SystemConfig = toml::from_str(&text).expect("ho ho ho");
+
+        assert_eq!(dnd5toml.permitted_parts.len(), 10);
+        assert_eq!(dnd5toml.permitted_attributes.len(), 126);
     }
 }

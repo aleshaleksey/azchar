@@ -157,11 +157,11 @@ impl LoadedDbs {
         };
         let key = (character.name.to_owned(), character.uuid().to_owned());
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            character.save(conn.connect()?)?;
+            character.save(conn.connect()?, self.root_db.connect()?)?;
         } else {
             let key = self.create_sheet(&key.0)?;
             let conn = self.connections.get_mut(&key).expect("Just created");
-            character.save(conn.connect()?)?;
+            character.save(conn.connect()?, self.root_db.connect()?)?;
         }
         Ok(())
     }
