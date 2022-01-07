@@ -1,26 +1,25 @@
+//! This module deals with server related things. Namely with the interactions
+//! with the outside world.
+//! This includes:
+//! a) The main loop.
+//! b) Requests and responses.
 #![allow(clippy::field_reassign_with_default)]
 extern crate serde_json;
 #[cfg(test)]
 extern crate tempfile;
 extern crate toml;
-extern crate uuid_rs;
 #[macro_use]
 extern crate serde_derive;
-extern crate fnv;
-#[macro_use]
-extern crate diesel_migrations;
-#[macro_use]
-extern crate diesel;
 
-mod config;
-mod database;
-mod error;
-mod roller;
-mod server;
+extern crate azchar_config;
+extern crate azchar_database;
+extern crate azchar_error;
 
-use crate::database::LoadedDbs;
-use crate::server::main_loop::Mode;
-use crate::server::MainLoop;
+mod main_loop;
+mod requests;
+
+use crate::main_loop::Mode;
+use crate::main_loop::MainLoop;
 
 // macro_rules! do_or_die {
 //     ($result:expr) => {

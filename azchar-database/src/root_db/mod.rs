@@ -1,9 +1,9 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
-use crate::database::character::character::CompleteCharacter;
-use crate::database::root_db::system::PermittedPart;
-use crate::database::Config;
-use crate::error::ma;
+use crate::character::character::CompleteCharacter;
+use crate::root_db::system::PermittedPart;
+use crate::Config;
+use azchar_error::ma;
 
 use fnv::FnvHashMap;
 
@@ -92,7 +92,7 @@ impl LoadedDbs {
     /// Create a new character sheet database.
     /// Returns the character name and uuid.
     pub fn create_sheet(&mut self, name: &str) -> Result<(String, String), String> {
-        use crate::database::root_db::characters::character_dbs::dsl::character_dbs;
+        use crate::root_db::characters::character_dbs::dsl::character_dbs;
         let uuid = v4!();
         // Sanity check.
         if self

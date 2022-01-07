@@ -1,12 +1,29 @@
 //! The base package for the database.
 #![allow(dead_code)]
 #![allow(deprecated)]
-use crate::config::Config;
-use crate::error::ma;
+#![allow(clippy::field_reassign_with_default)]
+extern crate serde_json;
+#[cfg(test)]
+extern crate tempfile;
+extern crate toml;
+extern crate uuid_rs;
+#[macro_use]
+extern crate serde_derive;
+extern crate fnv;
+#[macro_use]
+extern crate diesel_migrations;
+#[macro_use]
+extern crate diesel;
+
+extern crate azchar_error;
+extern crate azchar_config;
+
+use azchar_config::Config;
+use azchar_error::ma;
 use diesel::{Connection, SqliteConnection};
 
-pub(crate) mod character;
-pub(crate) mod root_db;
+pub mod character;
+pub mod root_db;
 mod shared;
 
 pub use root_db::{CharacterDbRef, LoadedDbs};

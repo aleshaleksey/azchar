@@ -1,5 +1,5 @@
 //! This deals with the attributes table.
-use crate::error::ma;
+use azchar_error::ma;
 
 use diesel::{Connection, SqliteConnection};
 use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};

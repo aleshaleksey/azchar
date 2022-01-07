@@ -1,5 +1,5 @@
 //! This file contains the basic setup for most tests.
-use crate::database::root_db::system_config::SystemConfig;
+use crate::root_db::system_config::SystemConfig;
 use crate::LoadedDbs;
 
 use tempfile::TempDir;
@@ -39,7 +39,7 @@ pub(crate) fn setup(ts: TestSystem) -> TestSetup {
     let root_path = root_dir.path().to_string_lossy();
     let a = match ts {
         TestSystem::MemorySphere => MEMORY_SPHERE.to_string(),
-        TestSystem::DnD5 => std::fs::read_to_string("examples/dnd5e.toml").expect("Yes."),
+        TestSystem::DnD5 => std::fs::read_to_string("../examples/dnd5e.toml").expect("Yes."),
     };
     let sys_config: SystemConfig = toml::from_str(&a).expect("Could not toml");
     let system = sys_config

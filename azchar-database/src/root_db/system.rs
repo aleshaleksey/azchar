@@ -1,10 +1,10 @@
 //! This deals with tables on the root database that deal with
 //! permitted character parts and permitted attributes.
-use crate::database::shared::*;
-use crate::error::ma;
+use crate::shared::*;
+use azchar_error::ma;
 
-use crate::database::character::NewAttribute;
-use crate::database::character::NewCharacter;
+use crate::character::NewAttribute;
+use crate::character::NewCharacter;
 
 use diesel::{BoolExpressionMethods, ExpressionMethods};
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
@@ -88,8 +88,8 @@ impl PermittedPart {
         sheet_conn: &SqliteConnection,
         name: &str,
     ) -> Result<(), String> {
-        use crate::database::character::attribute::attributes::dsl as at_dsl;
-        use crate::database::character::character::characters::dsl as ch_dsl;
+        use crate::character::attribute::attributes::dsl as at_dsl;
+        use crate::character::character::characters::dsl as ch_dsl;
 
         for part in PermittedPart::load_obligatory(root_conn)?.into_iter() {
             // Create and insert an empty part and then create obligatory attributes.
@@ -216,8 +216,8 @@ pub(crate) struct NewPermittedAttribute {
 #[cfg(test)]
 mod system_tests {
     use super::{PermittedAttribute, PermittedPart};
-    use crate::database::root_db::tests;
-    use crate::database::shared::Part;
+    use crate::root_db::tests;
+    use crate::shared::Part;
 
     use diesel::SqliteConnection;
 

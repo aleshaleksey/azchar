@@ -1,8 +1,8 @@
 //! This file deals with encoding and decoing the TOML files needed for the root db.
 // TODO: test conversion into a new system.
-use crate::database::root_db::system::{NewPermittedAttribute, NewPermittedPart};
-use crate::database::shared::*;
-use crate::error::ma;
+use crate::root_db::system::{NewPermittedAttribute, NewPermittedPart};
+use crate::shared::*;
+use azchar_error::ma;
 use crate::LoadedDbs;
 
 use diesel::RunQueryDsl;
@@ -62,7 +62,7 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     // Create an instance of `SystemConfig` from a config toml.
-    pub(crate) fn from_config(system_config_path: &str) -> Result<Self, String> {
+    pub fn from_config(system_config_path: &str) -> Result<Self, String> {
         let mut config_file = std::fs::File::open(system_config_path).map_err(ma)?;
         let mut config_string = String::new();
         config_file.read_to_string(&mut config_string).map_err(ma)?;
@@ -72,10 +72,10 @@ impl SystemConfig {
     /// This function exists to:
     // a) Create the root database with all three tables.
     // b) Insert permitted attributes and parts into it.
-    pub(crate) fn into_system(self, path: &str, system: &str) -> Result<LoadedDbs, String> {
+    pub fn into_system(self, path: &str, system: &str) -> Result<LoadedDbs, String> {
         // The required tables.
-        use crate::database::root_db::system::permitted_attributes::dsl as pa_dsl;
-        use crate::database::root_db::system::permitted_parts::dsl as pp_dsl;
+        use crate::root_db::system::permitted_attributes::dsl as pa_dsl;
+        use crate::root_db::system::permitted_parts::dsl as pp_dsl;
 
         let file_name = format!("{}.db", system);
         let file_path = PathBuf::from(path).join(&file_name);
@@ -128,8 +128,8 @@ impl SystemConfig {
 #[cfg(test)]
 mod system_config_tests {
     use super::{PermittedAttribute, PermittedPart, SystemConfig};
-    use crate::database::root_db::tests::MEMORY_SPHERE;
-    use crate::database::shared::*;
+    use crate::root_db::tests::MEMORY_SPHERE;
+    use crate::shared::*;
 
     #[test]
     fn permitted_part_from_toml1() {
@@ -340,7 +340,7 @@ mod system_config_tests {
 
     #[test]
     fn dnd5_config_from_toml() {
-        let text = std::fs::read_to_string("examples/dnd5e.toml").expect("Yes.");
+        let text = std::fs::read_to_string("../examples/dnd5e.toml").expect("Yes.");
         let dnd5toml: SystemConfig = toml::from_str(&text).expect("ho ho ho");
 
         assert_eq!(dnd5toml.permitted_parts.len(), 10);

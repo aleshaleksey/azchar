@@ -1,8 +1,15 @@
+extern crate azchar_error;
+
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate toml;
+
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 
-use crate::error::ma;
+use azchar_error::ma;
 
 #[derive(Debug, Deserialize)]
 /// The base configuration file for the app.

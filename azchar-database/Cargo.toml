@@ -1,0 +1,22 @@
+[package]
+name = "azchar-database"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+diesel_migrations = "1.4.0"
+fnv = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+tempfile = "*"
+toml = "0.5.8"
+uuid-rs = { version = "*", features = ["random"] }
+
+azchar-error = { path = "../azchar-error" }
+azchar-config = { path = "../azchar-config" }
+
+[dependencies.diesel]
+version = "1.4.8"
+features = ["sqlite"]
+# features = ["with-deprecated", "32-column-tables", "sqlite"]

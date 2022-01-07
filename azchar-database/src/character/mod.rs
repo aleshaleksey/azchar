@@ -1,6 +1,6 @@
 #![allow(clippy::module_inception)]
-pub(crate) mod attribute;
-pub(crate) mod character;
+pub mod attribute;
+pub mod character;
 #[cfg(test)]
 mod tests;
 

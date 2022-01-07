@@ -1,0 +1,20 @@
+[package]
+name = "azchar-server"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+tempfile = "*"
+toml = "0.5.8"
+azchar-config = { path = "../azchar-config" }
+azchar-database = { path = "../azchar-database" }
+azchar-error = { path = "../azchar-error" }
+
+[dependencies.libazdice]
+git = "https://github.com/aleshaleksey/libazdice.git"
+version = "0.2.5"

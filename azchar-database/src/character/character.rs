@@ -1,7 +1,7 @@
 //! This deals with the character columns.
-use crate::database::root_db::system::{PermittedAttribute, PermittedPart};
-use crate::database::shared::Part;
-use crate::error::ma;
+use crate::root_db::system::{PermittedAttribute, PermittedPart};
+use crate::shared::Part;
+use azchar_error::ma;
 
 use diesel::result::Error as DbError;
 use diesel::OptionalExtension;

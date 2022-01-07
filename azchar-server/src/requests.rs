@@ -1,10 +1,10 @@
 //! This deals with requests.
-use crate::database::character::character::CompleteCharacter;
-use crate::database::root_db::system_config::SystemConfig;
-use crate::database::CharacterDbRef;
-use crate::error::ma;
+use azchar_database::character::character::CompleteCharacter;
+use azchar_database::root_db::system_config::SystemConfig;
+use azchar_database::CharacterDbRef;
+use azchar_error::ma;
 
-use crate::LoadedDbs;
+use azchar_database::LoadedDbs;
 
 /// A request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,8 +68,8 @@ impl Request {
         let res = match self {
             Self::CreateSystem(name, path, system) => {
                 let sys = if std::path::PathBuf::from(&system).exists() {
-                    let s = SystemConfig::from_config(&system)?;
-                    s
+                    SystemConfig::from_config(&system)?
+                    // s
                 } else {
                     toml::from_str(&system).map_err(ma)?
                 };
@@ -134,7 +134,7 @@ impl Request {
 
 #[cfg(test)]
 mod tests {
-    use crate::server::requests::Request;
+    use crate::requests::Request;
     #[test]
     fn make_create_list_request() {
         println!("{:?}", serde_json::to_string(&Request::ListCharacters));

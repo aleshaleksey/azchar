@@ -3,23 +3,14 @@ name = "azchar"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "azchar"
+path = "azchar-server/src/main.rs"
 
-[dependencies]
-diesel_migrations = "1.4.0"
-fnv = "*"
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
-tempfile = "*"
-toml = "0.5.8"
-uuid-rs = { version = "*", features = ["random"] }
-
-[dependencies.libazdice]
-git = "https://github.com/aleshaleksey/libazdice.git"
-version = "0.2.5"
-
-[dependencies.diesel]
-version = "1.4.8"
-features = ["sqlite"]
-# features = ["with-deprecated", "32-column-tables", "sqlite"]
+[workspace]
+members = [
+  "azchar-config",
+  "azchar-database",
+  "azchar-error",
+  "azchar-server",
+]

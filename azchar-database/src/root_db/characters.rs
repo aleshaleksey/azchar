@@ -1,5 +1,5 @@
 //! This deals with the base connections for the root db and outer dbs.
-use crate::error::ma;
+use azchar_error::ma;
 
 use diesel::RunQueryDsl;
 use diesel::SqliteConnection;
@@ -54,9 +54,9 @@ impl NewCharacterDbRef {
 
 #[cfg(test)]
 mod character_tests {
-    use crate::database::character::character::CompleteCharacter;
-    use crate::database::root_db::tests::*;
-    use crate::database::BasicConnection;
+    use crate::character::character::CompleteCharacter;
+    use crate::root_db::tests::*;
+    use crate::BasicConnection;
 
     const NAME1: &str = "Test Character";
     const NAME2: &str = "Test Character 2";
