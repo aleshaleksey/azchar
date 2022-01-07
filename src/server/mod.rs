@@ -3,5 +3,7 @@
 //! This includes:
 //! a) The main loop.
 //! b) Requests and responses.
-mod main_loop;
-mod requests;
+pub(crate) mod main_loop;
+pub(super) mod requests;
+
+pub(crate) use main_loop::MainLoop;

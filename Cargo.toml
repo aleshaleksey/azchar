@@ -21,4 +21,5 @@ version = "0.2.5"
 
 [dependencies.diesel]
 version = "1.4.8"
-features = ["with-deprecated", "32-column-tables", "sqlite"]
+features = ["sqlite"]
+# features = ["with-deprecated", "32-column-tables", "sqlite"]

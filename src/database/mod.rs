@@ -30,6 +30,9 @@ impl std::fmt::Debug for BasicConnection {
 }
 
 impl BasicConnection {
+    pub(crate) fn path(&self) -> &str {
+        &self.db_path
+    }
     /// Create a connection but do not connect.
     pub fn new(path: &str) -> Self {
         BasicConnection {

@@ -19,25 +19,36 @@ mod roller;
 mod server;
 
 use crate::database::LoadedDbs;
+use crate::server::main_loop::Mode;
+use crate::server::MainLoop;
 
-macro_rules! do_or_die {
-    ($result:expr) => {
-        match $result {
-            Ok(r) => r,
-            Err(e) => {
-                println!("Big fail: {:?}", e);
-                return;
-            }
-        }
-    };
-}
+// macro_rules! do_or_die {
+//     ($result:expr) => {
+//         match $result {
+//             Ok(r) => r,
+//             Err(e) => {
+//                 println!("Big fail: {:?}", e);
+//                 return;
+//             }
+//         }
+//     };
+// }
 
 fn main() {
-    let config = do_or_die!(config::Config::from_path("examples/example.toml"));
-    let loaded_dbs = do_or_die!(LoadedDbs::from_config(config));
+    // Get settings.
+    let args: Vec<String> = std::env::args().map(String::from).collect();
+    let address: String = match args.get(1) {
+        Some(s) => String::from(s),
+        None => String::from("127.0.0.1:55555"),
+    };
+    let mode = args
+        .iter()
+        .map(|x| Mode::from_args(x))
+        .find(|x| !matches!(x, Mode::Default))
+        .unwrap_or(Mode::Default);
 
-    println!("Root db: {:?}", loaded_dbs.root_connection());
-    for ((name, uuid), connection) in loaded_dbs.character_connections().iter() {
-        println!("char name: {}, uuid:{}, conn: {:?}", name, uuid, connection);
+    match MainLoop::create_with_connection(&address) {
+        Ok(mut ml) => ml.run(mode),
+        Err(e) => println!("{}", e),
     }
 }

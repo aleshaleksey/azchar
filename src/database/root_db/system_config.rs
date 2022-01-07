@@ -64,7 +64,6 @@ impl SystemConfig {
     // Create an instance of `SystemConfig` from a config toml.
     pub(crate) fn from_config(system_config_path: &str) -> Result<Self, String> {
         let mut config_file = std::fs::File::open(system_config_path).map_err(ma)?;
-
         let mut config_string = String::new();
         config_file.read_to_string(&mut config_string).map_err(ma)?;
         toml::from_str(&config_string).map_err(ma)
@@ -88,7 +87,8 @@ impl SystemConfig {
         }
 
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
-        let file_path_string = file_path.to_string_lossy();
+        let file_path_string = file_path.canonicalize().map_err(ma)?;
+        let file_path_string = file_path_string.to_string_lossy();
         println!("path: {:?}", file_path_string);
 
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;

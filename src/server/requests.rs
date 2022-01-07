@@ -1,8 +1,9 @@
 //! This deals with requests.
-use super::main_loop::MainLoop;
 use crate::database::character::character::CompleteCharacter;
 use crate::database::root_db::system_config::SystemConfig;
 use crate::database::CharacterDbRef;
+use crate::error::ma;
+
 use crate::LoadedDbs;
 
 /// A request.
@@ -63,21 +64,29 @@ impl Request {
 
     /// Run the request and give a response.
     /// NB: An error case should be unwrapped
-    pub(crate) fn execute(self, main_loop: &mut MainLoop) -> Result<Response, String> {
+    pub(crate) fn execute(self, main_loop: &mut Option<LoadedDbs>) -> Result<Response, String> {
         let res = match self {
             Self::CreateSystem(name, path, system) => {
-                let sys = SystemConfig::from_config(&system)?;
-                let dbs = sys.into_system(&path, &name)?;
-                main_loop.dbs = Some(dbs);
+                let sys = if std::path::PathBuf::from(&system).exists() {
+                    let s = SystemConfig::from_config(&system)?;
+                    s
+                } else {
+                    toml::from_str(&system).map_err(ma)?
+                };
+                let dbs = sys.into_system(&path, &name);
+                if let Err(ref e) = dbs {
+                    println!("{:?}", e);
+                }
+                *main_loop = Some(dbs?);
                 Response::CreateSystem(format!("Created \"{}\" in \"{}\"", name, path))
             }
             Self::InitialiseFromPath(path) => {
                 let mut dbs = LoadedDbs::custom(&path)?;
                 let chars = dbs.list_characters()?;
-                main_loop.dbs = Some(dbs);
+                *main_loop = Some(dbs);
                 Response::InitialiseFromPath(chars)
             }
-            Self::CreateCharacterSheet(name) => match main_loop.dbs {
+            Self::CreateCharacterSheet(name) => match main_loop {
                 Some(ref mut dbs) => {
                     dbs.create_sheet(&name)?;
                     let chars = dbs.list_characters()?;
@@ -85,7 +94,7 @@ impl Request {
                 }
                 None => Response::Err(String::from("Load system first.")),
             },
-            Self::CreateUpdateCharacter(sheet) => match main_loop.dbs {
+            Self::CreateUpdateCharacter(sheet) => match main_loop {
                 Some(ref mut dbs) => {
                     dbs.create_or_update_character(sheet)?;
                     let chars = dbs.list_characters()?;
@@ -93,17 +102,17 @@ impl Request {
                 }
                 None => Response::Err(String::from("Load system first.")),
             },
-            Self::ListCharacters => match main_loop.dbs {
+            Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {
                     let chars = dbs.list_characters()?;
                     Response::ListCharacters(chars)
                 }
                 None => Response::Err(String::from("Load system first.")),
             },
-            Self::LoadCharacter(name, uuid) => match main_loop.dbs {
+            Self::LoadCharacter(name, uuid) => match main_loop {
                 Some(ref mut dbs) => {
-                    let char = dbs.load_character((name, uuid))?;
-                    Response::LoadCharacter(char)
+                    let char = dbs.load_character((name, uuid));
+                    Response::LoadCharacter(char?)
                 }
                 None => Response::Err(String::from("Load system first.")),
             },
@@ -120,5 +129,23 @@ impl Request {
             Self::Invalid(x) => Response::Invalid(format!("Invalid request received:({})", x)),
         };
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::server::requests::Request;
+    #[test]
+    fn make_create_list_request() {
+        println!("{:?}", serde_json::to_string(&Request::ListCharacters));
+        println!(
+            "{:?}",
+            serde_json::to_string(&Request::CreateSystem(
+                String::from("a"),
+                String::from("b"),
+                String::from("c")
+            ))
+        );
+        panic!()
     }
 }

@@ -3,10 +3,10 @@ use crate::database::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::database::shared::Part;
 use crate::error::ma;
 
+use diesel::result::Error as DbError;
 use diesel::OptionalExtension;
 use diesel::{Connection, SqliteConnection};
 use diesel::{ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl};
-use diesel::result::Error as DbError;
 use fnv::{FnvHashMap, FnvHashSet};
 
 use super::attribute::{AttributeKey, AttributeValue, Attributes};
@@ -31,7 +31,7 @@ table! {
 }
 
 /// A structure to store a db ref.
-#[derive(Debug, Clone, PartialEq, Identifiable, Queryable)]
+#[derive(Debug, Clone, PartialEq, Identifiable, Queryable, QueryableByName)]
 #[table_name = "characters"]
 pub struct Character {
     id: i64,
@@ -139,7 +139,6 @@ impl CompleteCharacter {
 
     pub fn load(conn: &SqliteConnection) -> Result<CompleteCharacter, String> {
         use self::characters::dsl::*;
-
         let core_char: Character = characters
             .filter(belongs_to.is_null())
             .first(conn)
@@ -257,7 +256,7 @@ impl CompleteCharacter {
                 &self.attributes,
                 &permitted_attrs,
                 (&self.character_type, Part::Main),
-                &obligatory_attrs
+                &obligatory_attrs,
             ) {
                 error_string = e;
                 return Err(DbError::NotFound);
@@ -294,7 +293,8 @@ impl CompleteCharacter {
                     &sub_char.attributes,
                     &permitted_attrs,
                     (&sub_char.character_type, sub_char.part_type),
-                    &obligatory_attrs) {
+                    &obligatory_attrs,
+                ) {
                     error_string = e;
                     return Err(DbError::NotFound);
                 };

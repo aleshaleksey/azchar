@@ -3,8 +3,8 @@ use diesel::backend::Backend;
 use diesel::serialize::{Output, Result as SrlResult, ToSql};
 use diesel::types::Integer;
 
-use std::io::Write;
 use std::hash::Hash;
+use std::io::Write;
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, AsExpression, Serialize, Deserialize)]
