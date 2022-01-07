@@ -15,8 +15,8 @@ extern crate diesel_migrations;
 #[macro_use]
 extern crate diesel;
 
-extern crate azchar_error;
 extern crate azchar_config;
+extern crate azchar_error;
 
 use azchar_config::Config;
 use azchar_error::ma;

@@ -18,8 +18,8 @@ extern crate azchar_error;
 mod main_loop;
 mod requests;
 
-use crate::main_loop::Mode;
 use crate::main_loop::MainLoop;
+use crate::main_loop::Mode;
 
 // macro_rules! do_or_die {
 //     ($result:expr) => {

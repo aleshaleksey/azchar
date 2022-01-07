@@ -135,17 +135,27 @@ impl Request {
 #[cfg(test)]
 mod tests {
     use crate::requests::Request;
+
     #[test]
-    fn make_create_list_request() {
-        println!("{:?}", serde_json::to_string(&Request::ListCharacters));
-        println!(
-            "{:?}",
-            serde_json::to_string(&Request::CreateSystem(
-                String::from("a"),
-                String::from("b"),
-                String::from("c")
-            ))
+    fn make_list_characters_request() {
+        let exp = "\"ListCharacters\"";
+        assert_eq!(
+            exp,
+            &serde_json::to_string(&Request::ListCharacters).unwrap()
         );
-        panic!()
+    }
+
+    #[test]
+    fn make_create_system_request() {
+        let exp = "{\"CreateSystem\":[\"name\",\"db_path\",\"cfg_path\"]}";
+        assert_eq!(
+            exp,
+            &serde_json::to_string(&Request::CreateSystem(
+                String::from("name"),
+                String::from("db_path"),
+                String::from("cfg_path"),
+            ))
+            .unwrap()
+        );
     }
 }

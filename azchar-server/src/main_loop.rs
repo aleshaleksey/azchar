@@ -1,7 +1,7 @@
 //! Here we deal with the main loop.
+use crate::requests::{Request, Response};
 use azchar_database::root_db::LoadedDbs;
 use azchar_error::ma;
-use crate::requests::{Request, Response};
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
