@@ -109,6 +109,7 @@ mod character_tests {
             let c = CompleteCharacter::load(conn).expect("I'm here.");
             println!("char:{:?}", c);
             println!("char:{:?}", serde_json::to_string(&c).expect("yes"));
+            // assert_eq!(&c.name, "");
             assert_eq!(&c.name, NAME1);
         }
     }

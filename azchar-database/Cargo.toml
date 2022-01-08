@@ -10,7 +10,7 @@ serde = "*"
 serde_derive = "*"
 serde_json = "*"
 tempfile = "*"
-toml = "0.5.8"
+toml = "0.5"
 uuid-rs = { version = "*", features = ["random"] }
 
 azchar-error = { path = "../azchar-error" }

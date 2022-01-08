@@ -10,6 +10,7 @@ extern crate tempfile;
 extern crate toml;
 #[macro_use]
 extern crate serde_derive;
+extern crate websocket;
 
 extern crate azchar_config;
 extern crate azchar_database;

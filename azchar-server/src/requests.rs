@@ -16,7 +16,7 @@ pub(crate) enum Request {
     /// This represents the character name.
     CreateCharacterSheet(String),
     /// The string is a CompleteCharacter JSON/TOML.
-    CreateUpdateCharacter(String),
+    CreateUpdateCharacter(CompleteCharacter),
     /// This needs no arguments and uses the current root.
     ListCharacters,
     /// The string a name and UUID.
@@ -69,7 +69,6 @@ impl Request {
             Self::CreateSystem(name, path, system) => {
                 let sys = if std::path::PathBuf::from(&system).exists() {
                     SystemConfig::from_config(&system)?
-                    // s
                 } else {
                     toml::from_str(&system).map_err(ma)?
                 };
@@ -135,6 +134,8 @@ impl Request {
 #[cfg(test)]
 mod tests {
     use crate::requests::Request;
+    use azchar_database::character::character::CompleteCharacter;
+    use std::io::Read;
 
     #[test]
     fn make_list_characters_request() {
@@ -156,6 +157,69 @@ mod tests {
                 String::from("cfg_path"),
             ))
             .unwrap()
+        );
+    }
+
+    #[test]
+    fn make_initialise_from_path_request() {
+        let exp = "{\"InitialiseFromPath\":\"/path/\"}";
+        assert_eq!(
+            exp,
+            &serde_json::to_string(&Request::InitialiseFromPath(String::from("/path/"))).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_character_sheet() {
+        let exp = "{\"CreateCharacterSheet\":\"Euridice\"}";
+        assert_eq!(
+            exp,
+            &serde_json::to_string(&Request::CreateCharacterSheet(String::from("Euridice")))
+                .unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_update_character() {
+        let mut ch = String::new();
+        let mut file = std::fs::File::open("../examples/dnd5e_minimal_sheet.json").unwrap();
+        file.read_to_string(&mut ch).unwrap();
+        ch.pop();
+
+        let complete: CompleteCharacter = serde_json::from_str(&ch).unwrap();
+        let exp = format!("{{\"CreateUpdateCharacter\":{}}}", ch);
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::CreateUpdateCharacter(complete)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_roll() {
+        let exp = "{\"Roll\":\"2d10dl1mx10+1d4+6\"}";
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::Roll(String::from("2d10dl1mx10+1d4+6"))).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_invalid() {
+        let exp = "{\"Invalid\":\"PoopaScooottta!!!\"}";
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::Invalid(String::from("PoopaScooottta!!!"))).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_load_character() {
+        let exp = "{\"LoadCharacter\":[\"Euridice\",\"5936ce00-2275-463c-106a-0f2edde38175\"]}";
+        let eur = String::from("Euridice");
+        let uuid = String::from("5936ce00-2275-463c-106a-0f2edde38175");
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::LoadCharacter(eur, uuid)).unwrap(),
         );
     }
 }

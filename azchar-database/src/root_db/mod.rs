@@ -149,12 +149,10 @@ impl LoadedDbs {
     /// Create or update character.
     /// Take a JSON and either a) create a character or b) update a character
     /// Depending on whether the character exists in the current instance.
-    pub fn create_or_update_character(&mut self, c: String) -> Result<(), String> {
-        // Create a character.
-        let character: CompleteCharacter = match toml::from_str(&c) {
-            Err(_) => serde_json::from_str(&c).map_err(ma)?,
-            Ok(c) => c,
-        };
+    pub fn create_or_update_character(
+        &mut self,
+        character: CompleteCharacter,
+    ) -> Result<(), String> {
         let key = (character.name.to_owned(), character.uuid().to_owned());
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             character.save(conn.connect()?, self.root_db.connect()?)?;

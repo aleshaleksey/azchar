@@ -14,3 +14,17 @@ members = [
   "azchar-error",
   "azchar-server",
 ]
+
+[dependencies]
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+tempfile = "*"
+toml = "0.5"
+websocket = "0.24"
+azchar-config = { path = "azchar-config" }
+azchar-database = { path = "azchar-database" }
+azchar-error = { path = "azchar-error" }
+[dependencies.libazdice]
+git = "https://github.com/aleshaleksey/libazdice.git"
+version = "0.2.5"

@@ -7,5 +7,5 @@ edition = "2018"
 serde = "*"
 serde_derive = "*"
 tempfile = "*"
-toml = "0.5.8"
+toml = "0.5"
 azchar-error = { path = "../azchar-error" }
