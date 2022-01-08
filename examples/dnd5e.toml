@@ -1,4 +1,8 @@
 # basic definition of DnD 5e
+#
+# `permitted_parts` define what type of parts the system will support.
+# part main/Main is obligatory, and must be unique.
+# other parts are permitted in any number. obligatory=true parts are obligatory.
 permitted_parts = [
   { part_name = "main", part_type = "Main", obligatory = true },
   { part_name = "spell", part_type = "Ability", obligatory = false },
@@ -11,6 +15,8 @@ permitted_parts = [
   { part_name = "current_mount", part_type = "Ability", obligatory = false },
   { part_name = "background", part_type = "Other", obligatory = true },
 ]
+# Defines which attributes each part_name/part_type is permitted to have.
+# A permitted part may have zero or more permitted attributes. 
 permitted_attributes = [
   # NB: We do not need name, speed, weight, size, hp_total/current.
   # { part_name = "main", part_type = "Main" }
