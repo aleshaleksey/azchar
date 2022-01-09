@@ -95,9 +95,12 @@ impl Request {
             },
             Self::CreateUpdateCharacter(sheet) => match main_loop {
                 Some(ref mut dbs) => {
-                    dbs.create_or_update_character(sheet)?;
-                    let chars = dbs.list_characters()?;
-                    Response::CreateUpdateCharacter(chars)
+                    let res = dbs.create_or_update_character(sheet);
+                    println!("res:{:?}", res);
+                    res?;
+                    let chars = dbs.list_characters();
+                    println!("chars:{:?}", chars);
+                    Response::CreateUpdateCharacter(chars?)
                 }
                 None => Response::Err(String::from("Load system first.")),
             },

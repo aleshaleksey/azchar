@@ -18,9 +18,10 @@ extern crate azchar_error;
 
 mod main_loop;
 mod requests;
+mod websocket_loop;
 
 use crate::main_loop::MainLoop;
-use crate::main_loop::Mode;
+use crate::websocket_loop::WsMainLoop;
 
 // macro_rules! do_or_die {
 //     ($result:expr) => {
@@ -47,8 +48,33 @@ fn main() {
         .find(|x| !matches!(x, Mode::Default))
         .unwrap_or(Mode::Default);
 
-    match MainLoop::create_with_connection(&address) {
-        Ok(mut ml) => ml.run(mode),
-        Err(e) => println!("{}", e),
+    match mode {
+        Mode::WebSocket => match WsMainLoop::create_with_conn(&address) {
+            Ok(ml) => ml.run(),
+            Err(e) => println!("{}", e),
+        },
+        _ => match MainLoop::create_with_connection(&address) {
+            Ok(mut ml) => ml.run(mode),
+            Err(e) => println!("{}", e),
+        },
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Mode {
+    Http,
+    Client,
+    WebSocket,
+    Default,
+}
+
+impl Mode {
+    pub(crate) fn from_args(arg: &str) -> Self {
+        match arg.to_string().to_lowercase().as_ref() {
+            "-h" | "--http" => Self::Http,
+            "-c" | "--client" => Self::Client,
+            "-w" | "--websocket" => Self::WebSocket,
+            _ => Self::Default,
+        }
     }
 }

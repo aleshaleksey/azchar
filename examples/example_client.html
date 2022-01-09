@@ -1,36 +1,45 @@
-<!DOCTYPE html>
+<!-- This needs to be loaded with npm. -->
+<!DOCTYPE html utf8>
 <html lang="en">
+<meta charset="utf-8">
 <script type="text/javascript">
-var text = 'send_request';
+// {"Roll":"2d20dl1mx10+1d4+6"}
+// ws://127.0.0.1:55555)
+var socket;
+function connect(button) {
+   var buttonVal = button.name;
+   var addressbox = document.getElementById('addr_' +buttonVal);
+   var address = addressbox.value;
+   socket = new WebSocket(address);
+   socket.onopen = function(e) {
+    console.log("[open] Connection established");
+    console.log("Sending to server");
+  };
+  socket.onmessage = function(event) {
+    console.log(`[message] Data received from server: ${event.data}`);
+    var out_a = document.getElementById('out_a');
+    out_a.value = event.data;
+  };
+  socket.onclose = function(event) {
+    if (event.wasClean) {
+      console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+    } else {
+      console.log('[close] Connection died');
+    }
+  };
+  socket.onerror = function(error) {
+  console.log(`[error] ${error.message}`);
+  };
+}
 
-function send(button) {
+function send_a(button) {
    var buttonVal = button.name;
    var inbox = document.getElementById('input_' + buttonVal);
-   var out = document.getElementById('out_' + buttonVal);
-   var addressbox = document.getElementById('addr_' +buttonVal);
    var message = inbox.value;
-   var address = addressbox.value;
-   /// FETCH HATES ME. ARRGHH!!!!s
-   fetch(
-    address + "/" + "AZCHARREQUEST__" + message + "__ENDAZCHARREQUEST",{
-    mode: 'no-cors' // 'cors' by default
-  })
-    .then((response) =>
-      {
-        response._bodyText// << This is the problem
-      })
-    .then((responseData) => { // responseData = undefined
-        console.log("got content" + responseData);
-     }).catch(function(err) {
-        console.log("got err" + err);
-      });
-
-   console.log(message);
-
+   // socket.send("Poop!");
+   socket.send(message);
 }
 </script>
-<!-- <textarea class="scrollabletextbox" name="input_a" id="input_a" rows=40, cols=80>
-</textarea> -->
 <style>
   .textarea_a {
     width: 350px;
@@ -43,9 +52,16 @@ function send(button) {
     height: 30px;
   }
 </style>
-<input class="textarea_b" name="addr_a" id="addr_a"></input>
-<input type="submit" name="a" value="click-me" onclick="send(this); return false;">
+<input class="textarea_b" value="ws://127.0.0.1:55555" name="addr_a" id="addr_a"></input>
+<input type="submit"
+      name="a"
+      value="click-me"
+      onclick="connect(this); return false;">
+<input type="submit"
+       name="b"
+       value="click-me-next"
+       onclick="send_a(this); return false;">
 <p></p>
-<textarea class="textarea_a" name="input_a" id="input_a"></textarea>
+<textarea class="textarea_a" placeholder='{"Roll":"1d20"}' name="input_b" id="input_b"></textarea>
 <p></p>
 <textarea class="textarea_a" name="out_a" id="out_a"></textarea>

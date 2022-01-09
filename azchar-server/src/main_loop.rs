@@ -1,4 +1,5 @@
 //! Here we deal with the main loop.
+use super::Mode;
 use crate::requests::{Request, Response};
 use azchar_database::root_db::LoadedDbs;
 use azchar_error::ma;
@@ -17,23 +18,6 @@ const ESC2: [&str; 26] = [
     ":", "<", ">", "[", "]", "{", "}", "+", "/", ",", ";", "=", "?", "\\", "^", "|", "~", "#", " ",
     "$", "%", "&", "@", "`", "\"", "'",
 ];
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum Mode {
-    Http,
-    Client,
-    Default,
-}
-
-impl Mode {
-    pub(crate) fn from_args(arg: &str) -> Self {
-        match arg.to_string().to_lowercase().as_ref() {
-            "-h" | "--http" => Self::Http,
-            "-c" | "--client" => Self::Client,
-            _ => Self::Default,
-        }
-    }
-}
 
 pub struct MainLoop {
     /// This represents the local connection to the system.
@@ -98,15 +82,7 @@ impl MainLoop {
             }
             .unwrap()
         };
-        let ret = format!("HTTP/1.1 200 OK\r\n\r\n{}", res);
-        println!("{}", ret);
-        if let Err(e) = s.write(ret.as_bytes()) {
-            return Err(format!("POST Can't reply to {:?} because {:?}.", peer, e));
-        }
-        if let Err(e) = s.flush() {
-            return Err(format!("Can't flush {:?} because {:?}.", peer, e));
-        }
-        Ok(())
+        send_and_flush(&mut s, &res, &peer)
     }
 
     fn handle_stream_as_http(mut s: TcpStream, dbs: &mut Option<LoadedDbs>) -> Result<(), String> {
@@ -148,13 +124,17 @@ impl MainLoop {
             res.len() + 8,
             res
         );
-        println!("{}", ret);
-        if let Err(e) = s.write(ret.as_bytes()) {
-            return Err(format!("POST Can't reply to {:?} because {:?}.", peer, e));
-        }
-        if let Err(e) = s.flush() {
-            return Err(format!("Can't flush {:?} because {:?}.", peer, e));
-        }
-        Ok(())
+        send_and_flush(&mut s, &ret, &peer)
     }
+}
+
+fn send_and_flush(s: &mut TcpStream, msg: &str, peer: &str) -> Result<(), String> {
+    println!("{}", msg);
+    if let Err(e) = s.write(msg.as_bytes()) {
+        return Err(format!("POST Can't reply to {:?} because {:?}.", peer, e));
+    }
+    if let Err(e) = s.flush() {
+        return Err(format!("Can't flush {:?} because {:?}.", peer, e));
+    }
+    Ok(())
 }
