@@ -1,2 +1,5 @@
+/examples/js-example
+/examples/js-ef
 /target
+/x.json
 Cargo.lock

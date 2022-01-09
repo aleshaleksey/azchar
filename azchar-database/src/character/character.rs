@@ -148,7 +148,8 @@ impl CompleteCharacter {
             .load(conn)
             .map_err(ma)?;
 
-        let ids: Vec<_> = bare_chars.iter().map(|c| c.id).collect();
+        let mut ids: Vec<_> = bare_chars.iter().map(|c| c.id).collect();
+        ids.push(core_char.id);
         let mut attributes = Attributes::get_vec_for_characters(&ids, conn)?;
         // This should speed up sorting by character.
         attributes.sort_by(|a, b| a.of.cmp(&b.of));
@@ -365,7 +366,9 @@ fn check_attributes_vs_db(
         .map(|a| &a.0.key)
         .collect::<FnvHashSet<_>>();
     for a in obligatory.iter() {
-        if !attrs.contains(&a.key) {
+        let v = permitted.get(&a.key).expect("bakabakashi");
+        let belongs = (part_type == v.1) && (part_name == v.2);
+        if belongs && !attrs.contains(&a.key) {
             let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
             return Err(m);
         }
