@@ -1,4 +1,4 @@
-# azchar
+# azchar[<img src="https://api.travis-ci.org/aleshaleksey/azchar.svg?branch=master">](https://travis-ci.org/aleshaleksey/azchar)
 A TTRPG system-agnostic system for storing characters.
 ## Aims
 The project aims to create an integrated "server" that facilitates the storing, loading, and manipulation of characters in a system agnostic fashion.
