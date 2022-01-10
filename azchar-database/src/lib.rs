@@ -69,6 +69,10 @@ impl BasicConnection {
         Ok(self.connection.as_ref().expect("Is there."))
     }
 
+    pub fn drop_connection(&mut self) {
+        self.connection = None;
+    }
+
     /// Gets a reference to the inner connection so we can actually use it.
     pub fn get_inner(&mut self) -> Option<&SqliteConnection> {
         self.connection.as_ref()

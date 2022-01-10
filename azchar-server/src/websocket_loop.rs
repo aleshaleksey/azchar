@@ -15,11 +15,11 @@ pub struct WsMainLoop {
 }
 
 impl WsMainLoop {
-    pub(crate) fn create_with_conn(address: &str) -> Result<Self, String> {
-        Ok(Self {
+    pub(crate) fn create(address: &str) -> Self {
+        Self {
             dbs: None,
             stream_addr: address.to_string(),
-        })
+        }
     }
 
     // Can only be run in WS mode.
@@ -41,7 +41,7 @@ impl WsMainLoop {
         let (mut receiver, mut sender) = cli.split().unwrap();
 
         for m in receiver.incoming_messages() {
-            println!("m:{:?}", m);
+            let then = std::time::Instant::now();
             match m {
                 Ok(OwnedMessage::Close(_d)) => {
                     println!("Close.");
@@ -59,6 +59,8 @@ impl WsMainLoop {
                 Err(e) => return Err(ma(e)),
                 _ => {}
             }
+            let elapsed = then.elapsed().as_micros();
+            println!("Request handled in {}us", elapsed);
         }
         Ok(())
     }

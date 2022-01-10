@@ -83,29 +83,38 @@ impl PermittedPart {
     }
 
     // Create the basic attributes and parts for the sheet.
+    // NB: The pre-existing Uuid should be used for the main part, or things
+    // get strange when updating.
     pub fn create_basic(
         root_conn: &SqliteConnection,
         sheet_conn: &SqliteConnection,
         name: &str,
+        uuid: &str,
     ) -> Result<(), String> {
         use crate::character::attribute::attributes::dsl as at_dsl;
         use crate::character::character::characters::dsl as ch_dsl;
 
+        // let then = std::time::Instant::now();
+        let mut new_attributes = Vec::new();
+        let mut main_id = None;
         for part in PermittedPart::load_obligatory(root_conn)?.into_iter() {
             // Create and insert an empty part and then create obligatory attributes.
             let mut new_part: NewCharacter = (&part).into();
-            println!("new_part:{:?}", new_part);
             // TODO Belonging properly.
             if !matches!(part.part_type, Part::Main) {
-                new_part.belongs_to = Some(
-                    ch_dsl::characters
-                        .filter(ch_dsl::part_type.eq(Part::Main))
-                        .select(ch_dsl::id)
-                        .first(sheet_conn)
-                        .map_err(ma)?,
-                );
+                new_part.belongs_to = if let Some(mid) = main_id {
+                    Some(mid)
+                } else {
+                    let mid = ch_dsl::characters
+                            .filter(ch_dsl::part_type.eq(Part::Main))
+                            .select(ch_dsl::id)
+                            .first(sheet_conn)
+                            .map_err(ma)?;
+                    Some(mid)
+                };
             } else {
                 new_part.name = name.to_owned();
+                new_part.uuid = uuid.to_owned();
             };
 
             diesel::insert_into(ch_dsl::characters)
@@ -118,6 +127,10 @@ impl PermittedPart {
                 .first(sheet_conn)
                 .map_err(ma)?;
 
+            if matches!(part.part_type, Part::Main) {
+                main_id = Some(char_id);
+            }
+
             // create attributes for the given part.
             let attributes = PermittedAttribute::load_obligatory_for_part(&part, root_conn)
                 .map_err(ma)?
@@ -128,13 +141,21 @@ impl PermittedPart {
                     value_text: None,
                     description: Some(at.attribute_description),
                     of: char_id,
-                })
-                .collect::<Vec<_>>();
+                });
+            new_attributes.extend(attributes);
+        }
+        // let a = then.elapsed().as_micros();
+        // Make fewer insertions.
+        for chunk in new_attributes.chunks(990) {
             diesel::insert_into(at_dsl::attributes)
-                .values(&attributes)
+                .values(chunk)
                 .execute(sheet_conn)
                 .map_err(ma)?;
         }
+        // let b = then.elapsed().as_micros();
+        // println!("a: {}us", a);
+        // println!("b: {}us", b - a);
+
         Ok(())
     }
 }

@@ -22,6 +22,8 @@ use uuid_rs::v4;
 use std::fs::File;
 use std::path::PathBuf;
 
+embed_migrations!("migrations_main");
+
 /// A structure that stores the root database connection and the character
 /// files it refers to.
 pub struct LoadedDbs {
@@ -45,9 +47,7 @@ impl LoadedDbs {
     /// Load databases from a custom path.
     pub fn custom(path: &str) -> Result<Self, String> {
         let mut root_db = BasicConnection::new(path);
-        root_db.connect()?;
-        let connections = root_db
-            .get_all_char_refs()?
+        let connections = CharacterDbRef::get_all(root_db.connect()?)?
             .into_iter()
             .map(|refs| ((refs.name, refs.uuid), BasicConnection::new(&refs.db_path)))
             .collect::<FnvHashMap<(String, String), BasicConnection>>();
@@ -58,6 +58,19 @@ impl LoadedDbs {
             permitted_parts: 0,
             root_path: path.to_string(),
         })
+    }
+
+    /// This function is used to refresh one's own status.
+    pub fn refresh_and_list(&mut self) -> Result<Vec<CharacterDbRef>, String> {
+        self.root_db.connect()?;
+        let connections = CharacterDbRef::get_all(self.root_db.connect()?)?;
+
+        self.connections = connections
+            .iter()
+            .cloned()
+            .map(|refs| ((refs.name, refs.uuid), BasicConnection::new(&refs.db_path)))
+            .collect::<FnvHashMap<(String, String), BasicConnection>>();
+        Ok(connections)
     }
 
     /// A special case for creating a new system.
@@ -93,6 +106,8 @@ impl LoadedDbs {
     /// Returns the character name and uuid.
     pub fn create_sheet(&mut self, name: &str) -> Result<(String, String), String> {
         use crate::root_db::characters::character_dbs::dsl::character_dbs;
+
+        // let then = std::time::Instant::now();
         let uuid = v4!();
         // Sanity check.
         if self
@@ -120,6 +135,7 @@ impl LoadedDbs {
 
         // Clean up if we can't create the character sheet.
         let root_conn = self.get_inner_root()?;
+        // let a0 = then.elapsed().as_micros();
         match diesel::insert_into(character_dbs)
             .values(&vec![reference])
             .execute(root_conn)
@@ -137,12 +153,20 @@ impl LoadedDbs {
         let mut sheet_conn_outer = BasicConnection::new(&file_path);
         let sheet_conn = sheet_conn_outer.connect()?;
         // Create all needed tables
-        embed_migrations!("migrations_main");
+        // let a = then.elapsed().as_micros();
+
         embedded_migrations::run(sheet_conn).map_err(ma)?;
         // Create all obligatory parts.
-        PermittedPart::create_basic(root_conn, sheet_conn, name)?;
+        // let b = then.elapsed().as_micros();
+        // println!("Before inital insertion:{}", a0);
+        // println!("Before migs:{}", a - a0);
+        // println!("Aftre migs:{}", b - a);
+
+        PermittedPart::create_basic(root_conn, sheet_conn, name, &uuid)?;
+        sheet_conn_outer.drop_inner();
         self.connections
             .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);
+
         Ok((name.to_string(), uuid))
     }
 
@@ -154,12 +178,15 @@ impl LoadedDbs {
         character: CompleteCharacter,
     ) -> Result<(), String> {
         let key = (character.name.to_owned(), character.uuid().to_owned());
+        println!("{:?}", key);
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             character.save(conn.connect()?, self.root_db.connect()?)?;
+            conn.drop_inner();
         } else {
             let key = self.create_sheet(&key.0)?;
             let conn = self.connections.get_mut(&key).expect("Just created");
             character.save(conn.connect()?, self.root_db.connect()?)?;
+            conn.drop_inner();
         }
         Ok(())
     }
@@ -167,18 +194,20 @@ impl LoadedDbs {
     /// This is used to get a list of characters.
     /// These are the keys to the database.
     pub fn list_characters(&mut self) -> Result<Vec<CharacterDbRef>, String> {
-        CharacterDbRef::get_all(self.root_db.connect()?)
+        self.refresh_and_list()
     }
 
     /// This is used to get the character list as a JSON string.
     pub fn list_characters_json(&mut self) -> Result<String, String> {
-        serde_json::to_string(&self.list_characters()?).map_err(ma)
+        serde_json::to_string(&self.refresh_and_list()?).map_err(ma)
     }
 
     /// A function to load a character.
     pub fn load_character(&mut self, key: (String, String)) -> Result<CompleteCharacter, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            CompleteCharacter::load(conn.connect()?)
+            let c = CompleteCharacter::load(conn.connect()?);
+            conn.drop_inner();
+            c
         } else {
             Err(format!(
                 "Character ({}, uuid = {}) not found in this database",

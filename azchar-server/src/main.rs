@@ -23,18 +23,6 @@ mod websocket_loop;
 use crate::main_loop::MainLoop;
 use crate::websocket_loop::WsMainLoop;
 
-// macro_rules! do_or_die {
-//     ($result:expr) => {
-//         match $result {
-//             Ok(r) => r,
-//             Err(e) => {
-//                 println!("Big fail: {:?}", e);
-//                 return;
-//             }
-//         }
-//     };
-// }
-
 fn main() {
     // Get settings.
     let args: Vec<String> = std::env::args().map(String::from).collect();
@@ -49,10 +37,7 @@ fn main() {
         .unwrap_or(Mode::Default);
 
     match mode {
-        Mode::WebSocket => match WsMainLoop::create_with_conn(&address) {
-            Ok(ml) => ml.run(),
-            Err(e) => println!("{}", e),
-        },
+        Mode::WebSocket => WsMainLoop::create(&address).run(),
         _ => match MainLoop::create_with_connection(&address) {
             Ok(mut ml) => ml.run(mode),
             Err(e) => println!("{}", e),

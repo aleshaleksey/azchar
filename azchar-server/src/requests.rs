@@ -95,11 +95,8 @@ impl Request {
             },
             Self::CreateUpdateCharacter(sheet) => match main_loop {
                 Some(ref mut dbs) => {
-                    let res = dbs.create_or_update_character(sheet);
-                    println!("res:{:?}", res);
-                    res?;
+                    dbs.create_or_update_character(sheet)?;
                     let chars = dbs.list_characters();
-                    println!("chars:{:?}", chars);
                     Response::CreateUpdateCharacter(chars?)
                 }
                 None => Response::Err(String::from("Load system first.")),
@@ -185,7 +182,11 @@ mod tests {
     #[test]
     fn make_create_update_character() {
         let mut ch = String::new();
-        let mut file = std::fs::File::open("../examples/dnd5e_minimal_sheet.json").unwrap();
+        let mut file = if let Ok(f) = std::fs::File::open("../examples/dnd5e_minimal_sheet.json") {
+            f
+        } else {
+            std::fs::File::open("examples/dnd5e_minimal_sheet.json").unwrap()
+        };
         file.read_to_string(&mut ch).unwrap();
         ch.pop();
 

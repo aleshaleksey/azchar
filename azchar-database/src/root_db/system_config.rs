@@ -11,6 +11,9 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
+// Create all needed tables
+embed_migrations!("migrations_root_db");
+
 /// This represents a part that is permitted and that will be created on a new sheet.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(super) struct PermittedPart {
@@ -94,8 +97,6 @@ impl SystemConfig {
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;
 
-        // Create all needed tables
-        embed_migrations!("migrations_root_db");
         embedded_migrations::run(new_root).map_err(ma)?;
 
         let Self {
