@@ -31,13 +31,13 @@ embed_migrations!("migrations_main");
 /// A structure that stores the root database connection and the character
 /// files it refers to.
 pub struct LoadedDbs {
-    root_db: BasicConnection,
+    pub(crate) root_db: BasicConnection,
     // Connections to character sheets with the character name and connections.
     connections: FnvHashMap<(String, String), BasicConnection>,
     // This shows permitted attributes.
-    permitted_attrs: Vec<PermittedAttribute>,
+    pub(crate) permitted_attrs: Vec<PermittedAttribute>,
     /// This shows parts keys.
-    permitted_parts: Vec<PermittedPart>,
+    pub(crate) permitted_parts: Vec<PermittedPart>,
     /// Keep the config around.
     root_path: String,
 }
@@ -252,14 +252,20 @@ impl LoadedDbs {
         let key = (character.name.to_owned(), character.uuid().to_owned());
         println!("{:?}", key);
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            character.save(conn.connect()?, self.root_db.connect()?)?;
+            character.save(
+                conn.connect()?,
+                (&self.permitted_attrs, &self.permitted_parts),
+            )?;
             conn.drop_inner();
-        } else {
-            let key = self.create_sheet(&key.0)?;
-            let conn = self.connections.get_mut(&key).expect("Just created");
-            character.save(conn.connect()?, self.root_db.connect()?)?;
-            conn.drop_inner();
+            return Ok(());
         }
+        let key = self.create_sheet(&key.0)?;
+        let conn = self.connections.get_mut(&key).expect("Just created");
+        character.save(
+            conn.connect()?,
+            (&self.permitted_attrs, &self.permitted_parts),
+        )?;
+        conn.drop_inner();
         Ok(())
     }
 

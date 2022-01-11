@@ -33,7 +33,7 @@ table!(
 /// This represents a part that is permitted and that will be created on a new sheet.
 #[derive(Debug, Clone, PartialEq, Identifiable, Queryable)]
 #[table_name = "permitted_parts"]
-pub(crate) struct PermittedPart {
+pub struct PermittedPart {
     id: i64,
     pub(crate) part_name: String,
     #[diesel(deserialize_as = "i32")]
@@ -44,7 +44,7 @@ pub(crate) struct PermittedPart {
 /// This represents a permitted attribute, to be created on a new sheet.
 #[derive(Debug, Clone, PartialEq, Queryable)]
 // #[table_name = "permitted_attributes"]
-pub(crate) struct PermittedAttribute {
+pub struct PermittedAttribute {
     pub(crate) key: String,
     pub(crate) attribute_type: i32,
     pub(crate) attribute_description: String,

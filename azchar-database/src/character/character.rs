@@ -1,6 +1,7 @@
 //! This deals with the character columns.
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::Part;
+
 use azchar_error::ma;
 
 use diesel::result::Error as DbError;
@@ -204,7 +205,11 @@ impl CompleteCharacter {
     /// If the sheet is empty a new character is created, otherwise it is updated.
     /// NB: The sheet should already exist.
     /// NB2: We disallow characters lacking obligatory parts, or that have parts that are disallowed.
-    pub fn save(&self, conn: &SqliteConnection, root: &SqliteConnection) -> Result<(), String> {
+    pub fn save(
+        &self,
+        conn: &SqliteConnection,
+        (permitted_attrs, permitted_parts): (&[PermittedAttribute], &[PermittedPart]),
+    ) -> Result<(), String> {
         use self::characters::dsl::*;
 
         let existing: Option<Character> = characters
@@ -221,22 +226,30 @@ impl CompleteCharacter {
                 ));
             }
         }
-        let permitted_parts = PermittedPart::load_all(root)?
-            .into_iter()
-            .map(|p| ((p.part_name, p.part_type), p.obligatory))
-            .collect::<FnvHashMap<(String, Part), bool>>();
+        let permitted_parts = permitted_parts
+            .iter()
+            .map(|p| ((p.part_name.as_ref(), p.part_type), p.obligatory))
+            .collect::<FnvHashMap<(&str, Part), bool>>();
 
-        let permitted_attrs = PermittedAttribute::load_all(root)?
-            .into_iter()
-            .map(|a| (a.key, (a.obligatory, a.part_type, a.part_name)))
-            .collect::<FnvHashMap<String, (bool, Part, String)>>();
-        let obligatory_attrs = PermittedAttribute::load_all_obligatory(root)?;
+        let permitted_attrs_map = permitted_attrs
+            .iter()
+            .map(|a| {
+                (
+                    a.key.as_ref(),
+                    (a.obligatory, a.part_type, a.part_name.as_ref()),
+                )
+            })
+            .collect::<FnvHashMap<&str, (bool, Part, &str)>>();
+        let obligatory_attrs = permitted_attrs
+            .iter()
+            .filter(|a| a.obligatory)
+            .collect::<Vec<_>>();
 
         // Do the work.
         let mut error_string = "DbError::NotFound".to_string();
         let res = conn.transaction::<_, diesel::result::Error, _>(|| {
             if permitted_parts
-                .get(&(self.character_type.clone(), Part::Main))
+                .get(&(self.character_type.as_ref(), Part::Main))
                 .is_none()
             {
                 error_string = "Main part type is not permitted in the system".to_owned();
@@ -244,7 +257,7 @@ impl CompleteCharacter {
             }
             let mut own_oblig_part_count = 1;
             for p in self.parts.iter() {
-                if let Some(val) = permitted_parts.get(&(p.character_type.clone(), p.part_type)) {
+                if let Some(val) = permitted_parts.get(&(p.character_type.as_ref(), p.part_type)) {
                     if *val {
                         own_oblig_part_count += 1;
                     }
@@ -262,7 +275,7 @@ impl CompleteCharacter {
 
             if let Err(e) = check_attributes_vs_db(
                 &self.attributes,
-                &permitted_attrs,
+                &permitted_attrs_map,
                 (&self.character_type, Part::Main),
                 &obligatory_attrs,
             ) {
@@ -299,7 +312,7 @@ impl CompleteCharacter {
                 uuids.push(&sub_char.uuid);
                 if let Err(e) = check_attributes_vs_db(
                     &sub_char.attributes,
-                    &permitted_attrs,
+                    &permitted_attrs_map,
                     (&sub_char.character_type, sub_char.part_type),
                     &obligatory_attrs,
                 ) {
@@ -349,13 +362,13 @@ impl CompleteCharacter {
 
 fn check_attributes_vs_db(
     own_attributes: &[(AttributeKey, AttributeValue)],
-    permitted: &FnvHashMap<String, (bool, Part, String)>,
+    permitted: &FnvHashMap<&str, (bool, Part, &str)>,
     (part_name, part_type): (&str, Part),
-    obligatory: &[PermittedAttribute],
+    obligatory: &[&PermittedAttribute],
 ) -> Result<(), String> {
     // First attribute check.
     for (ak, _) in own_attributes.iter() {
-        if let Some(v) = permitted.get(&ak.key) {
+        if let Some(v) = permitted.get(&ak.key.as_ref()) {
             if (part_type != v.1) && (part_name != v.2) {
                 let msg = format!(
                     "Can't save sheet: Attribute '{}' not allowed for '{}'",
@@ -372,10 +385,8 @@ fn check_attributes_vs_db(
         .iter()
         .map(|a| &a.0.key)
         .collect::<FnvHashSet<_>>();
-    for a in obligatory.iter() {
-        let v = permitted.get(&a.key).expect("bakabakashi");
-        let belongs = (part_type == v.1) && (part_name == v.2);
-        if belongs && !attrs.contains(&a.key) {
+    for a in obligatory.iter().filter(|pa| pa.part_name==part_name && pa.part_type==part_type) {
+        if !attrs.contains(&a.key) {
             let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
             return Err(m);
         }
