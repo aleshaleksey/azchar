@@ -129,6 +129,7 @@ impl Request {
                 let bonus = roll.get_bonus().total();
                 Response::Roll(totals, bonus)
             }
+            Self::Shutdown => Response::Shutdown,
             Self::Invalid(x) => Response::Invalid(format!("Invalid request received:({})", x)),
         };
         Ok(res)
