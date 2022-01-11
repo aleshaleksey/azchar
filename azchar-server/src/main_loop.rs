@@ -81,7 +81,7 @@ impl MainLoop {
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
-                Err(_) => serde_json::to_string(&Response::Err(echo, String::new())),
+                Err(e) => serde_json::to_string(&Response::Err(echo, ma(e))),
             }
             .unwrap()
         };
@@ -123,7 +123,7 @@ impl MainLoop {
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
-                Err(_) => serde_json::to_string(&Response::Err(echo, String::new())),
+                Err(e) => serde_json::to_string(&Response::Err(echo, ma(e))),
             }
             .unwrap()
         };

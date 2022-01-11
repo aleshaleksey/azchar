@@ -51,7 +51,7 @@ impl WsMainLoop {
                     let res = match Request::convert(t.clone()).execute(dbs) {
                         Ok(Response::Shutdown) => return Ok(()),
                         Ok(r) => serde_json::to_string(&r),
-                        Err(_) => serde_json::to_string(&Response::Err(t, String::new())),
+                        Err(e) => serde_json::to_string(&Response::Err(t, ma(e))),
                     }
                     .map_err(ma)?;
                     let m = Message::text(&res);
