@@ -65,11 +65,27 @@ impl BasicConnection {
         }
 
         let c = SqliteConnection::establish(&self.db_path).map_err(ma)?;
+        {
+            // Execute basic optimisations.
+            c.execute("pragma journal_mode = WAL;").map_err(ma)?;
+            c.execute("pragma synchronous = normal;").map_err(ma)?;
+            c.execute("pragma temp_store = memory;").map_err(ma)?;
+            c.execute("pragma journal_mode = WAL;").map_err(ma)?;
+            c.execute("pragma wal_checkpoint(truncate);").map_err(ma)?;
+            c.execute("pragma locking_mode=EXCLUSIVE;").map_err(ma)?;
+            c.execute("pragma wal_autocheckpoint = 500;").map_err(ma)?;
+        }
         self.connection = Some(c);
         Ok(self.connection.as_ref().expect("Is there."))
     }
 
     pub fn drop_connection(&mut self) {
+        if let Err(e) = Self::tidy_up(&self.connection) {
+            println!(
+                "Error {:?} when tidying database for {:?} on close.",
+                e, self.db_path
+            );
+        }
         self.connection = None;
     }
 
@@ -88,6 +104,26 @@ impl BasicConnection {
         match self.connection {
             Some(ref conn) => CharacterDbRef::get_all(conn),
             None => Err("Not connected!".to_string()),
+        }
+    }
+
+    /// Do the thing where you tidy up before closing.
+    fn tidy_up(conn: &Option<SqliteConnection>) -> Result<(), String> {
+        if let Some(c) = conn {
+            c.execute("pragma vacuum;").map_err(ma)?;
+            c.execute("pragma optimize;").map_err(ma)?;
+        }
+        Ok(())
+    }
+}
+
+impl Drop for BasicConnection {
+    fn drop(&mut self) {
+        if let Err(e) = BasicConnection::tidy_up(&self.connection) {
+            println!(
+                "Error {:?} when tidying database for {:?} on close.",
+                e, self.db_path
+            );
         }
     }
 }
