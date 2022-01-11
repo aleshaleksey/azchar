@@ -1,10 +1,13 @@
 //! This file deals with encoding and decoing the TOML files needed for the root db.
 // TODO: test conversion into a new system.
+use crate::root_db::system::PermittedAttribute as DbPermittedAttribute;
+use crate::root_db::system::PermittedPart as DbPermittedPart;
 use crate::root_db::system::{NewPermittedAttribute, NewPermittedPart};
 use crate::shared::*;
 use crate::LoadedDbs;
 use azchar_error::ma;
 
+use diesel::result::Error as DsError;
 use diesel::RunQueryDsl;
 
 use std::fs::File;
@@ -97,8 +100,6 @@ impl SystemConfig {
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;
 
-        embedded_migrations::run(new_root).map_err(ma)?;
-
         let Self {
             permitted_parts,
             permitted_attributes,
@@ -108,19 +109,24 @@ impl SystemConfig {
         let permitted_parts: Vec<NewPermittedPart> =
             permitted_parts.into_iter().map(Into::into).collect();
 
-        // Insert values as needed.
-        println!("PP:{:?}", permitted_parts.len());
-        println!("PA:{:?}", permitted_attributes.len());
-        diesel::insert_into(pp_dsl::permitted_parts)
-            .values(&permitted_parts)
-            .execute(new_root)
+        embedded_migrations::run(new_root).map_err(ma)?;
+        new_root
+            .immediate_transaction::<_, DsError, _>(|| {
+                // Insert values as needed.
+                diesel::insert_into(pp_dsl::permitted_parts)
+                    .values(&permitted_parts)
+                    .execute(new_root)?;
+                diesel::insert_into(pa_dsl::permitted_attributes)
+                    .values(&permitted_attributes)
+                    .execute(new_root)?;
+                Ok(())
+            })
             .map_err(ma)?;
-        println!("created parts");
-        diesel::insert_into(pa_dsl::permitted_attributes)
-            .values(&permitted_attributes)
-            .execute(new_root)
-            .map_err(ma)?;
-        println!("created attributes");
+
+        let pp = DbPermittedPart::load_all(new_root)?;
+        let pa = DbPermittedAttribute::load_all(new_root)?;
+        loaded_dbs.permitted_parts = pp;
+        loaded_dbs.permitted_attrs = pa;
 
         Ok(loaded_dbs)
     }

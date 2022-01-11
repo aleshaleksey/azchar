@@ -1,10 +1,14 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
-use crate::character::character::CompleteCharacter;
-use crate::root_db::system::PermittedPart;
+use crate::character::attribute::NewAttribute;
+use crate::character::character::{Character, CompleteCharacter, NewCharacter};
+use crate::root_db::system::{PermittedAttribute, PermittedPart};
+use crate::shared::*;
 use crate::Config;
-use azchar_error::ma;
 
+use azchar_error::ma;
+use diesel::result::Error as DsError;
+use diesel::Connection;
 use fnv::FnvHashMap;
 
 pub mod attributes;
@@ -31,9 +35,9 @@ pub struct LoadedDbs {
     // Connections to character sheets with the character name and connections.
     connections: FnvHashMap<(String, String), BasicConnection>,
     // This shows permitted attributes.
-    attribute_keys: u8,
+    permitted_attrs: Vec<PermittedAttribute>,
     /// This shows parts keys.
-    permitted_parts: u8,
+    permitted_parts: Vec<PermittedPart>,
     /// Keep the config around.
     root_path: String,
 }
@@ -51,11 +55,13 @@ impl LoadedDbs {
             .into_iter()
             .map(|refs| ((refs.name, refs.uuid), BasicConnection::new(&refs.db_path)))
             .collect::<FnvHashMap<(String, String), BasicConnection>>();
+        let permitted_attrs = PermittedAttribute::load_all(root_db.connect()?)?;
+        let permitted_parts = PermittedPart::load_all(root_db.connect()?)?;
         Ok(LoadedDbs {
             root_db,
             connections,
-            attribute_keys: 0,
-            permitted_parts: 0,
+            permitted_attrs,
+            permitted_parts,
             root_path: path.to_string(),
         })
     }
@@ -74,14 +80,14 @@ impl LoadedDbs {
     }
 
     /// A special case for creating a new system.
+    /// NB, we do not load parts till later, because they do not exist yet!
     pub fn new_system(path: &str) -> Result<Self, String> {
-        let mut root_db = BasicConnection::new(path);
-        root_db.connect()?;
+        let root_db = BasicConnection::new(path);
         Ok(LoadedDbs {
             root_db,
             connections: FnvHashMap::default(),
-            attribute_keys: 0,
-            permitted_parts: 0,
+            permitted_attrs: Vec::new(),
+            permitted_parts: Vec::new(),
             root_path: path.to_string(),
         })
     }
@@ -105,9 +111,10 @@ impl LoadedDbs {
     /// Create a new character sheet database.
     /// Returns the character name and uuid.
     pub fn create_sheet(&mut self, name: &str) -> Result<(String, String), String> {
+        use crate::character::attribute::attributes::dsl as at_dsl;
+        use crate::character::character::characters::dsl as ch_dsl;
         use crate::root_db::characters::character_dbs::dsl::character_dbs;
 
-        // let then = std::time::Instant::now();
         let uuid = v4!();
         // Sanity check.
         if self
@@ -135,7 +142,6 @@ impl LoadedDbs {
 
         // Clean up if we can't create the character sheet.
         let root_conn = self.get_inner_root()?;
-        // let a0 = then.elapsed().as_micros();
         match diesel::insert_into(character_dbs)
             .values(&vec![reference])
             .execute(root_conn)
@@ -152,17 +158,83 @@ impl LoadedDbs {
         let file_path = file_path.to_string_lossy();
         let mut sheet_conn_outer = BasicConnection::new(&file_path);
         let sheet_conn = sheet_conn_outer.connect()?;
+
         // Create all needed tables
-        // let a = then.elapsed().as_micros();
-
+        let then = std::time::Instant::now();
         embedded_migrations::run(sheet_conn).map_err(ma)?;
-        // Create all obligatory parts.
-        // let b = then.elapsed().as_micros();
-        // println!("Before inital insertion:{}", a0);
-        // println!("Before migs:{}", a - a0);
-        // println!("Aftre migs:{}", b - a);
+        let t1 = then.elapsed().as_micros();
+        // Create and place a new part.
+        let mut main_new_part: NewCharacter = self
+            .permitted_parts
+            .iter()
+            .find(|p| matches!(p.part_type, Part::Main))
+            .map(Into::into)
+            .expect("There's always a new part");
+        main_new_part.name = name.to_owned();
+        main_new_part.uuid = uuid.to_owned();
 
-        PermittedPart::create_basic(root_conn, sheet_conn, name, &uuid)?;
+        sheet_conn
+            .transaction::<_, DsError, _>(|| {
+                diesel::insert_into(ch_dsl::characters)
+                    .values(main_new_part)
+                    .execute(sheet_conn)?;
+                let char_id = Character::get_latest_id(sheet_conn)?;
+
+                let new_subparts: Vec<NewCharacter> = self
+                    .permitted_parts
+                    .iter()
+                    .filter(|p| p.obligatory && !matches!(p.part_type, Part::Main))
+                    .map(|p| {
+                        let mut p: NewCharacter = p.into();
+                        p.belongs_to = Some(char_id);
+                        p
+                    })
+                    .collect();
+
+                // Da chunking!
+                for chunk in new_subparts.chunks(999) {
+                    diesel::insert_into(ch_dsl::characters)
+                        .values(chunk)
+                        .execute(sheet_conn)?;
+                }
+
+                // All character parts created here are obligatory.
+                let identifiers: Vec<Character> = ch_dsl::characters.load(sheet_conn)?;
+
+                let mut new_attributes = Vec::new();
+                for p in identifiers {
+                    let attr_iter = self
+                        .permitted_attrs
+                        .iter()
+                        .filter(|a| {
+                            a.obligatory
+                                && a.part_name == p.character_type
+                                && a.part_type == p.part_type
+                        })
+                        .map(|a| NewAttribute {
+                            key: a.key.to_owned(),
+                            value_num: None,
+                            value_text: None,
+                            description: Some(a.attribute_description.to_owned()),
+                            of: p.id,
+                        });
+                    new_attributes.extend(attr_iter);
+                }
+
+                // Da chunking!
+                for chunk in new_attributes.chunks(999) {
+                    diesel::insert_into(at_dsl::attributes)
+                        .values(chunk)
+                        .execute(sheet_conn)?;
+                }
+                Ok(())
+            })
+            .map_err(ma)?;
+
+        let t2 = then.elapsed().as_micros();
+        println!("migrations:{}us", t1);
+        println!("insertions:{}us", t2 - t1);
+
         sheet_conn_outer.drop_inner();
         self.connections
             .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);

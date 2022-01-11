@@ -23,11 +23,20 @@ table! {
 #[table_name = "attributes"]
 pub struct Attribute {
     id: i64,
-    pub(crate) key: String,
-    pub(crate) value_num: Option<i64>,
-    pub(crate) value_text: Option<String>,
-    pub(crate) description: Option<String>,
+    pub key: String,
+    pub value_num: Option<i64>,
+    pub value_text: Option<String>,
+    pub description: Option<String>,
     pub(crate) of: i64,
+}
+
+impl Attribute {
+    pub fn id(&self) -> i64 {
+        self.id
+    }
+    pub fn of(&self) -> i64 {
+        self.id
+    }
 }
 
 #[derive(Debug, Clone, Insertable)]

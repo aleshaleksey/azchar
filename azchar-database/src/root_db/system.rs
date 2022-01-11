@@ -3,7 +3,6 @@
 use crate::shared::*;
 use azchar_error::ma;
 
-use crate::character::NewAttribute;
 use crate::character::NewCharacter;
 
 use diesel::{BoolExpressionMethods, ExpressionMethods};
@@ -47,8 +46,8 @@ pub(crate) struct PermittedPart {
 // #[table_name = "permitted_attributes"]
 pub(crate) struct PermittedAttribute {
     pub(crate) key: String,
-    attribute_type: i32,
-    attribute_description: String,
+    pub(crate) attribute_type: i32,
+    pub(crate) attribute_description: String,
     pub(crate) part_name: String,
     #[diesel(deserialize_as = "i32")]
     pub(crate) part_type: Part,
@@ -68,6 +67,9 @@ impl From<&PermittedPart> for NewCharacter {
 }
 
 impl PermittedPart {
+    pub fn id(&self) -> i64 {
+        self.id
+    }
     /// Get all permitted parts.
     pub fn load_all(root_conn: &SqliteConnection) -> Result<Vec<Self>, String> {
         use self::permitted_parts::dsl::*;
@@ -80,83 +82,6 @@ impl PermittedPart {
             .filter(obligatory.eq(true))
             .load(root_conn)
             .map_err(ma)
-    }
-
-    // Create the basic attributes and parts for the sheet.
-    // NB: The pre-existing Uuid should be used for the main part, or things
-    // get strange when updating.
-    pub fn create_basic(
-        root_conn: &SqliteConnection,
-        sheet_conn: &SqliteConnection,
-        name: &str,
-        uuid: &str,
-    ) -> Result<(), String> {
-        use crate::character::attribute::attributes::dsl as at_dsl;
-        use crate::character::character::characters::dsl as ch_dsl;
-
-        // let then = std::time::Instant::now();
-        let mut new_attributes = Vec::new();
-        let mut main_id = None;
-        for part in PermittedPart::load_obligatory(root_conn)?.into_iter() {
-            // Create and insert an empty part and then create obligatory attributes.
-            let mut new_part: NewCharacter = (&part).into();
-            // TODO Belonging properly.
-            if !matches!(part.part_type, Part::Main) {
-                new_part.belongs_to = if let Some(mid) = main_id {
-                    Some(mid)
-                } else {
-                    let mid = ch_dsl::characters
-                            .filter(ch_dsl::part_type.eq(Part::Main))
-                            .select(ch_dsl::id)
-                            .first(sheet_conn)
-                            .map_err(ma)?;
-                    Some(mid)
-                };
-            } else {
-                new_part.name = name.to_owned();
-                new_part.uuid = uuid.to_owned();
-            };
-
-            diesel::insert_into(ch_dsl::characters)
-                .values(new_part)
-                .execute(sheet_conn)
-                .map_err(ma)?;
-            let char_id: i64 = ch_dsl::characters
-                .order_by(ch_dsl::id.desc())
-                .select(ch_dsl::id)
-                .first(sheet_conn)
-                .map_err(ma)?;
-
-            if matches!(part.part_type, Part::Main) {
-                main_id = Some(char_id);
-            }
-
-            // create attributes for the given part.
-            let attributes = PermittedAttribute::load_obligatory_for_part(&part, root_conn)
-                .map_err(ma)?
-                .into_iter()
-                .map(|at| NewAttribute {
-                    key: at.key,
-                    value_num: None,
-                    value_text: None,
-                    description: Some(at.attribute_description),
-                    of: char_id,
-                });
-            new_attributes.extend(attributes);
-        }
-        // let a = then.elapsed().as_micros();
-        // Make fewer insertions.
-        for chunk in new_attributes.chunks(990) {
-            diesel::insert_into(at_dsl::attributes)
-                .values(chunk)
-                .execute(sheet_conn)
-                .map_err(ma)?;
-        }
-        // let b = then.elapsed().as_micros();
-        // println!("a: {}us", a);
-        // println!("b: {}us", b - a);
-
-        Ok(())
     }
 }
 

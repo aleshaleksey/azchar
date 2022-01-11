@@ -34,10 +34,10 @@ table! {
 #[derive(Debug, Clone, PartialEq, Identifiable, Queryable, QueryableByName)]
 #[table_name = "characters"]
 pub struct Character {
-    id: i64,
+    pub(crate) id: i64,
     name: String,
     uuid: String,
-    character_type: String,
+    pub(crate) character_type: String,
     speed: i32,
     weight: Option<i32>,
     size: Option<String>,
@@ -45,7 +45,14 @@ pub struct Character {
     hp_current: Option<i32>,
     belongs_to: Option<i64>,
     #[diesel(deserialize_as = "i32")]
-    part_type: Part,
+    pub(crate) part_type: Part,
+}
+
+impl Character {
+    pub fn get_latest_id(conn: &SqliteConnection) -> Result<i64, DbError> {
+        use self::characters::dsl::*;
+        characters.order_by(id.desc()).select(id).first(conn)
+    }
 }
 
 #[derive(Debug, Clone, Insertable, Default)]
