@@ -40,8 +40,10 @@ impl MainLoop {
                 (Ok(s), _) => Self::handle_stream_as_http(s, &mut self.dbs),
                 (Err(e), _) => Err(format!("Incoming error: {:?}", e)),
             };
-            if let Err(e) = res {
-                println!("Error: {:?}", e);
+            match res {
+                Ok(true) => {}
+                Err(e) => println!("Error: {:?}", e),
+                Ok(false) => break,
             }
         }
     }
@@ -49,7 +51,7 @@ impl MainLoop {
     fn handle_stream_as_client(
         mut s: TcpStream,
         dbs: &mut Option<LoadedDbs>,
-    ) -> Result<(), String> {
+    ) -> Result<bool, String> {
         let peer = match s.peer_addr() {
             Ok(addr) => format!("{}", addr),
             _ => "Unknown Sender".to_owned(),
@@ -77,15 +79,20 @@ impl MainLoop {
             let req = Request::convert(echo.clone());
             println!("{:?}", req);
             match req.execute(dbs) {
+                Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
                 Err(_) => serde_json::to_string(&Response::Err(echo)),
             }
             .unwrap()
         };
-        send_and_flush(&mut s, &res, &peer)
+        send_and_flush(&mut s, &res, &peer)?;
+        Ok(true)
     }
 
-    fn handle_stream_as_http(mut s: TcpStream, dbs: &mut Option<LoadedDbs>) -> Result<(), String> {
+    fn handle_stream_as_http(
+        mut s: TcpStream,
+        dbs: &mut Option<LoadedDbs>,
+    ) -> Result<bool, String> {
         let peer = match s.peer_addr() {
             Ok(addr) => format!("{}", addr),
             _ => "Unknown Sender".to_owned(),
@@ -114,6 +121,7 @@ impl MainLoop {
             let req = Request::convert(echo.clone());
             println!("{:?}", req);
             match req.execute(dbs) {
+                Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
                 Err(_) => serde_json::to_string(&Response::Err(echo)),
             }
@@ -124,7 +132,8 @@ impl MainLoop {
             res.len() + 8,
             res
         );
-        send_and_flush(&mut s, &ret, &peer)
+        send_and_flush(&mut s, &ret, &peer)?;
+        Ok(true)
     }
 }
 

@@ -23,6 +23,8 @@ pub(crate) enum Request {
     LoadCharacter(String, String),
     /// Represents a request to parse and run a roll.
     Roll(String),
+    /// Shut down the server.
+    Shutdown,
     /// Represents an invalid request.
     Invalid(String),
 }
@@ -46,6 +48,8 @@ pub(crate) enum Response {
     Roll(Vec<i64>, i64),
     /// Represents an invalid request.
     Invalid(String),
+    /// Shut down the server.
+    Shutdown,
     /// Represents an error.
     Err(String),
 }
