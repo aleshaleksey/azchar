@@ -385,7 +385,10 @@ fn check_attributes_vs_db(
         .iter()
         .map(|a| &a.0.key)
         .collect::<FnvHashSet<_>>();
-    for a in obligatory.iter().filter(|pa| pa.part_name==part_name && pa.part_type==part_type) {
+    for a in obligatory
+        .iter()
+        .filter(|pa| pa.part_name == part_name && pa.part_type == part_type)
+    {
         if !attrs.contains(&a.key) {
             let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
             return Err(m);

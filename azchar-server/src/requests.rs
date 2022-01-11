@@ -51,7 +51,7 @@ pub(crate) enum Response {
     /// Shut down the server.
     Shutdown,
     /// Represents an error.
-    Err(String),
+    Err(String, String),
 }
 
 impl Request {
@@ -95,7 +95,10 @@ impl Request {
                     let chars = dbs.list_characters()?;
                     Response::CreateCharacterSheet(chars)
                 }
-                None => Response::Err(String::from("Load system first.")),
+                None => Response::Err(
+                    String::from("Load system first."),
+                    serde_json::to_string(&Self::CreateCharacterSheet(name)).unwrap(),
+                ),
             },
             Self::CreateUpdateCharacter(sheet) => match main_loop {
                 Some(ref mut dbs) => {
@@ -103,21 +106,30 @@ impl Request {
                     let chars = dbs.list_characters();
                     Response::CreateUpdateCharacter(chars?)
                 }
-                None => Response::Err(String::from("Load system first.")),
+                None => Response::Err(
+                    String::from("Load system first."),
+                    serde_json::to_string(&Self::CreateUpdateCharacter(sheet)).unwrap(),
+                ),
             },
             Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {
                     let chars = dbs.list_characters()?;
                     Response::ListCharacters(chars)
                 }
-                None => Response::Err(String::from("Load system first.")),
+                None => Response::Err(
+                    String::from("Load system first."),
+                    serde_json::to_string(&Self::ListCharacters).unwrap(),
+                ),
             },
             Self::LoadCharacter(name, uuid) => match main_loop {
                 Some(ref mut dbs) => {
                     let char = dbs.load_character((name, uuid));
                     Response::LoadCharacter(char?)
                 }
-                None => Response::Err(String::from("Load system first.")),
+                None => Response::Err(
+                    String::from("Load system first."),
+                    serde_json::to_string(&Self::LoadCharacter(name, uuid)).unwrap(),
+                ),
             },
             Self::Roll(dice) => {
                 let roll = libazdice::parse::parse(dice)?.roll();
