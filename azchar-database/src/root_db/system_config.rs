@@ -99,6 +99,7 @@ impl SystemConfig {
 
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;
+        crate::set_pragma(new_root)?;
 
         let Self {
             permitted_parts,

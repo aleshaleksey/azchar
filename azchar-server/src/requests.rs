@@ -1,5 +1,6 @@
 //! This deals with requests.
-use azchar_database::character::character::CompleteCharacter;
+use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+use azchar_database::character::character::{CharacterPart, CompleteCharacter};
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::CharacterDbRef;
 use azchar_error::ma;
@@ -17,6 +18,10 @@ pub(crate) enum Request {
     CreateCharacterSheet(String),
     /// The string is a CompleteCharacter JSON/TOML.
     CreateUpdateCharacter(CompleteCharacter),
+    /// This needs no arguments and uses the current root. [Need identifier]
+    CreateUpdateAttribute(String, String, AttributeKey, AttributeValue),
+    /// Update a single character part. [Need identifier]
+    CreateUpdatePart(String, String, CharacterPart),
     /// This needs no arguments and uses the current root.
     ListCharacters,
     /// The string a name and UUID.
@@ -40,6 +45,10 @@ pub(crate) enum Response {
     CreateCharacterSheet(Vec<CharacterDbRef>),
     /// Returns updated list of characters.
     CreateUpdateCharacter(Vec<CharacterDbRef>),
+    /// This needs no arguments and uses the current root.
+    CreateUpdateAttribute,
+    /// Update a single character part.
+    CreateUpdatePart,
     /// Returns a list of characters.
     ListCharacters(Vec<CharacterDbRef>),
     /// The Complete Character.
@@ -52,6 +61,15 @@ pub(crate) enum Response {
     Shutdown,
     /// Represents an error.
     Err(String, String),
+}
+
+impl Response {
+    fn load_db_error(r: Request) -> Self {
+        Response::Err(
+            String::from("Load system first."),
+            serde_json::to_string(&r).unwrap(),
+        )
+    }
 }
 
 impl Request {
@@ -69,6 +87,7 @@ impl Request {
     /// Run the request and give a response.
     /// NB: An error case should be unwrapped
     pub(crate) fn execute(self, main_loop: &mut Option<LoadedDbs>) -> Result<Response, String> {
+        let a = std::time::Instant::now();
         let res = match self {
             Self::CreateSystem(name, path, system) => {
                 let sys = if std::path::PathBuf::from(&system).exists() {
@@ -95,10 +114,7 @@ impl Request {
                     let chars = dbs.list_characters()?;
                     Response::CreateCharacterSheet(chars)
                 }
-                None => Response::Err(
-                    String::from("Load system first."),
-                    serde_json::to_string(&Self::CreateCharacterSheet(name)).unwrap(),
-                ),
+                None => Response::load_db_error(Self::CreateCharacterSheet(name)),
             },
             Self::CreateUpdateCharacter(sheet) => match main_loop {
                 Some(ref mut dbs) => {
@@ -106,30 +122,37 @@ impl Request {
                     let chars = dbs.list_characters();
                     Response::CreateUpdateCharacter(chars?)
                 }
-                None => Response::Err(
-                    String::from("Load system first."),
-                    serde_json::to_string(&Self::CreateUpdateCharacter(sheet)).unwrap(),
-                ),
+                None => Response::load_db_error(Self::CreateUpdateCharacter(sheet)),
+            },
+            Self::CreateUpdateAttribute(name, uuid, attr_k, attr_v) => match main_loop {
+                Some(ref mut dbs) => {
+                    dbs.create_update_attribute(attr_k, attr_v, (name, uuid))?;
+                    Response::CreateUpdateAttribute
+                }
+                None => {
+                    Response::load_db_error(Self::CreateUpdateAttribute(name, uuid, attr_k, attr_v))
+                }
+            },
+            Self::CreateUpdatePart(name, uuid, character) => match main_loop {
+                Some(ref mut dbs) => {
+                    dbs.create_update_part(character, (name, uuid))?;
+                    Response::CreateUpdatePart
+                }
+                None => Response::load_db_error(Self::CreateUpdatePart(name, uuid, character)),
             },
             Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {
                     let chars = dbs.list_characters()?;
                     Response::ListCharacters(chars)
                 }
-                None => Response::Err(
-                    String::from("Load system first."),
-                    serde_json::to_string(&Self::ListCharacters).unwrap(),
-                ),
+                None => Response::load_db_error(Self::ListCharacters),
             },
             Self::LoadCharacter(name, uuid) => match main_loop {
                 Some(ref mut dbs) => {
                     let char = dbs.load_character((name, uuid));
                     Response::LoadCharacter(char?)
                 }
-                None => Response::Err(
-                    String::from("Load system first."),
-                    serde_json::to_string(&Self::LoadCharacter(name, uuid)).unwrap(),
-                ),
+                None => Response::load_db_error(Self::LoadCharacter(name, uuid)),
             },
             Self::Roll(dice) => {
                 let roll = libazdice::parse::parse(dice)?.roll();
@@ -144,6 +167,8 @@ impl Request {
             Self::Shutdown => Response::Shutdown,
             Self::Invalid(x) => Response::Invalid(format!("Invalid request received:({})", x)),
         };
+        let b = a.elapsed().as_micros();
+        println!("inner exec: {}us", b);
         Ok(res)
     }
 }

@@ -37,6 +37,20 @@ pub struct BasicConnection {
     connection: Option<SqliteConnection>,
 }
 
+/// To do when a sheet is created.
+pub fn set_pragma(c: &SqliteConnection) -> Result<(), String> {
+    c.execute("pragma analysis_limit=500;").map_err(ma)?;
+    c.execute("pragma foreign_keys=off;").map_err(ma)?;
+    c.execute("pragma journal_mode = WAL;").map_err(ma)?;
+    c.execute("pragma synchronous = off;").map_err(ma)?;
+    c.execute("pragma temp_store = memory;").map_err(ma)?;
+    c.execute("pragma wal_checkpoint(TRUNCATE);").map_err(ma)?;
+    c.execute("pragma locking_mode=EXCLUSIVE;").map_err(ma)?;
+    c.execute("pragma wal_autocheckpoint = 2000;").map_err(ma)?;
+    c.execute("pragma optimize;").map_err(ma)?;
+    Ok(())
+}
+
 impl std::fmt::Debug for BasicConnection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         f.debug_struct("BasicConnection")
@@ -65,16 +79,7 @@ impl BasicConnection {
         }
 
         let c = SqliteConnection::establish(&self.db_path).map_err(ma)?;
-        {
-            // Execute basic optimisations.
-            c.execute("pragma journal_mode = WAL;").map_err(ma)?;
-            c.execute("pragma synchronous = normal;").map_err(ma)?;
-            c.execute("pragma temp_store = memory;").map_err(ma)?;
-            c.execute("pragma journal_mode = WAL;").map_err(ma)?;
-            c.execute("pragma wal_checkpoint(truncate);").map_err(ma)?;
-            c.execute("pragma locking_mode=EXCLUSIVE;").map_err(ma)?;
-            c.execute("pragma wal_autocheckpoint = 500;").map_err(ma)?;
-        }
+        set_pragma(&c)?;
         self.connection = Some(c);
         Ok(self.connection.as_ref().expect("Is there."))
     }
@@ -110,8 +115,8 @@ impl BasicConnection {
     /// Do the thing where you tidy up before closing.
     fn tidy_up(conn: &Option<SqliteConnection>) -> Result<(), String> {
         if let Some(c) = conn {
-            c.execute("pragma vacuum;").map_err(ma)?;
             c.execute("pragma optimize;").map_err(ma)?;
+            c.execute("vacuum;").map_err(ma)?;
         }
         Ok(())
     }

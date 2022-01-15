@@ -42,18 +42,21 @@ impl WsMainLoop {
 
         for m in receiver.incoming_messages() {
             let then = std::time::Instant::now();
+            let mut elapsed_a = 0;
             match m {
                 Ok(OwnedMessage::Close(_d)) => {
                     println!("Close.");
                     continue;
                 }
                 Ok(OwnedMessage::Text(t)) => {
+                    let then = std::time::Instant::now();
                     let res = match Request::convert(t.clone()).execute(dbs) {
                         Ok(Response::Shutdown) => return Ok(()),
                         Ok(r) => serde_json::to_string(&r),
                         Err(e) => serde_json::to_string(&Response::Err(t, ma(e))),
                     }
                     .map_err(ma)?;
+                    elapsed_a = then.elapsed().as_micros();
                     let m = Message::text(&res);
                     sender.send_message(&m).map_err(ma)?;
                 }
@@ -61,7 +64,7 @@ impl WsMainLoop {
                 _ => {}
             }
             let elapsed = then.elapsed().as_micros();
-            println!("Request handled in {}us", elapsed);
+            println!("Request handled in {}us (inner {}us)", elapsed, elapsed_a);
         }
         Ok(())
     }

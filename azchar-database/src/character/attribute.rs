@@ -1,10 +1,12 @@
 //! This deals with the attributes table.
+use super::character::characters;
 use azchar_error::ma;
 
 use diesel::{Connection, SqliteConnection};
 use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 
 use fnv::FnvHashMap;
+use std::iter::Iterator;
 
 table! {
     // NB, key and of should be unique.
@@ -18,8 +20,10 @@ table! {
     }
 }
 
+joinable!(attributes -> characters(of));
+
 /// A structure to store a db ref.
-#[derive(Debug, Clone, PartialEq, Queryable, Identifiable)]
+#[derive(Debug, Clone, PartialEq, Queryable, Identifiable, Insertable)]
 #[table_name = "attributes"]
 pub struct Attribute {
     id: i64,
@@ -60,7 +64,33 @@ pub struct AttributeValue {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AttributeKey {
     pub(crate) key: String,
-    of: i64,
+    pub(super) of: i64,
+}
+
+enum NewOrOldAttribute {
+    New(NewAttribute),
+    Old(Attribute),
+}
+
+fn kv_into_attribute(k: &AttributeKey, v: &AttributeValue) -> NewOrOldAttribute {
+    if let Some(id) = v.id {
+        NewOrOldAttribute::Old(Attribute {
+            id,
+            key: k.key.clone(),
+            value_num: v.value_num,
+            value_text: v.value_text.clone(),
+            description: v.description.clone(),
+            of: k.of,
+        })
+    } else {
+        NewOrOldAttribute::New(NewAttribute {
+            key: k.key.clone(),
+            value_num: v.value_num,
+            value_text: v.value_text.clone(),
+            description: v.description.clone(),
+            of: k.of,
+        })
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -143,51 +173,65 @@ impl Attributes {
         Ok(Self::from_vec(attribute_vec))
     }
 
-    /// Insert or update a character's attributes.
-    pub fn insert_update(&self, conn: &SqliteConnection) -> Result<(), diesel::result::Error> {
+    // NB: This is not a transaction, which may allow us to speed up character updates.
+    pub(crate) fn insert_update_vec<'a, I>(
+        vec: I,
+        conn: &SqliteConnection,
+    ) -> Result<(), diesel::result::Error>
+    where
+        I: Iterator<Item = (&'a AttributeKey, &'a AttributeValue)>,
+    {
         use self::attributes::dsl::*;
 
         let mut update_vec = Vec::new();
         let mut insert_vec = Vec::new();
 
-        for (k, v) in self.0.iter() {
-            if let Some(attr_id) = v.id {
-                update_vec.push(Attribute {
-                    id: attr_id,
-                    key: k.key.clone(),
-                    value_num: v.value_num,
-                    value_text: v.value_text.clone(),
-                    description: v.description.clone(),
-                    of: k.of,
-                });
-            } else {
-                insert_vec.push(NewAttribute {
-                    key: k.key.clone(),
-                    value_num: v.value_num,
-                    value_text: v.value_text.clone(),
-                    description: v.description.clone(),
-                    of: k.of,
-                });
+        for (k, v) in vec {
+            match kv_into_attribute(k, v) {
+                NewOrOldAttribute::New(a) => insert_vec.push(a),
+                NewOrOldAttribute::Old(a) => update_vec.push(a),
             }
         }
+        for chunk in insert_vec.chunks(999) {
+            diesel::insert_into(attributes)
+                .values(chunk)
+                .execute(conn)?;
+        }
+        for chunk in update_vec.chunks(999) {
+            diesel::replace_into(attributes)
+                .values(chunk)
+                .execute(conn)?;
+        }
+        Ok(())
+    }
+
+    /// Insert or update a character's attributes.
+    pub(crate) fn insert_update(
+        &self,
+        conn: &SqliteConnection,
+    ) -> Result<(), diesel::result::Error> {
         conn.transaction::<_, diesel::result::Error, _>(|| {
-            for chunk in insert_vec.chunks(999) {
-                diesel::insert_into(attributes)
-                    .values(chunk)
-                    .execute(conn)?;
-            }
-            for va in update_vec {
-                diesel::update(attributes.filter(id.eq(va.id)))
-                    .set((
-                        key.eq(va.key),
-                        value_num.eq(va.value_num),
-                        value_text.eq(va.value_text),
-                        description.eq(va.description),
-                        of.eq(va.of),
-                    ))
-                    .execute(conn)?;
-            }
-            Ok(())
+            Self::insert_update_vec(self.0.iter(), conn)
         })
+    }
+
+    /// Insert a single key value.
+    pub(crate) fn insert_update_key_value(
+        k: &AttributeKey,
+        v: &AttributeValue,
+        conn: &SqliteConnection,
+    ) -> Result<(), String> {
+        use self::attributes::dsl::*;
+        match kv_into_attribute(k, v) {
+            NewOrOldAttribute::Old(a) => diesel::replace_into(attributes)
+                .values(a)
+                .execute(conn)
+                .map(|_| ()),
+            NewOrOldAttribute::New(a) => diesel::insert_into(attributes)
+                .values(a)
+                .execute(conn)
+                .map(|_| ()),
+        }
+        .map_err(ma)
     }
 }

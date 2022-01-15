@@ -1,7 +1,7 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
-use crate::character::attribute::NewAttribute;
-use crate::character::character::{Character, CompleteCharacter, NewCharacter};
+use crate::character::attribute::{AttributeKey, AttributeValue, Attributes, NewAttribute};
+use crate::character::character::{Character, CharacterPart, CompleteCharacter, NewCharacter};
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::*;
 use crate::Config;
@@ -103,6 +103,11 @@ impl LoadedDbs {
         Ok(self.root_db.get_inner().expect("We just created it."))
     }
 
+    /// Drop inner root.
+    pub fn drop_inner_root(&mut self) {
+        self.root_db.drop_inner()
+    }
+
     /// Get other connections.
     pub fn character_connections(&self) -> &FnvHashMap<(String, String), BasicConnection> {
         &self.connections
@@ -158,6 +163,7 @@ impl LoadedDbs {
         let file_path = file_path.to_string_lossy();
         let mut sheet_conn_outer = BasicConnection::new(&file_path);
         let sheet_conn = sheet_conn_outer.connect()?;
+        crate::set_pragma(sheet_conn)?;
 
         // Create all needed tables
         let then = std::time::Instant::now();
@@ -235,7 +241,6 @@ impl LoadedDbs {
         println!("migrations:{}us", t1);
         println!("insertions:{}us", t2 - t1);
 
-        sheet_conn_outer.drop_inner();
         self.connections
             .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);
 
@@ -249,6 +254,7 @@ impl LoadedDbs {
         &mut self,
         character: CompleteCharacter,
     ) -> Result<(), String> {
+        let then = std::time::Instant::now();
         let key = (character.name.to_owned(), character.uuid().to_owned());
         println!("{:?}", key);
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
@@ -256,7 +262,9 @@ impl LoadedDbs {
                 conn.connect()?,
                 (&self.permitted_attrs, &self.permitted_parts),
             )?;
+            let x = then.elapsed().as_micros();
             conn.drop_inner();
+            println!("drop-{}us", x);
             return Ok(());
         }
         let key = self.create_sheet(&key.0)?;
@@ -266,6 +274,8 @@ impl LoadedDbs {
             (&self.permitted_attrs, &self.permitted_parts),
         )?;
         conn.drop_inner();
+        let x = then.elapsed().as_micros();
+        println!("drop-{}us", x);
         Ok(())
     }
 
@@ -283,9 +293,7 @@ impl LoadedDbs {
     /// A function to load a character.
     pub fn load_character(&mut self, key: (String, String)) -> Result<CompleteCharacter, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            let c = CompleteCharacter::load(conn.connect()?);
-            conn.drop_inner();
-            c
+            CompleteCharacter::load(conn.connect()?)
         } else {
             Err(format!(
                 "Character ({}, uuid = {}) not found in this database",
@@ -297,5 +305,36 @@ impl LoadedDbs {
     /// Load a character as a string. Ready for consumption.
     pub fn load_character_as_json(&mut self, key: (String, String)) -> Result<String, String> {
         serde_json::to_string(&self.load_character(key)?).map_err(ma)
+    }
+
+    pub fn create_update_attribute(
+        &mut self,
+        attr_key: AttributeKey,
+        attr_value: AttributeValue,
+        key: (String, String),
+    ) -> Result<(), String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            Attributes::insert_update_key_value(&attr_key, &attr_value, conn.connect()?)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
+
+    pub fn create_update_part(
+        &mut self,
+        part: CharacterPart,
+        key: (String, String),
+    ) -> Result<(), String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            CompleteCharacter::insert_update_character_part(part, conn.connect()?)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
     }
 }

@@ -31,3 +31,10 @@ create table attributes(
   of BIGINT NOT NULL references characters(id),
   UNIQUE(key, of)
 );
+
+create index if not exists attributes_idx on attributes(id);
+create index if not exists attributes_ofx on attributes(of);
+create index if not exists attributes_keyx on attributes(key);
+create index if not exists characters_idx on characters(id);
+create index if not exists characters_belonx on characters(belongs_to);
+create index if not exists characters_belonx on characters(part_type);
