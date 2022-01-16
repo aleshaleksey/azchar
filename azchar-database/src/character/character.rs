@@ -300,17 +300,18 @@ impl CompleteCharacter {
 
         let res = conn.immediate_transaction::<_, DbError, _>(|| {
             // A check to see if the existing character already exists here.
-            let existing: Option<Character> = characters
+            let existing: Option<(i64,String,String)> = characters
                 .filter(part_type.eq(Part::Main))
+                .select((id, name, uuid))
                 .first(conn)
                 .optional()?;
             let a = then.elapsed().as_micros();
             // If the current sheet is already occupied by a different character, return early.
             if let Some(other) = &existing {
-                if self.id != Some(other.id) {
+                if self.id != Some(other.0) {
                     error_string = format!(
                         "A character already exists on this sheet: name:{}, uuid:{}",
-                        other.name, other.uuid,
+                        other.1, other.2,
                     );
                     return Err(DbError::NotFound);
                 }
