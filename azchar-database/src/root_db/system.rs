@@ -99,15 +99,10 @@ impl PermittedPart {
 
     pub fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
         conn.prepare_cached(
-            "INSERT INTO permitted_parts(key, part_name, part_type, obligatory) VALUES (?);",
+            "INSERT INTO permitted_parts(part_name, part_type, obligatory) VALUES (?,?,?);",
         )
         .map_err(ma)?
-        .execute(params![
-            self.id,
-            self.part_name,
-            self.part_type,
-            self.obligatory,
-        ])
+        .execute(params![self.part_name, self.part_type, self.obligatory,])
         .map_err(ma)
     }
 }
@@ -127,7 +122,7 @@ impl PermittedAttribute {
 
     pub fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
         conn
-            .prepare_cached("INSERT INTO permitted_attributes(key, attribute_type, attribute_description, part_name, part_type, obligatory) VALUES (?);")
+            .prepare_cached("INSERT INTO permitted_attributes(key, attribute_type, attribute_description, part_name, part_type, obligatory) VALUES (?,?,?,?,?,?);")
             .map_err(ma)?
             .execute(params![
                 self.key,
@@ -145,10 +140,10 @@ impl PermittedAttribute {
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         root_conn
-            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type:t ORDER BY part_type ASC;")
+            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type=:t ORDER BY part_type ASC;")
             .map_err(ma)?
             .query_map(
-                &[(":n", &part.part_name), (":t", &serde_json::to_string(&part.part_type).map_err(ma)?)],
+                &[(":n", &part.part_name), (":t", &(part.part_type as i64).to_string())],
                 |row| PermittedAttribute::from_row(row)
             )
             .map_err(ma)?
@@ -162,10 +157,10 @@ impl PermittedAttribute {
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         root_conn
-            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type:t AND obligatory=true ORDER BY part_type ASC;")
+            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type=:t AND obligatory=true ORDER BY part_type ASC;")
             .map_err(ma)?
             .query_map(
-                &[(":n", &part.part_name), (":t", &serde_json::to_string(&part.part_type).map_err(ma)?)],
+                &[(":n", &part.part_name), (":t", &(part.part_type as i64).to_string())],
                 |row| PermittedAttribute::from_row(row)
             )
             .map_err(ma)?
@@ -202,7 +197,7 @@ mod system_tests {
     use crate::root_db::tests;
     use crate::shared::Part;
 
-    use diesel::SqliteConnection;
+    use rusqlite::Connection as SqliteConnection;
 
     /// The basic setup used.
     fn get_all_parts(setup: &mut tests::TestSetup) -> (&SqliteConnection, Vec<PermittedPart>) {
@@ -235,13 +230,13 @@ mod system_tests {
             parts,
             vec![
                 PermittedPart {
-                    id: 1,
+                    id: Some(1),
                     part_name: String::from("main"),
                     part_type: Part::Main,
                     obligatory: true,
                 },
                 PermittedPart {
-                    id: 2,
+                    id: Some(2),
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
                     obligatory: true,
@@ -258,7 +253,7 @@ mod system_tests {
         assert_eq!(
             parts[0],
             PermittedPart {
-                id: 1,
+                id: Some(1),
                 part_name: String::from("main"),
                 part_type: Part::Main,
                 obligatory: true,
@@ -267,7 +262,7 @@ mod system_tests {
         assert_eq!(
             parts[1],
             PermittedPart {
-                id: 2,
+                id: Some(2),
                 part_name: String::from("spell"),
                 part_type: Part::Ability,
                 obligatory: false,

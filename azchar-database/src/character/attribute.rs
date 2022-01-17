@@ -19,6 +19,22 @@ use std::iter::Iterator;
 //     }
 // }racters(of));
 
+const INSERT_ATTR: &str = "INSERT INTO attributes( \
+key, \
+value_num, \
+value_text, \
+description, \
+of \
+) VALUES (?,?,?,?,?);";
+const REPLACE_ATTR: &str = "REPLACE INTO attributes( \
+id, \
+key, \
+value_num, \
+value_text, \
+description, \
+of \
+) VALUES (?,?,?,?,?,?);";
+
 /// A structure to store a db ref.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Attribute {
@@ -53,34 +69,30 @@ impl Attribute {
     }
 
     pub(crate) fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
-        conn.prepare_cached(
-            "INSERT INTO attributes(key, value_num, value_text, description, of) VALUES (?);",
-        )
-        .map_err(ma)?
-        .execute(params![
-            self.key,
-            self.value_num,
-            self.value_text.as_ref(),
-            self.description.as_ref(),
-            self.of,
-        ])
-        .map_err(ma)
+        conn.prepare_cached(INSERT_ATTR)
+            .map_err(ma)?
+            .execute(params![
+                self.key,
+                self.value_num,
+                self.value_text.as_ref(),
+                self.description.as_ref(),
+                self.of,
+            ])
+            .map_err(ma)
     }
 
     pub(crate) fn update_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
-        conn.prepare_cached(
-            "REPLACE INTO attributes(id, key, value_num, value_text, description, of) VALUES (?);",
-        )
-        .map_err(ma)?
-        .execute(params![
-            self.id.unwrap(),
-            self.key,
-            self.value_num,
-            self.value_text.as_ref(),
-            self.description.as_ref(),
-            self.of,
-        ])
-        .map_err(ma)
+        conn.prepare_cached(REPLACE_ATTR)
+            .map_err(ma)?
+            .execute(params![
+                self.id.unwrap(),
+                self.key,
+                self.value_num,
+                self.value_text.as_ref(),
+                self.description.as_ref(),
+                self.of,
+            ])
+            .map_err(ma)
     }
 
     pub(crate) fn insert_update_key_val(
@@ -89,32 +101,28 @@ impl Attribute {
         conn: &SqliteConnection,
     ) -> Result<usize, String> {
         if let Some(id) = v.id {
-            conn.prepare_cached(
-                "REPLACE INTO attributes(key, value_num, value_text, description, of) VALUES (?);",
-            )
-            .map_err(ma)?
-            .execute(params![
-                id,
-                k.key,
-                v.value_num,
-                v.value_text.as_ref(),
-                v.description.as_ref(),
-                k.of,
-            ])
-            .map_err(ma)
+            conn.prepare_cached(REPLACE_ATTR)
+                .map_err(ma)?
+                .execute(params![
+                    id,
+                    k.key,
+                    v.value_num,
+                    v.value_text.as_ref(),
+                    v.description.as_ref(),
+                    k.of,
+                ])
+                .map_err(ma)
         } else {
-            conn.prepare_cached(
-                "INSERT INTO attributes(key, value_num, value_text, description, of) VALUES (?);",
-            )
-            .map_err(ma)?
-            .execute(params![
-                k.key,
-                v.value_num,
-                v.value_text.as_ref(),
-                v.description.as_ref(),
-                k.of,
-            ])
-            .map_err(ma)
+            conn.prepare_cached(INSERT_ATTR)
+                .map_err(ma)?
+                .execute(params![
+                    k.key,
+                    v.value_num,
+                    v.value_text.as_ref(),
+                    v.description.as_ref(),
+                    k.of,
+                ])
+                .map_err(ma)
         }
     }
 
@@ -198,9 +206,38 @@ impl Attributes {
     where
         I: Iterator<Item = (&'a AttributeKey, &'a AttributeValue)>,
     {
-        for (k, v) in vec {
-            Self::insert_update_key_value(k, v, conn)?;
+        let mut inserts = Vec::new();
+        let mut updates = Vec::new();
+        for attr in vec {
+            match attr.1.id {
+                Some(_) => updates.push(attr),
+                None => inserts.push(attr),
+            }
         }
+        let mut insert = conn.prepare_cached(INSERT_ATTR).map_err(ma)?;
+        let mut replace = conn.prepare_cached(REPLACE_ATTR).map_err(ma)?;
+        for i in inserts {
+            insert.execute(params![
+                i.0.key,
+                i.1.value_num,
+                i.1.value_text.as_ref(),
+                i.1.description.as_ref(),
+                i.0.of,
+            ]).map_err(ma)?;
+        }
+        conn.cache_flush().map_err(ma)?;
+        for u in updates {
+            replace.execute(params![
+                u.1.id.unwrap(),
+                u.0.key,
+                u.1.value_num,
+                u.1.value_text.as_ref(),
+                u.1.description.as_ref(),
+                u.0.of,
+            ]).map_err(ma)?;
+        }
+        conn.cache_flush().map_err(ma)?;
+
         Ok(())
     }
 

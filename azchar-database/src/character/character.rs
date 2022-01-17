@@ -30,6 +30,31 @@ use super::attribute::{Attribute, AttributeKey, AttributeValue, Attributes};
 //     }
 // }
 
+const INSERT_CHAR: &str = "INSERT INTO characters( \
+name, \
+uuid, \
+character_type, \
+speed, \
+weight, \
+size, \
+hp_total, \
+hp_current, \
+belongs_to, \
+part_type) VALUES (?,?,?,?,?,?,?,?,?,?);";
+
+const REPLACE_CHAR: &str = "REPLACE INTO characters( \
+id, \
+name, \
+uuid, \
+character_type, \
+speed, \
+weight, \
+size, \
+hp_total, \
+hp_current, \
+belongs_to, \
+part_type) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+
 /// A structure to store a db ref.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Character {
@@ -62,9 +87,14 @@ impl Character {
     ) -> Result<Option<(i64, String, String)>, String> {
         // Part zero is main.
         let r = conn
-            .prepare_cached("SELECT (id, name, uuid) FROM characters WHERE part_type=0;")
+            .prepare_cached("SELECT id,name,uuid FROM characters WHERE part_type=0;")
             .map_err(ma)?
-            .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+            .query_map([], |row| {
+                let id: i64 = row.get(0)?;
+                let name: String = row.get(1)?;
+                let uuid: String = row.get(2)?;
+                Ok((id, name, uuid))
+            })
             .map_err(ma)?
             .next()
             .map(|x| x.map_err(ma));
@@ -76,8 +106,7 @@ impl Character {
     }
 
     pub fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
-        conn
-            .prepare_cached("INSERT INTO characters(name, uuid, character_type, speed, weight, size, hp_total, hp_current, belongs_to, part_type) VALUES (?);")
+        conn.prepare_cached(INSERT_CHAR)
             .map_err(ma)?
             .execute(params![
                 self.name,
@@ -90,14 +119,13 @@ impl Character {
                 self.hp_current,
                 self.belongs_to,
                 self.part_type,
-                ])
+            ])
             .map_err(ma)
     }
 
     pub fn update_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
         if let Some(id) = self.id {
-            conn
-                .prepare_cached("REPLACE INTO characters(id, name, uuid, character_type, speed, weight, size, hp_total, hp_current, belongs_to, part_type) VALUES (?);")
+            conn.prepare_cached(REPLACE_CHAR)
                 .map_err(ma)?
                 .execute(params![
                     id,
@@ -111,7 +139,7 @@ impl Character {
                     self.hp_current,
                     self.belongs_to,
                     self.part_type,
-                    ])
+                ])
                 .map_err(ma)
         } else {
             Err(format!(
@@ -339,6 +367,7 @@ impl CompleteCharacter {
     ) -> Result<(), String> {
         let then = std::time::Instant::now();
         // A check to see if the existing character already exists here.
+        println!("get main ident");
         let existing: Option<(i64, String, String)> = Character::get_main_identifiers(conn)?;
         let a = then.elapsed().as_micros();
         // If the current sheet is already occupied by a different character, return early.
@@ -350,7 +379,7 @@ impl CompleteCharacter {
                 ));
             }
         }
-
+        println!("getting to main.");
         let old_complete = CompleteCharacter::load(conn)?;
         if &old_complete == self {
             let b = then.elapsed().as_micros();
@@ -358,7 +387,7 @@ impl CompleteCharacter {
             println!("same ret check: {}", b - a);
             return Ok(());
         }
-
+        println!("got to main");
         let permitted_parts = permitted_parts
             .iter()
             .map(|p| ((p.part_name.as_ref(), p.part_type), p.obligatory))
@@ -455,13 +484,16 @@ impl CompleteCharacter {
         for c in new_chars.into_iter() {
             c.insert_single(conn)?;
         }
+        conn.cache_flush().map_err(ma)?;
         for c in upd_chars.into_iter() {
             c.update_single(conn)?;
         }
-
-        Attributes::insert_update_vec(attribute_refs.into_iter(), conn)?;
+        conn.cache_flush().map_err(ma)?;
         let d = then.elapsed().as_micros();
-        println!("transaction: {}", d);
+        Attributes::insert_update_vec(attribute_refs.into_iter(), conn)?;
+        println!("inserted attributes");
+        let e = then.elapsed().as_micros();
+        println!("insert to chars {}us, to attrs: {}us.", d, e);
         Ok(())
     }
 

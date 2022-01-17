@@ -17,5 +17,5 @@ azchar-config = { path = "../azchar-config" }
 
 [dependencies.rusqlite]
 version = "0.26.3"
-features = ["modern-full"]
+features = ["bundled-full"]
 # features = ["with-deprecated", "32-column-tables", "sqlite"]

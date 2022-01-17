@@ -139,7 +139,7 @@ impl LoadedDbs {
         // Clean up if we can't create the character sheet.
         let root_conn = self.get_inner_root()?;
         match root_conn
-            .prepare_cached("INSERT INTO character_dbs (name, uuid, db_path) VALUES (?);")
+            .prepare_cached("INSERT INTO character_dbs (name, uuid, db_path) VALUES (?,?,?);")
             .map_err(ma)?
             .execute(params![refr.name, refr.uuid, refr.db_path])
             .map_err(ma)
@@ -161,13 +161,9 @@ impl LoadedDbs {
         let then = std::time::Instant::now();
         //// Start, transaction.
         {
-            let sheet_tx = sheet_conn.transaction().map_err(ma)?;
-            sheet_tx
-                .prepare(SHEET_MIGRATION)
-                .map_err(ma)?
-                .execute([])
-                .map_err(ma)?;
+            sheet_conn.execute_batch(SHEET_MIGRATION).map_err(ma)?;
             let t1 = then.elapsed().as_micros();
+            let sheet_tx = BasicConnection::default_tx(sheet_conn)?;
             // Create and place a new part.
             let mut main_new_part: Character = self
                 .permitted_parts
@@ -221,7 +217,7 @@ impl LoadedDbs {
                     a.insert_single(&sheet_tx).map_err(ma)?;
                 }
             }
-            sheet_tx.finish().map_err(ma)?;
+            sheet_tx.commit().map_err(ma)?;
             let t2 = then.elapsed().as_micros();
             println!("migrations:{}us", t1);
             println!("insertions:{}us", t2 - t1);
@@ -243,10 +239,10 @@ impl LoadedDbs {
         let key = (character.name.to_owned(), character.uuid().to_owned());
         println!("{:?}", key);
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            character.save(
-                conn.connect()?,
-                (&self.permitted_attrs, &self.permitted_parts),
-            )?;
+            let sheet_tx = BasicConnection::default_tx(conn.connect()?)?;
+            character.save(&sheet_tx, (&self.permitted_attrs, &self.permitted_parts))?;
+            sheet_tx.commit().map_err(ma)?;
+
             let x = then.elapsed().as_micros();
             conn.drop_inner();
             println!("drop-{}us", x);
@@ -254,10 +250,10 @@ impl LoadedDbs {
         }
         let key = self.create_sheet(&key.0)?;
         let conn = self.connections.get_mut(&key).expect("Just created");
-        character.save(
-            conn.connect()?,
-            (&self.permitted_attrs, &self.permitted_parts),
-        )?;
+        let sheet_tx = BasicConnection::default_tx(conn.connect()?)?;
+
+        character.save(&sheet_tx, (&self.permitted_attrs, &self.permitted_parts))?;
+        sheet_tx.commit().map_err(ma)?;
         conn.drop_inner();
         let x = then.elapsed().as_micros();
         println!("drop-{}us", x);
@@ -270,26 +266,19 @@ impl LoadedDbs {
         self.refresh_and_list()
     }
 
-    /// This is used to get the character list as a JSON string.
-    pub fn list_characters_json(&mut self) -> Result<String, String> {
-        serde_json::to_string(&self.refresh_and_list()?).map_err(ma)
-    }
-
     /// A function to load a character.
     pub fn load_character(&mut self, key: (String, String)) -> Result<CompleteCharacter, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            CompleteCharacter::load(conn.connect()?)
+            let sheet_tx = BasicConnection::default_tx(conn.connect()?)?;
+            let sheet = CompleteCharacter::load(&sheet_tx)?;
+            sheet_tx.commit().map_err(ma)?;
+            Ok(sheet)
         } else {
             Err(format!(
                 "Character ({}, uuid = {}) not found in this database",
                 key.0, key.1
             ))
         }
-    }
-
-    /// Load a character as a string. Ready for consumption.
-    pub fn load_character_as_json(&mut self, key: (String, String)) -> Result<String, String> {
-        serde_json::to_string(&self.load_character(key)?).map_err(ma)
     }
 
     pub fn create_update_attribute(
@@ -299,7 +288,10 @@ impl LoadedDbs {
         key: (String, String),
     ) -> Result<usize, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            Attributes::insert_update_key_value(&attr_key, &attr_value, conn.connect()?)
+            let sheet_tx = BasicConnection::default_tx(conn.connect()?)?;
+            let a = Attributes::insert_update_key_value(&attr_key, &attr_value, &sheet_tx)?;
+            sheet_tx.commit().map_err(ma)?;
+            Ok(a)
         } else {
             Err(format!(
                 "Character with identifier {}-{} not found.",
@@ -314,7 +306,10 @@ impl LoadedDbs {
         key: (String, String),
     ) -> Result<usize, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            CompleteCharacter::insert_update_character_part(part, conn.connect()?)
+            let sheet_tx = BasicConnection::default_tx(conn.connect()?)?;
+            let p = CompleteCharacter::insert_update_character_part(part, &sheet_tx)?;
+            sheet_tx.commit().map_err(ma)?;
+            Ok(p)
         } else {
             Err(format!(
                 "Character with identifier {}-{} not found.",
@@ -326,7 +321,6 @@ impl LoadedDbs {
 
 const ROOT_MIGRATION: &str = "
 -- Create the root table.
-BEGIN;
 create table character_dbs(
 	id INTEGER primary key AUTOINCREMENT,
 	name TEXT NOT NULL,
@@ -351,15 +345,12 @@ create table permitted_parts(
 	part_type INTEGER NOT NULL,
 	obligatory BOOLEAN NOT NULL
 );
-COMMIT;
 ";
 
 const SHEET_MIGRATION: &str = "
-BEGIN;
 -- Create the root table
 -- NB: Everything is a character, including, bodyparts, items and spells.
 -- All things have a name, type, weight,
-
 create table characters(
   -- The basic fields.
   id INTEGER primary key AUTOINCREMENT,
@@ -398,6 +389,4 @@ create index if not exists attributes_keyx on attributes(key);
 create index if not exists characters_idx on characters(id);
 create index if not exists characters_belonx on characters(belongs_to);
 create index if not exists characters_belonx on characters(part_type);
-
-COMMIT;
 ";

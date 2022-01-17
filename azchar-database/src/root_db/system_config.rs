@@ -4,7 +4,7 @@ use crate::root_db::system::PermittedAttribute as DbPermittedAttribute;
 use crate::root_db::system::PermittedPart as DbPermittedPart;
 use crate::root_db::ROOT_MIGRATION;
 use crate::shared::*;
-use crate::LoadedDbs;
+use crate::{BasicConnection, LoadedDbs};
 use azchar_error::ma;
 
 use std::fs::File;
@@ -90,7 +90,9 @@ impl SystemConfig {
 
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;
+        println!("got root,.");
         crate::set_pragma(new_root)?;
+        println!("set pragma.");
 
         let Self {
             permitted_parts,
@@ -103,25 +105,22 @@ impl SystemConfig {
 
         // START TRANSACTION.
         {
-            let root_tx = new_root.transaction().map_err(ma)?;
-            root_tx
-                .prepare_cached(ROOT_MIGRATION)
-                .map_err(ma)?
-                .execute([])
-                .map_err(ma)?;
-
+            let then = std::time::Instant::now();
+            new_root.execute_batch(ROOT_MIGRATION).map_err(ma)?;
+            let t1 = then.elapsed().as_micros();
+            let root_tx = BasicConnection::default_tx(new_root)?;
             for p in permitted_parts.iter() {
                 p.insert_single(&root_tx)?;
             }
             for a in permitted_attributes.iter() {
                 a.insert_single(&root_tx)?;
             }
-
             let pp = DbPermittedPart::load_all(&root_tx)?;
             let pa = DbPermittedAttribute::load_all(&root_tx)?;
-
-            root_tx.finish().map_err(ma)?;
-
+            println!("loaded bits. pa={}, pp={}", pa.len(), pp.len());
+            root_tx.commit().map_err(ma)?;
+            let t2 = then.elapsed().as_micros();
+            println!("Finished tr (Mig={}us, create={}us).", t1, t2 - t1);
             loaded_dbs.permitted_parts = pp;
             loaded_dbs.permitted_attrs = pa;
         }

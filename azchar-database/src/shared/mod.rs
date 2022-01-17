@@ -1,7 +1,7 @@
 //! Contains shared elements.
-use std::hash::Hash;
-use rusqlite::ToSql;
 use rusqlite::types::*;
+use rusqlite::ToSql;
+use std::hash::Hash;
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

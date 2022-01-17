@@ -23,6 +23,7 @@ pub mod character;
 pub mod root_db;
 mod shared;
 use rusqlite::Connection as SqliteConnection;
+use rusqlite::Transaction;
 
 pub use root_db::{CharacterDbRef, LoadedDbs};
 
@@ -54,22 +55,21 @@ pub(crate) fn check_name_string(input: String) -> Result<String, String> {
 }
 
 /// To do when a sheet is created.
-pub fn set_pragma(c: &SqliteConnection) -> Result<(), String> {
-    c.execute_batch(
-        "
-BEGIN;
-pragma analysis_limit=500;
-pragma foreign_keys=off;
-pragma journal_mode = WAL;
-pragma synchronous = off;
-pragma temp_store = memory;
-pragma wal_checkpoint(TRUNCATE);
-pragma locking_mode=EXCLUSIVE;
-pragma wal_autocheckpoint = 2000;
-pragma optimize;
-COMMIT;",
-    )
-    .map_err(ma)
+pub fn set_pragma(c: &mut SqliteConnection) -> Result<(), String> {
+    c.query_row("pragma analysis_limit=500", [], |_| Ok(()))
+        .map_err(ma)?;
+    c.execute("pragma foreign_keys=off;", []).map_err(ma)?;
+    c.query_row("pragma journal_mode=OFF;", [], |_| Ok(()))
+        .map_err(ma)?;
+    c.execute("pragma synchrononous=off;", []).map_err(ma)?;
+    c.execute("pragma temp_store=memory;", []).map_err(ma)?;
+    c.query_row("pragma wal_checkpoint(TRUNCATE);", [], |_| Ok(()))
+        .map_err(ma)?;
+    c.query_row("pragma locking_mode(EXCLUSIVE);", [], |_| Ok(()))
+        .map_err(ma)?;
+    c.query_row("pragma wal_autocheckpoint=1000;", [], |_| Ok(()))
+        .map_err(ma)?;
+    Ok(())
 }
 
 impl std::fmt::Debug for BasicConnection {
@@ -99,8 +99,8 @@ impl BasicConnection {
             return Ok(con);
         }
 
-        let c = SqliteConnection::open(&self.db_path).map_err(ma)?;
-        set_pragma(&c)?;
+        let mut c = SqliteConnection::open(&self.db_path).map_err(ma)?;
+        set_pragma(&mut c)?;
         self.connection = Some(c);
         Ok(self.connection.as_mut().expect("Is there."))
     }
@@ -136,9 +136,15 @@ impl BasicConnection {
     /// Do the thing where you tidy up before closing.
     fn tidy_up(conn: &Option<SqliteConnection>) -> Result<(), String> {
         if let Some(c) = conn {
-            c.execute_batch("pragma optimize;\nvacuum;").map_err(ma)?;
+            c.execute("pragma optimize;", []).map_err(ma)?;
+            c.execute("vacuum;", []).map_err(ma)?;
         }
         Ok(())
+    }
+
+    pub(crate) fn default_tx(conn: &mut SqliteConnection) -> Result<Transaction, String> {
+        conn.transaction_with_behavior(rusqlite::TransactionBehavior::Exclusive)
+            .map_err(ma)
     }
 }
 
