@@ -1,32 +1,27 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
-use crate::character::attribute::{AttributeKey, AttributeValue, Attributes, NewAttribute};
-use crate::character::character::{Character, CharacterPart, CompleteCharacter, NewCharacter};
+use crate::character::attribute::{Attribute, AttributeKey, AttributeValue, Attributes};
+use crate::character::character::{Character, CharacterPart, CompleteCharacter};
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::*;
 use crate::Config;
 
 use azchar_error::ma;
-use diesel::result::Error as DsError;
-use diesel::Connection;
 use fnv::FnvHashMap;
 
-pub mod attributes;
 pub mod characters;
 pub mod system;
 pub mod system_config;
 #[cfg(test)]
 mod tests;
 
-pub use characters::{CharacterDbRef, NewCharacterDbRef};
+pub use characters::CharacterDbRef;
 
-use diesel::{RunQueryDsl, SqliteConnection};
+use rusqlite::Connection as SqliteConnection;
 use uuid_rs::v4;
 
 use std::fs::File;
 use std::path::PathBuf;
-
-embed_migrations!("migrations_main");
 
 /// A structure that stores the root database connection and the character
 /// files it refers to.
@@ -98,7 +93,7 @@ impl LoadedDbs {
     }
 
     /// Needs to be connected.
-    pub fn get_inner_root(&mut self) -> Result<&SqliteConnection, String> {
+    pub fn get_inner_root(&mut self) -> Result<&mut SqliteConnection, String> {
         self.root_db.connect()?;
         Ok(self.root_db.get_inner().expect("We just created it."))
     }
@@ -116,10 +111,6 @@ impl LoadedDbs {
     /// Create a new character sheet database.
     /// Returns the character name and uuid.
     pub fn create_sheet(&mut self, name: &str) -> Result<(String, String), String> {
-        use crate::character::attribute::attributes::dsl as at_dsl;
-        use crate::character::character::characters::dsl as ch_dsl;
-        use crate::root_db::characters::character_dbs::dsl::character_dbs;
-
         let uuid = v4!();
         // Sanity check.
         if self
@@ -143,13 +134,14 @@ impl LoadedDbs {
 
         // Create the file.
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
-        let reference = NewCharacterDbRef::new(name.to_owned(), file_name, uuid.clone());
+        let refr = CharacterDbRef::new(name.to_owned(), file_name, uuid.clone())?;
 
         // Clean up if we can't create the character sheet.
         let root_conn = self.get_inner_root()?;
-        match diesel::insert_into(character_dbs)
-            .values(&vec![reference])
-            .execute(root_conn)
+        match root_conn
+            .prepare_cached("INSERT INTO character_dbs (name, uuid, db_path) VALUES (?);")
+            .map_err(ma)?
+            .execute(params![refr.name, refr.uuid, refr.db_path])
             .map_err(ma)
         {
             Ok(_) => {}
@@ -167,80 +159,73 @@ impl LoadedDbs {
 
         // Create all needed tables
         let then = std::time::Instant::now();
-        embedded_migrations::run(sheet_conn).map_err(ma)?;
-        let t1 = then.elapsed().as_micros();
-        // Create and place a new part.
-        let mut main_new_part: NewCharacter = self
-            .permitted_parts
-            .iter()
-            .find(|p| matches!(p.part_type, Part::Main))
-            .map(Into::into)
-            .expect("There's always a new part");
-        main_new_part.name = name.to_owned();
-        main_new_part.uuid = uuid.to_owned();
+        //// Start, transaction.
+        {
+            let sheet_tx = sheet_conn.transaction().map_err(ma)?;
+            sheet_tx
+                .prepare(SHEET_MIGRATION)
+                .map_err(ma)?
+                .execute([])
+                .map_err(ma)?;
+            let t1 = then.elapsed().as_micros();
+            // Create and place a new part.
+            let mut main_new_part: Character = self
+                .permitted_parts
+                .iter()
+                .find(|p| matches!(p.part_type, Part::Main))
+                .map(Into::into)
+                .expect("There's always a new part");
+            main_new_part.name = name.to_owned();
+            main_new_part.uuid = uuid.to_owned();
 
-        sheet_conn
-            .transaction::<_, DsError, _>(|| {
-                diesel::insert_into(ch_dsl::characters)
-                    .values(main_new_part)
-                    .execute(sheet_conn)?;
-                let char_id = Character::get_latest_id(sheet_conn)?;
+            main_new_part.insert_single(&sheet_tx).map_err(ma)?;
+            let char_id = Character::get_latest_id(&sheet_tx)?;
 
-                let new_subparts: Vec<NewCharacter> = self
-                    .permitted_parts
+            let new_subparts: Vec<Character> = self
+                .permitted_parts
+                .iter()
+                .filter(|p| p.obligatory && !matches!(p.part_type, Part::Main))
+                .map(|p| {
+                    let mut p: Character = p.into();
+                    p.belongs_to = Some(char_id);
+                    p
+                })
+                .collect();
+
+            // Da chunking!
+            for chunk in new_subparts {
+                chunk.insert_single(&sheet_tx)?;
+            }
+
+            // All character parts created here are obligatory.
+            let identifiers: Vec<Character> = Character::load_all(&sheet_tx)?;
+
+            for p in identifiers {
+                let attr_iter = self
+                    .permitted_attrs
                     .iter()
-                    .filter(|p| p.obligatory && !matches!(p.part_type, Part::Main))
-                    .map(|p| {
-                        let mut p: NewCharacter = p.into();
-                        p.belongs_to = Some(char_id);
-                        p
+                    .filter(|a| {
+                        a.obligatory
+                            && a.part_name == p.character_type
+                            && a.part_type == p.part_type
                     })
-                    .collect();
-
-                // Da chunking!
-                for chunk in new_subparts.chunks(999) {
-                    diesel::insert_into(ch_dsl::characters)
-                        .values(chunk)
-                        .execute(sheet_conn)?;
+                    .map(|a| Attribute {
+                        id: None,
+                        key: a.key.to_owned(),
+                        value_num: None,
+                        value_text: None,
+                        description: Some(a.attribute_description.to_owned()),
+                        of: p.id.expect("It was inserted."),
+                    });
+                for a in attr_iter {
+                    a.insert_single(&sheet_tx).map_err(ma)?;
                 }
-
-                // All character parts created here are obligatory.
-                let identifiers: Vec<Character> = ch_dsl::characters.load(sheet_conn)?;
-
-                let mut new_attributes = Vec::new();
-                for p in identifiers {
-                    let attr_iter = self
-                        .permitted_attrs
-                        .iter()
-                        .filter(|a| {
-                            a.obligatory
-                                && a.part_name == p.character_type
-                                && a.part_type == p.part_type
-                        })
-                        .map(|a| NewAttribute {
-                            key: a.key.to_owned(),
-                            value_num: None,
-                            value_text: None,
-                            description: Some(a.attribute_description.to_owned()),
-                            of: p.id,
-                        });
-                    new_attributes.extend(attr_iter);
-                }
-
-                // Da chunking!
-                for chunk in new_attributes.chunks(999) {
-                    diesel::insert_into(at_dsl::attributes)
-                        .values(chunk)
-                        .execute(sheet_conn)?;
-                }
-                Ok(())
-            })
-            .map_err(ma)?;
-
-        let t2 = then.elapsed().as_micros();
-        println!("migrations:{}us", t1);
-        println!("insertions:{}us", t2 - t1);
-
+            }
+            sheet_tx.finish().map_err(ma)?;
+            let t2 = then.elapsed().as_micros();
+            println!("migrations:{}us", t1);
+            println!("insertions:{}us", t2 - t1);
+        }
         self.connections
             .insert((name.to_owned(), uuid.clone()), sheet_conn_outer);
 
@@ -312,7 +297,7 @@ impl LoadedDbs {
         attr_key: AttributeKey,
         attr_value: AttributeValue,
         key: (String, String),
-    ) -> Result<(), String> {
+    ) -> Result<usize, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             Attributes::insert_update_key_value(&attr_key, &attr_value, conn.connect()?)
         } else {
@@ -327,7 +312,7 @@ impl LoadedDbs {
         &mut self,
         part: CharacterPart,
         key: (String, String),
-    ) -> Result<(), String> {
+    ) -> Result<usize, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             CompleteCharacter::insert_update_character_part(part, conn.connect()?)
         } else {
@@ -338,3 +323,81 @@ impl LoadedDbs {
         }
     }
 }
+
+const ROOT_MIGRATION: &str = "
+-- Create the root table.
+BEGIN;
+create table character_dbs(
+	id INTEGER primary key AUTOINCREMENT,
+	name TEXT NOT NULL,
+	uuid TEXT NOT NULL,
+	db_path TEXT NOT NULL
+);
+
+create table permitted_attributes(
+	key TEXT NOT NULL primary key,
+	attribute_type INTEGER NOT NULL,
+	attribute_description TEXT NOT NULL,
+	part_name TEXT NOT NULL,
+	part_type INTEGER NOT NULL,
+	obligatory BOOLEAN NOT NULL
+	-- UNIQUE(part_name, part_type)
+);
+
+create table permitted_parts(
+	id INTEGER primary key AUTOINCREMENT,
+	part_name TEXT NOT NULL,
+	-- Should be an enum which is shared with characters..
+	part_type INTEGER NOT NULL,
+	obligatory BOOLEAN NOT NULL
+);
+COMMIT;
+";
+
+const SHEET_MIGRATION: &str = "
+BEGIN;
+-- Create the root table
+-- NB: Everything is a character, including, bodyparts, items and spells.
+-- All things have a name, type, weight,
+
+create table characters(
+  -- The basic fields.
+  id INTEGER primary key AUTOINCREMENT,
+  name TEXT NOT NULL,
+  uuid TEXT NOT NULL UNIQUE,
+  character_type TEXT NOT NULL, -- NB: Text for maximum flexibility.
+  -- Basic, vital attributes for characters.
+  -- NB: Might not be relevant to all things.
+  speed INTEGER NOT NULL,
+  weight INTEGER,
+  size TEXT,
+  -- Not all things have hitpoints, mp. etc.
+  hp_total INTEGER,
+  hp_current INTEGER,
+  -- What, if anything does this character belong to?
+  belongs_to BIGINT references characters(id),
+  -- What kind of part is it. See appropriate type.
+  part_type INTEGER
+);
+
+-- A basic set of keys and values.
+
+create table attributes(
+  id INTEGER primary key AUTOINCREMENT,
+  key TEXT NOT NULL,
+  value_num INTEGER,
+  value_text TEXT,
+  description TEXT,
+  of BIGINT NOT NULL references characters(id),
+  UNIQUE(key, of)
+);
+
+create index if not exists attributes_idx on attributes(id);
+create index if not exists attributes_ofx on attributes(of);
+create index if not exists attributes_keyx on attributes(key);
+create index if not exists characters_idx on characters(id);
+create index if not exists characters_belonx on characters(belongs_to);
+create index if not exists characters_belonx on characters(part_type);
+
+COMMIT;
+";

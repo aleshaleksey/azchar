@@ -4,5 +4,5 @@ pub mod character;
 #[cfg(test)]
 mod tests;
 
-pub use attribute::{Attribute, NewAttribute};
-pub use character::{Character, NewCharacter};
+pub use attribute::Attribute;
+pub use character::Character;

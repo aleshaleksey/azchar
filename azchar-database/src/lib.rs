@@ -9,27 +9,31 @@ extern crate toml;
 extern crate uuid_rs;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate rusqlite;
 extern crate fnv;
-#[macro_use]
-extern crate diesel_migrations;
-#[macro_use]
-extern crate diesel;
 
 extern crate azchar_config;
 extern crate azchar_error;
 
 use azchar_config::Config;
 use azchar_error::ma;
-use diesel::{Connection, SqliteConnection};
 
 pub mod character;
 pub mod root_db;
 mod shared;
+use rusqlite::Connection as SqliteConnection;
 
 pub use root_db::{CharacterDbRef, LoadedDbs};
 
 pub(self) const MIGRATIONS_MAIN: &str = "migrations_main";
 pub(self) const MIGRATIONS_ROOT: &str = "migrations_root_db";
+
+pub(self) const CHARS_TABLE: &str = "characters";
+pub(self) const ATTRS_TABLE: &str = "attributes";
+pub(self) const CHARACTER_DBS_TABLE: &str = "character_dbs";
+pub(self) const PERMITTED_CHARS_TABLE: &str = "permitted_parts";
+pub(self) const PERMITTED_ATTRS_TABLE: &str = "permitted_attributes";
 
 /// Represents a basic connection to an sqlite database.
 pub struct BasicConnection {
@@ -37,18 +41,35 @@ pub struct BasicConnection {
     connection: Option<SqliteConnection>,
 }
 
+/// A check to see if an input string is OK to use in SQL.
+pub(crate) fn check_name_string(input: String) -> Result<String, String> {
+    if input
+        .chars()
+        .all(|c| c != '\\' && (c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '.'))
+    {
+        Ok(input)
+    } else {
+        Err("Not a valid name string.".to_string())
+    }
+}
+
 /// To do when a sheet is created.
 pub fn set_pragma(c: &SqliteConnection) -> Result<(), String> {
-    c.execute("pragma analysis_limit=500;").map_err(ma)?;
-    c.execute("pragma foreign_keys=off;").map_err(ma)?;
-    c.execute("pragma journal_mode = WAL;").map_err(ma)?;
-    c.execute("pragma synchronous = off;").map_err(ma)?;
-    c.execute("pragma temp_store = memory;").map_err(ma)?;
-    c.execute("pragma wal_checkpoint(TRUNCATE);").map_err(ma)?;
-    c.execute("pragma locking_mode=EXCLUSIVE;").map_err(ma)?;
-    c.execute("pragma wal_autocheckpoint = 2000;").map_err(ma)?;
-    c.execute("pragma optimize;").map_err(ma)?;
-    Ok(())
+    c.execute_batch(
+        "
+BEGIN;
+pragma analysis_limit=500;
+pragma foreign_keys=off;
+pragma journal_mode = WAL;
+pragma synchronous = off;
+pragma temp_store = memory;
+pragma wal_checkpoint(TRUNCATE);
+pragma locking_mode=EXCLUSIVE;
+pragma wal_autocheckpoint = 2000;
+pragma optimize;
+COMMIT;",
+    )
+    .map_err(ma)
 }
 
 impl std::fmt::Debug for BasicConnection {
@@ -73,15 +94,15 @@ impl BasicConnection {
     }
 
     /// Try to connect to an Sqlite Database.
-    pub fn connect(&mut self) -> Result<&SqliteConnection, String> {
-        if let Some(ref con) = self.connection {
+    pub fn connect(&mut self) -> Result<&mut SqliteConnection, String> {
+        if let Some(ref mut con) = self.connection {
             return Ok(con);
         }
 
-        let c = SqliteConnection::establish(&self.db_path).map_err(ma)?;
+        let c = SqliteConnection::open(&self.db_path).map_err(ma)?;
         set_pragma(&c)?;
         self.connection = Some(c);
-        Ok(self.connection.as_ref().expect("Is there."))
+        Ok(self.connection.as_mut().expect("Is there."))
     }
 
     pub fn drop_connection(&mut self) {
@@ -95,8 +116,8 @@ impl BasicConnection {
     }
 
     /// Gets a reference to the inner connection so we can actually use it.
-    pub fn get_inner(&mut self) -> Option<&SqliteConnection> {
-        self.connection.as_ref()
+    pub fn get_inner(&mut self) -> Option<&mut SqliteConnection> {
+        self.connection.as_mut()
     }
 
     /// Drops the inner connection.
@@ -115,8 +136,7 @@ impl BasicConnection {
     /// Do the thing where you tidy up before closing.
     fn tidy_up(conn: &Option<SqliteConnection>) -> Result<(), String> {
         if let Some(c) = conn {
-            c.execute("pragma optimize;").map_err(ma)?;
-            c.execute("vacuum;").map_err(ma)?;
+            c.execute_batch("pragma optimize;\nvacuum;").map_err(ma)?;
         }
         Ok(())
     }

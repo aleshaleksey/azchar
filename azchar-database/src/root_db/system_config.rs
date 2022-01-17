@@ -2,20 +2,14 @@
 // TODO: test conversion into a new system.
 use crate::root_db::system::PermittedAttribute as DbPermittedAttribute;
 use crate::root_db::system::PermittedPart as DbPermittedPart;
-use crate::root_db::system::{NewPermittedAttribute, NewPermittedPart};
+use crate::root_db::ROOT_MIGRATION;
 use crate::shared::*;
 use crate::LoadedDbs;
 use azchar_error::ma;
 
-use diesel::result::Error as DsError;
-use diesel::RunQueryDsl;
-
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-
-// Create all needed tables
-embed_migrations!("migrations_root_db");
 
 /// This represents a part that is permitted and that will be created on a new sheet.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -25,9 +19,10 @@ pub(super) struct PermittedPart {
     obligatory: bool,
 }
 
-impl From<PermittedPart> for NewPermittedPart {
+impl From<PermittedPart> for DbPermittedPart {
     fn from(p: PermittedPart) -> Self {
         Self {
+            id: None,
             part_name: p.part_name,
             part_type: p.part_type,
             obligatory: p.obligatory,
@@ -46,7 +41,7 @@ pub(super) struct PermittedAttribute {
     obligatory: bool,
 }
 
-impl From<PermittedAttribute> for NewPermittedAttribute {
+impl From<PermittedAttribute> for DbPermittedAttribute {
     fn from(a: PermittedAttribute) -> Self {
         Self {
             key: a.key,
@@ -79,10 +74,6 @@ impl SystemConfig {
     // a) Create the root database with all three tables.
     // b) Insert permitted attributes and parts into it.
     pub fn into_system(self, path: &str, system: &str) -> Result<LoadedDbs, String> {
-        // The required tables.
-        use crate::root_db::system::permitted_attributes::dsl as pa_dsl;
-        use crate::root_db::system::permitted_parts::dsl as pp_dsl;
-
         let file_name = format!("{}.db", system);
         let file_path = PathBuf::from(path).join(&file_name);
         if file_path.exists() {
@@ -105,30 +96,36 @@ impl SystemConfig {
             permitted_parts,
             permitted_attributes,
         } = self;
-        let permitted_attributes: Vec<NewPermittedAttribute> =
+        let permitted_attributes: Vec<DbPermittedAttribute> =
             permitted_attributes.into_iter().map(Into::into).collect();
-        let permitted_parts: Vec<NewPermittedPart> =
+        let permitted_parts: Vec<DbPermittedPart> =
             permitted_parts.into_iter().map(Into::into).collect();
 
-        embedded_migrations::run(new_root).map_err(ma)?;
-        new_root
-            .immediate_transaction::<_, DsError, _>(|| {
-                // Insert values as needed.
-                diesel::insert_into(pp_dsl::permitted_parts)
-                    .values(&permitted_parts)
-                    .execute(new_root)?;
-                diesel::insert_into(pa_dsl::permitted_attributes)
-                    .values(&permitted_attributes)
-                    .execute(new_root)?;
-                Ok(())
-            })
-            .map_err(ma)?;
+        // START TRANSACTION.
+        {
+            let root_tx = new_root.transaction().map_err(ma)?;
+            root_tx
+                .prepare_cached(ROOT_MIGRATION)
+                .map_err(ma)?
+                .execute([])
+                .map_err(ma)?;
 
-        let pp = DbPermittedPart::load_all(new_root)?;
-        let pa = DbPermittedAttribute::load_all(new_root)?;
-        loaded_dbs.permitted_parts = pp;
-        loaded_dbs.permitted_attrs = pa;
+            for p in permitted_parts.iter() {
+                p.insert_single(&root_tx)?;
+            }
+            for a in permitted_attributes.iter() {
+                a.insert_single(&root_tx)?;
+            }
 
+            let pp = DbPermittedPart::load_all(&root_tx)?;
+            let pa = DbPermittedAttribute::load_all(&root_tx)?;
+
+            root_tx.finish().map_err(ma)?;
+
+            loaded_dbs.permitted_parts = pp;
+            loaded_dbs.permitted_attrs = pa;
+        }
+        // END TRANSACTION.
         Ok(loaded_dbs)
     }
 }

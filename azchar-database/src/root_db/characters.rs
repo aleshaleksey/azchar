@@ -1,54 +1,57 @@
 //! This deals with the base connections for the root db and outer dbs.
 use azchar_error::ma;
 
-use diesel::RunQueryDsl;
-use diesel::SqliteConnection;
+use crate::CHARACTER_DBS_TABLE;
+use rusqlite::Connection as SqliteConnection;
+use rusqlite::Error as RSqlError;
 
-table! {
-    character_dbs(id) {
-        id -> BigInt,
-        name -> Text,
-        uuid -> Text,
-        db_path -> Text,
-    }
-}
+// table! {
+//     character_dbs(id) {
+//         id -> BigInt,
+//         name -> Text,
+//         uuid -> Text,
+//         db_path -> Text,
+//     }
+// }
 
 /// A structure to store a db ref.
-#[derive(Debug, Clone, PartialEq, Queryable, Identifiable, Serialize, Deserialize)]
-#[table_name = "character_dbs"]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CharacterDbRef {
-    id: i64,
+    id: Option<i64>,
     pub(super) name: String,
     pub(super) uuid: String,
     pub(super) db_path: String,
 }
 
 impl CharacterDbRef {
-    /// Get all in a db.
-    pub fn get_all(conn: &SqliteConnection) -> Result<Vec<CharacterDbRef>, String> {
-        use self::character_dbs::dsl::*;
-        character_dbs.load(conn).map_err(ma)
-    }
-}
-
-#[derive(Debug, Clone, Insertable)]
-#[table_name = "character_dbs"]
-pub struct NewCharacterDbRef {
-    name: String,
-    uuid: String,
-    db_path: String,
-}
-
-impl NewCharacterDbRef {
     /// NB, this should also make sure that the DB exists.
     /// At the very least, it should not be used outside of a scoped transaction
     /// which creates or checks the existance of the character database.
-    pub fn new(name: String, db_path: String, uuid: String) -> Self {
-        Self {
-            name,
+    /// NB: Needs to check that name is not an attack.
+    pub fn new(name: String, db_path: String, uuid: String) -> Result<Self, String> {
+        Ok(Self {
+            id: None,
+            name: crate::check_name_string(name)?,
             uuid,
             db_path,
-        }
+        })
+    }
+
+    /// Get all in a db.
+    pub fn get_all(conn: &SqliteConnection) -> Result<Vec<CharacterDbRef>, String> {
+        conn.prepare_cached(&format!("SELECT * FROM {};", CHARACTER_DBS_TABLE))
+            .map_err(ma)?
+            .query_map([], |row| {
+                Ok(CharacterDbRef {
+                    id: Some(row.get(0)?),
+                    name: row.get(1)?,
+                    uuid: row.get(2)?,
+                    db_path: row.get(3)?,
+                })
+            })
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
+            .map_err(ma)
     }
 }
 

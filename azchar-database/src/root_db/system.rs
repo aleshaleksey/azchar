@@ -3,62 +3,58 @@
 use crate::shared::*;
 use azchar_error::ma;
 
-use crate::character::NewCharacter;
-
-use diesel::{BoolExpressionMethods, ExpressionMethods};
-use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
+use crate::character::Character;
+use rusqlite::Connection as SqliteConnection;
+use rusqlite::Error as RSqlError;
+use rusqlite::Row as RSqlRow;
 
 use std::default::Default;
 
-table!(
-    permitted_attributes(key) {
-        key -> Text,
-        attribute_type -> Integer,
-        attribute_description -> Text,
-        part_name -> Text,
-        part_type -> Integer,
-        obligatory -> Bool,
-    }
-);
-
-table!(
-    permitted_parts(id) {
-        id -> BigInt,
-        part_name -> Text,
-        part_type -> Integer,
-        obligatory -> Bool,
-    }
-);
+// table!(
+//     permitted_attributes(key) {
+//         key -> Text,
+//         attribute_type -> Integer,
+//         attribute_description -> Text,
+//         part_name -> Text,
+//         part_type -> Integer,
+//         obligatory -> Bool,
+//     }
+// );
+//
+// table!(
+//     permitted_parts(id) {
+//         id -> BigInt,
+//         part_name -> Text,
+//         part_type -> Integer,
+//         obligatory -> Bool,
+//     }
+// );
 
 /// This represents a part that is permitted and that will be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Identifiable, Queryable)]
-#[table_name = "permitted_parts"]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PermittedPart {
-    id: i64,
+    pub(crate) id: Option<i64>,
     pub(crate) part_name: String,
-    #[diesel(deserialize_as = "i32")]
     pub(crate) part_type: Part,
     pub(crate) obligatory: bool,
 }
 
 /// This represents a permitted attribute, to be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Queryable)]
-// #[table_name = "permitted_attributes"]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PermittedAttribute {
     pub(crate) key: String,
     pub(crate) attribute_type: i32,
     pub(crate) attribute_description: String,
     pub(crate) part_name: String,
-    #[diesel(deserialize_as = "i32")]
     pub(crate) part_type: Part,
     pub(crate) obligatory: bool,
 }
 
-impl From<&PermittedPart> for NewCharacter {
+impl From<&PermittedPart> for Character {
     fn from(pp: &PermittedPart) -> Self {
         use uuid_rs::v4;
 
-        let mut new = NewCharacter::default();
+        let mut new = Character::default();
         new.uuid = v4!();
         new.character_type = pp.part_name.to_string();
         new.part_type = pp.part_type;
@@ -67,96 +63,137 @@ impl From<&PermittedPart> for NewCharacter {
 }
 
 impl PermittedPart {
-    pub fn id(&self) -> i64 {
+    pub fn id(&self) -> Option<i64> {
         self.id
+    }
+
+    fn from_row(row: &RSqlRow) -> Result<Self, RSqlError> {
+        let r = PermittedPart {
+            id: row.get(0)?,
+            part_name: row.get(1)?,
+            part_type: row.get(2)?,
+            obligatory: row.get(3)?,
+        };
+        Ok(r)
     }
     /// Get all permitted parts.
     pub fn load_all(root_conn: &SqliteConnection) -> Result<Vec<Self>, String> {
-        use self::permitted_parts::dsl::*;
-        permitted_parts.load(root_conn).map_err(ma)
+        root_conn
+            .prepare_cached("SELECT * from permitted_parts;")
+            .map_err(ma)?
+            .query_map([], |row| PermittedPart::from_row(row))
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
+            .map_err(ma)
     }
     /// Get all permitted parts.
     pub fn load_obligatory(root_conn: &SqliteConnection) -> Result<Vec<Self>, String> {
-        use self::permitted_parts::dsl::*;
-        permitted_parts
-            .filter(obligatory.eq(true))
-            .load(root_conn)
+        root_conn
+            .prepare_cached("SELECT * from permitted_parts WHERE obligatory=true;")
+            .map_err(ma)?
+            .query_map([], |row| PermittedPart::from_row(row))
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
             .map_err(ma)
+    }
+
+    pub fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
+        conn.prepare_cached(
+            "INSERT INTO permitted_parts(key, part_name, part_type, obligatory) VALUES (?);",
+        )
+        .map_err(ma)?
+        .execute(params![
+            self.id,
+            self.part_name,
+            self.part_type,
+            self.obligatory,
+        ])
+        .map_err(ma)
     }
 }
 
 impl PermittedAttribute {
+    fn from_row(row: &RSqlRow) -> Result<Self, RSqlError> {
+        let r = PermittedAttribute {
+            key: row.get(0)?,
+            attribute_type: row.get(1)?,
+            attribute_description: row.get(2)?,
+            part_name: row.get(3)?,
+            part_type: row.get(4)?,
+            obligatory: row.get(5)?,
+        };
+        Ok(r)
+    }
+
+    pub fn insert_single(&self, conn: &SqliteConnection) -> Result<usize, String> {
+        conn
+            .prepare_cached("INSERT INTO permitted_attributes(key, attribute_type, attribute_description, part_name, part_type, obligatory) VALUES (?);")
+            .map_err(ma)?
+            .execute(params![
+                self.key,
+                self.attribute_type,
+                self.attribute_description,
+                self.part_name,
+                self.part_type,
+                self.obligatory,
+                ])
+            .map_err(ma)
+    }
     // Load permitted attributes for the part from the root database.
     pub(crate) fn load_for_part(
         part: &PermittedPart,
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
-        use self::permitted_attributes::dsl::*;
-        permitted_attributes
-            .filter(
-                part_name
-                    .eq(&part.part_name)
-                    .and(part_type.eq(part.part_type)),
+        root_conn
+            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type:t ORDER BY part_type ASC;")
+            .map_err(ma)?
+            .query_map(
+                &[(":n", &part.part_name), (":t", &serde_json::to_string(&part.part_type).map_err(ma)?)],
+                |row| PermittedAttribute::from_row(row)
             )
-            .order_by(part_type.asc())
-            .load(root_conn)
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
             .map_err(ma)
     }
+
     // Load permitted attributes for the part from the root database.
     pub(crate) fn load_obligatory_for_part(
         part: &PermittedPart,
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
-        use self::permitted_attributes::dsl::*;
-        permitted_attributes
-            .filter(
-                part_name
-                    .eq(&part.part_name)
-                    .and(part_type.eq(part.part_type))
-                    .and(obligatory.eq(true)),
+        root_conn
+            .prepare_cached("SELECT * from permitted_attributes WHERE part_name=:n AND part_type:t AND obligatory=true ORDER BY part_type ASC;")
+            .map_err(ma)?
+            .query_map(
+                &[(":n", &part.part_name), (":t", &serde_json::to_string(&part.part_type).map_err(ma)?)],
+                |row| PermittedAttribute::from_row(row)
             )
-            .order_by(part_type.asc())
-            .load(root_conn)
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
             .map_err(ma)
     }
 
     pub(crate) fn load_all(root_conn: &SqliteConnection) -> Result<Vec<Self>, String> {
-        use self::permitted_attributes::dsl::*;
-        permitted_attributes
-            .order_by(part_type.asc())
-            .load(root_conn)
+        root_conn
+            .prepare_cached("SELECT * from permitted_attributes;")
+            .map_err(ma)?
+            .query_map([], |row| PermittedAttribute::from_row(row))
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
             .map_err(ma)
     }
 
     pub(crate) fn load_all_obligatory(root_conn: &SqliteConnection) -> Result<Vec<Self>, String> {
-        use self::permitted_attributes::dsl::*;
-        permitted_attributes
-            .filter(obligatory.eq(true))
-            .order_by(part_type.asc())
-            .load(root_conn)
+        root_conn
+            .prepare_cached(
+                "SELECT * from permitted_attributes WHERE obligatory=true ORDER BY part_type ASC;",
+            )
+            .map_err(ma)?
+            .query_map([], |row| PermittedAttribute::from_row(row))
+            .map_err(ma)?
+            .collect::<Result<Vec<_>, RSqlError>>()
             .map_err(ma)
     }
-}
-
-/// This represents a part that is permitted and that will be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Insertable)]
-#[table_name = "permitted_parts"]
-pub(crate) struct NewPermittedPart {
-    pub(crate) part_name: String,
-    pub(crate) part_type: Part,
-    pub(crate) obligatory: bool,
-}
-
-/// This represents a permitted attribute, to be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Insertable)]
-#[table_name = "permitted_attributes"]
-pub(crate) struct NewPermittedAttribute {
-    pub(crate) key: String,
-    pub(crate) attribute_type: i32,
-    pub(crate) attribute_description: String,
-    pub(crate) part_name: String,
-    pub(crate) part_type: Part,
-    pub(crate) obligatory: bool,
 }
 
 #[cfg(test)]

@@ -1,14 +1,10 @@
 //! Contains shared elements.
-use diesel::backend::Backend;
-use diesel::serialize::{Output, Result as SrlResult, ToSql};
-use diesel::types::Integer;
-
 use std::hash::Hash;
-use std::io::Write;
+use rusqlite::ToSql;
+use rusqlite::types::*;
 
 #[repr(i32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, AsExpression, Serialize, Deserialize)]
-#[sql_type = "Integer"]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// This is used for both the character and system
 /// database and is convertable to i16 to be storable
 // on an Sqlite database.
@@ -54,12 +50,36 @@ impl From<i32> for Part {
     }
 }
 
-impl<Db: Backend> ToSql<Integer, Db> for Part
-where
-    i32: ToSql<Integer, Db>,
-{
-    fn to_sql<W: Write>(&self, out: &mut Output<W, Db>) -> SrlResult {
-        (*self as i32).to_sql(out)
+impl Into<i64> for Part {
+    // Here because diesel derive refuses to work.
+    fn into(self) -> i64 {
+        match self {
+            Self::Main => 0,
+            Self::Body => 1,
+            Self::Mechanical => 2,
+            Self::InventoryItem => 3,
+            Self::Asset => 4,
+            Self::Ability => 5,
+            Self::Summon => 6,
+            Self::Minion => 7,
+            Self::Other => 255,
+        }
+    }
+}
+
+impl ToSql for Part {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>, rusqlite::Error> {
+        Ok(ToSqlOutput::Owned(Value::Integer((*self).into())))
+    }
+}
+
+impl FromSql for Part {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            ValueRef::Null => Ok(Self::Other),
+            ValueRef::Integer(i) => Ok(Self::from(i as i32)),
+            _ => Err(FromSqlError::InvalidType),
+        }
     }
 }
 
