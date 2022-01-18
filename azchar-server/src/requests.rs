@@ -1,5 +1,6 @@
 //! This deals with requests.
-use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+use azchar_database::character::attribute::{AttributeKey, AttributeValue, InputAttribute};
+use azchar_database::character::character::InputCharacter;
 use azchar_database::character::character::{CharacterPart, CompleteCharacter};
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::CharacterDbRef;
@@ -19,9 +20,13 @@ pub(crate) enum Request {
     /// The string is a CompleteCharacter JSON/TOML.
     CreateUpdateCharacter(CompleteCharacter),
     /// This needs no arguments and uses the current root. [Need identifier]
-    CreateUpdateAttribute(String, String, AttributeKey, AttributeValue),
+    UpdateAttribute(String, String, AttributeKey, AttributeValue),
+    /// Purely for creating an attribute.
+    CreateAttribute(String, String, InputAttribute),
     /// Update a single character part. [Need identifier]
-    CreateUpdatePart(String, String, CharacterPart),
+    UpdatePart(String, String, CharacterPart),
+    /// A function particularly for adding new parts.
+    CreatePart(String, String, InputCharacter),
     /// This needs no arguments and uses the current root.
     ListCharacters,
     /// The string a name and UUID.
@@ -46,9 +51,11 @@ pub(crate) enum Response {
     /// Returns updated list of characters.
     CreateUpdateCharacter(Vec<CharacterDbRef>),
     /// This needs no arguments and uses the current root.
-    CreateUpdateAttribute,
+    UpdateAttribute,
     /// Update a single character part.
-    CreateUpdatePart,
+    UpdatePart,
+    /// We must update the whole character when create an utterly new_attribute o part.
+    CreateAttributePart(CompleteCharacter),
     /// Returns a list of characters.
     ListCharacters(Vec<CharacterDbRef>),
     /// The Complete Character.
@@ -124,21 +131,32 @@ impl Request {
                 }
                 None => Response::load_db_error(Self::CreateUpdateCharacter(sheet)),
             },
-            Self::CreateUpdateAttribute(name, uuid, attr_k, attr_v) => match main_loop {
+            Self::UpdateAttribute(name, uuid, attr_k, attr_v) => match main_loop {
                 Some(ref mut dbs) => {
                     dbs.create_update_attribute(attr_k, attr_v, (name, uuid))?;
-                    Response::CreateUpdateAttribute
+                    Response::UpdateAttribute
                 }
-                None => {
-                    Response::load_db_error(Self::CreateUpdateAttribute(name, uuid, attr_k, attr_v))
-                }
+                None => Response::load_db_error(Self::UpdateAttribute(name, uuid, attr_k, attr_v)),
             },
-            Self::CreateUpdatePart(name, uuid, character) => match main_loop {
+            Self::UpdatePart(name, uuid, character) => match main_loop {
                 Some(ref mut dbs) => {
                     dbs.create_update_part(character, (name, uuid))?;
-                    Response::CreateUpdatePart
+                    Response::UpdatePart
                 }
-                None => Response::load_db_error(Self::CreateUpdatePart(name, uuid, character)),
+                None => Response::load_db_error(Self::UpdatePart(name, uuid, character)),
+            },
+            Self::CreatePart(name, uuid, part) => match main_loop {
+                Some(ref mut dbs) => {
+                    Response::CreateAttributePart(dbs.create_part(part, (name, uuid))?)
+                }
+                None => Response::load_db_error(Self::CreatePart(name, uuid, part)),
+            },
+            Self::CreateAttribute(name, uuid, attr) => match main_loop {
+                Some(ref mut dbs) => {
+                    let res = dbs.create_attribute(attr, (name, uuid))?;
+                    Response::CreateAttributePart(res)
+                }
+                None => Response::load_db_error(Self::CreateAttribute(name, uuid, attr)),
             },
             Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {

@@ -168,7 +168,9 @@ mod system_tests {
     use diesel::SqliteConnection;
 
     /// The basic setup used.
-    fn get_all_parts(setup: &mut tests::TestSetup) -> (&SqliteConnection, Vec<PermittedPart>) {
+    pub(crate) fn get_all_parts(
+        setup: &mut tests::TestSetup,
+    ) -> (&SqliteConnection, Vec<PermittedPart>) {
         let root_db = setup
             .loaded_dbs
             .get_inner_root()

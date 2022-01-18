@@ -133,6 +133,79 @@ impl NewCharacter {
             part_type: Part::Main,
         }
     }
+
+    pub(crate) fn from_input(input: InputCharacter) -> Self {
+        use uuid_rs::v4;
+        NewCharacter {
+            name: input.name,
+            uuid: v4!(),
+            character_type: input.character_type,
+            speed: input.speed,
+            weight: input.weight,
+            size: input.size,
+            hp_total: input.hp_total,
+            hp_current: input.hp_current,
+            belongs_to: input.belongs_to,
+            part_type: input.part_type,
+        }
+    }
+
+    pub(crate) fn checked_insert(
+        self,
+        conn: &SqliteConnection,
+        permitted_parts: &[PermittedPart],
+    ) -> Result<(), String> {
+        use self::characters::dsl::*;
+        // First check if this is allowed.
+        if !permitted_parts
+            .iter()
+            .any(|p| p.part_name == self.character_type && p.part_type == self.part_type)
+        {
+            let m = format!(
+                "Part {}-({:?},{}) not permitted in this system",
+                self.name, self.part_type, self.character_type
+            );
+            return Err(m);
+        }
+        // Next check if it chains with the character.
+        let parts: Vec<Character> = characters.load(conn).map_err(ma)?;
+        if self.belongs_to.is_none()
+            || (matches!(self.part_type, Part::Main)
+                && parts.iter().any(|p| matches!(p.part_type, Part::Main)))
+        {
+            let m = format!(
+                "Part {} has a \"Main\" typ, but one already exists on this sheet.",
+                self.name
+            );
+            return Err(m);
+        }
+        if !parts.iter().any(|p| Some(p.id) == self.belongs_to) {
+            let m = format!(
+                "Part {}-({:?},{}) doesn't belong.",
+                self.name, self.part_type, self.character_type
+            );
+            return Err(m);
+        }
+        diesel::insert_into(characters)
+            .values(&self)
+            .execute(conn)
+            .map_err(ma)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+/// This is used purely for creating new parts.
+pub struct InputCharacter {
+    name: String,
+    character_type: String,
+    speed: i32,
+    weight: Option<i32>,
+    size: Option<String>,
+    hp_total: Option<i32>,
+    hp_current: Option<i32>,
+    belongs_to: Option<i64>,
+    part_type: Part,
 }
 
 /// exists to make working with CompleteCharacter simpler.
@@ -300,7 +373,7 @@ impl CompleteCharacter {
 
         let res = conn.immediate_transaction::<_, DbError, _>(|| {
             // A check to see if the existing character already exists here.
-            let existing: Option<(i64,String,String)> = characters
+            let existing: Option<(i64, String, String)> = characters
                 .filter(part_type.eq(Part::Main))
                 .select((id, name, uuid))
                 .first(conn)

@@ -39,9 +39,9 @@ pub struct BasicConnection {
 
 /// To do when a sheet is created.
 pub fn set_pragma(c: &SqliteConnection) -> Result<(), String> {
-    c.execute("pragma analysis_limit=500;").map_err(ma)?;
+    c.execute("pragma analysis_limit=1000;").map_err(ma)?;
     c.execute("pragma foreign_keys=off;").map_err(ma)?;
-    c.execute("pragma journal_mode = WAL;").map_err(ma)?;
+    c.execute("pragma journal_mode = OFF;").map_err(ma)?;
     c.execute("pragma synchronous = off;").map_err(ma)?;
     c.execute("pragma temp_store = memory;").map_err(ma)?;
     c.execute("pragma wal_checkpoint(TRUNCATE);").map_err(ma)?;

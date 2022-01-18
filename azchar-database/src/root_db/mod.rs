@@ -1,6 +1,7 @@
 //! This deals with the base connections for the root db and outer dbs.
 use super::BasicConnection;
 use crate::character::attribute::{AttributeKey, AttributeValue, Attributes, NewAttribute};
+use crate::character::character::InputCharacter;
 use crate::character::character::{Character, CharacterPart, CompleteCharacter, NewCharacter};
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::*;
@@ -330,6 +331,40 @@ impl LoadedDbs {
     ) -> Result<(), String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             CompleteCharacter::insert_update_character_part(part, conn.connect()?)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
+
+    pub fn create_part(
+        &mut self,
+        new_part: InputCharacter,
+        key: (String, String),
+    ) -> Result<CompleteCharacter, String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let c = conn.connect()?;
+            NewCharacter::from_input(new_part).checked_insert(c, &self.permitted_parts)?;
+            CompleteCharacter::load(c)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
+
+    pub fn create_attribute(
+        &mut self,
+        new_attr: NewAttribute,
+        key: (String, String),
+    ) -> Result<CompleteCharacter, String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let c = conn.connect()?;
+            new_attr.checked_insert(c, &self.permitted_attrs)?;
+            CompleteCharacter::load(c)
         } else {
             Err(format!(
                 "Character with identifier {}-{} not found.",

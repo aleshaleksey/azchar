@@ -1,5 +1,6 @@
 //! This deals with the attributes table.
 use super::character::characters;
+use crate::root_db::system::PermittedAttribute;
 use azchar_error::ma;
 
 use diesel::{Connection, SqliteConnection};
@@ -43,7 +44,7 @@ impl Attribute {
     }
 }
 
-#[derive(Debug, Clone, Insertable)]
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[table_name = "attributes"]
 pub struct NewAttribute {
     pub(crate) key: String,
@@ -52,6 +53,45 @@ pub struct NewAttribute {
     pub(crate) description: Option<String>,
     pub(crate) of: i64,
 }
+
+impl NewAttribute {
+    pub(crate) fn checked_insert(
+        self,
+        conn: &SqliteConnection,
+        permitted_attrs: &[PermittedAttribute],
+    ) -> Result<usize, String> {
+        use self::attributes::dsl::*;
+        use super::character::characters::dsl as c_dsl;
+        use crate::diesel::OptionalExtension;
+        // First check if this is allowed.
+        if let Some(perm) = permitted_attrs.iter().find(|a| a.key == self.key) {
+            // Then check if the part to receive the attribute exists.
+            if c_dsl::characters
+                .filter(c_dsl::part_type.eq(perm.part_type))
+                .select(c_dsl::id)
+                .first::<i64>(conn)
+                .optional()
+                .map_err(ma)?
+                .is_some()
+            {
+                // Then try to insert. Maybe we'll be lucky.
+                diesel::insert_into(attributes)
+                    .values(&self)
+                    .execute(conn)
+                    .map_err(ma)
+            } else {
+                Err(format!("Part does not exist for attribute {}.", self.key))
+            }
+        } else {
+            Err(format!(
+                "Attribute {} not permitted in this system",
+                self.key
+            ))
+        }
+    }
+}
+
+pub type InputAttribute = NewAttribute;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AttributeValue {
