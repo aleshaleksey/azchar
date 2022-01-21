@@ -372,4 +372,35 @@ impl LoadedDbs {
             ))
         }
     }
+
+    pub fn delete_character(
+        &mut self,
+        char_name: String,
+        char_uuid: String,
+    ) -> Result<(), String> {
+        use crate::root_db::characters::character_dbs::dsl::* ;
+        use crate::diesel::{QueryDsl, ExpressionMethods, BoolExpressionMethods};
+
+        let key = (char_name.clone(), char_uuid.clone());
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            ::diesel::delete(
+                character_dbs
+                    .filter(name.eq(&char_name).and(uuid.eq(&char_uuid)))
+                )
+                .execute(self.root_db.connect()?)
+                .map_err(ma)?;
+            match std::fs::remove_file(&conn.db_path) {
+                Ok(()) => Ok(()),
+                Err(_) => match std::fs::remove_file(&conn.db_path) {
+                    Ok(()) => Ok(()),
+                    Err(e) => Err(format!("{}", e)),
+                }
+            }
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
 }

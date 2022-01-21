@@ -27,6 +27,8 @@ pub(crate) enum Request {
     UpdatePart(String, String, CharacterPart),
     /// A function particularly for adding new parts.
     CreatePart(String, String, InputCharacter),
+    /// Delete a character.
+    DeleteCharacter(String, String),
     /// This needs no arguments and uses the current root.
     ListCharacters,
     /// The string a name and UUID.
@@ -56,6 +58,8 @@ pub(crate) enum Response {
     UpdatePart,
     /// We must update the whole character when create an utterly new_attribute o part.
     CreateAttributePart(CompleteCharacter),
+    /// Delete Character, return the list.
+    DeleteCharacter(Vec<CharacterDbRef>),
     /// Returns a list of characters.
     ListCharacters(Vec<CharacterDbRef>),
     /// The Complete Character.
@@ -158,6 +162,13 @@ impl Request {
                 }
                 None => Response::load_db_error(Self::CreateAttribute(name, uuid, attr)),
             },
+            Self::DeleteCharacter(name, uuid) => match main_loop {
+                Some(ref mut dbs) => {
+                    dbs.delete_character(name, uuid)?;
+                    Response::DeleteCharacter(dbs.list_characters()?)
+                }
+                None => Response::load_db_error(Self::LoadCharacter(name, uuid)),
+            }
             Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {
                     let chars = dbs.list_characters()?;
