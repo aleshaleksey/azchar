@@ -308,6 +308,23 @@ impl LoadedDbs {
         serde_json::to_string(&self.load_character(key)?).map_err(ma)
     }
 
+    pub fn create_attribute(
+        &mut self,
+        new_attr: NewAttribute,
+        key: (String, String),
+    ) -> Result<CompleteCharacter, String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let c = conn.connect()?;
+            new_attr.checked_insert(c, &self.permitted_attrs)?;
+            CompleteCharacter::load(c)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
+
     pub fn create_update_attribute(
         &mut self,
         attr_key: AttributeKey,
@@ -356,37 +373,13 @@ impl LoadedDbs {
         }
     }
 
-    pub fn create_attribute(
-        &mut self,
-        new_attr: NewAttribute,
-        key: (String, String),
-    ) -> Result<CompleteCharacter, String> {
-        if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            let c = conn.connect()?;
-            new_attr.checked_insert(c, &self.permitted_attrs)?;
-            CompleteCharacter::load(c)
-        } else {
-            Err(format!(
-                "Character with identifier {}-{} not found.",
-                key.0, key.1
-            ))
-        }
-    }
-
-    pub fn delete_character(
-        &mut self,
-        char_name: String,
-        char_uuid: String,
-    ) -> Result<(), String> {
-        use crate::root_db::characters::character_dbs::dsl::* ;
-        use crate::diesel::{QueryDsl, ExpressionMethods, BoolExpressionMethods};
+    pub fn delete_character(&mut self, char_name: String, char_uuid: String) -> Result<(), String> {
+        use crate::diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl};
+        use crate::root_db::characters::character_dbs::dsl::*;
 
         let key = (char_name.clone(), char_uuid.clone());
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            ::diesel::delete(
-                character_dbs
-                    .filter(name.eq(&char_name).and(uuid.eq(&char_uuid)))
-                )
+            ::diesel::delete(character_dbs.filter(name.eq(&char_name).and(uuid.eq(&char_uuid))))
                 .execute(self.root_db.connect()?)
                 .map_err(ma)?;
             match std::fs::remove_file(&conn.db_path) {
@@ -394,7 +387,7 @@ impl LoadedDbs {
                 Err(_) => match std::fs::remove_file(&conn.db_path) {
                     Ok(()) => Ok(()),
                     Err(e) => Err(format!("{}", e)),
-                }
+                },
             }
         } else {
             Err(format!(

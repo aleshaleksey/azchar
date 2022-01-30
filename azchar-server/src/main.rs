@@ -34,7 +34,7 @@ fn main() {
         .iter()
         .map(|x| Mode::from_args(x))
         .find(|x| !matches!(x, Mode::Default))
-        .unwrap_or(Mode::Default);
+        .unwrap_or(Mode::WebSocket);
 
     match mode {
         Mode::WebSocket => WsMainLoop::create(&address).run(),

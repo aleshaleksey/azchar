@@ -283,6 +283,11 @@ mod system_config_tests {
                     part_type: Part::InventoryItem,
                     obligatory: true,
                 },
+                PermittedPart {
+                    part_name: String::from("spell"),
+                    part_type: Part::Ability,
+                    obligatory: false,
+                },
             ],
             permitted_attributes: vec![
                 PermittedAttribute {

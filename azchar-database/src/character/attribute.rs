@@ -42,6 +42,20 @@ impl Attribute {
     pub fn of(&self) -> i64 {
         self.id
     }
+
+    pub fn into_key_value(self) -> (AttributeKey, AttributeValue) {
+        let v = AttributeValue {
+            id: Some(self.id),
+            value_num: self.value_num,
+            value_text: self.value_text,
+            description: self.description,
+        };
+        let k = AttributeKey {
+            key: self.key,
+            of: self.of,
+        };
+        (k, v)
+    }
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
@@ -52,6 +66,18 @@ pub struct NewAttribute {
     pub(crate) value_text: Option<String>,
     pub(crate) description: Option<String>,
     pub(crate) of: i64,
+}
+
+impl NewAttribute {
+    pub fn test() -> Self {
+        Self {
+            key: "memory_capacity".to_string(),
+            value_num: Some(9999),
+            value_text: Some("It's over nine thousand.".to_string()),
+            description: None,
+            of: 1,
+        }
+    }
 }
 
 impl NewAttribute {
@@ -101,10 +127,30 @@ pub struct AttributeValue {
     description: Option<String>,
 }
 
+impl AttributeValue {
+    pub fn test() -> Self {
+        AttributeValue {
+            id: None,
+            value_num: None,
+            value_text: Some("no".to_owned()),
+            description: None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AttributeKey {
     pub(crate) key: String,
     pub(super) of: i64,
+}
+
+impl AttributeKey {
+    pub fn test() -> Self {
+        AttributeKey {
+            key: "attack_power".to_string(),
+            of: 1,
+        }
+    }
 }
 
 enum NewOrOldAttribute {

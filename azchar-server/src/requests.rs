@@ -168,7 +168,7 @@ impl Request {
                     Response::DeleteCharacter(dbs.list_characters()?)
                 }
                 None => Response::load_db_error(Self::LoadCharacter(name, uuid)),
-            }
+            },
             Self::ListCharacters => match main_loop {
                 Some(ref mut dbs) => {
                     let chars = dbs.list_characters()?;
@@ -295,6 +295,135 @@ mod tests {
         assert_eq!(
             exp,
             serde_json::to_string(&Request::LoadCharacter(eur, uuid)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_update_attribute() {
+        use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+        let key = "{\"key\":\"attack_power\",\"of\":1}".to_string();
+        let value = "{\"id\":null,\"value_num\":null,\"value_text\":\"no\",\"description\":null}"
+            .to_string();
+
+        let k1 = AttributeKey::test();
+        let v1 = AttributeValue::test();
+
+        let exp = format!(
+            "{{\"UpdateAttribute\":[\
+        \"{}\",\
+        \"{}\",\
+        {},\
+        {}\
+        ]}}",
+            eur, uuid, key, value
+        );
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::UpdateAttribute(eur, uuid, k1, v1)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_part() {
+        use azchar_database::character::character::InputCharacter;
+
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+        let part = "{\"name\":\"Memory Thief\",\
+            \"character_type\":\"spell\",\
+            \"speed\":40,\
+            \"weight\":null,\
+            \"size\":null,\
+            \"hp_total\":30,\
+            \"hp_current\":10,\
+            \"belongs_to\":1,\
+            \"part_type\":\"Ability\"}";
+
+        let p1 = InputCharacter::test();
+
+        let exp = format!(
+            "{{\"CreatePart\":[\
+        \"{}\",\
+        \"{}\",\
+        {}\
+        ]}}",
+            eur, uuid, part
+        );
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::CreatePart(eur, uuid, p1)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_create_attribute() {
+        use azchar_database::character::attribute::InputAttribute;
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+
+        let part = "{\"key\":\"memory_capacity\",\
+            \"value_num\":9999,\
+            \"value_text\":\"It's over nine thousand.\",\
+            \"description\":null,\
+            \"of\":1}"
+            .to_string();
+        let p1 = InputAttribute::test();
+
+        let exp = format!(
+            "{{\"CreateAttribute\":[\"{}\",\"{}\",{}]}}",
+            eur, uuid, part
+        );
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::CreateAttribute(eur, uuid, p1)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_update_part() {
+        use azchar_database::character::character::CharacterPart;
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+
+        let p1 = CharacterPart::test();
+        let part = "{\"id\":5,\
+            \"name\":\"Memory Thief\",\
+            \"uuid\":\"5936ce00-2275-463c-106a-0f2edde38000\",\
+            \"character_type\":\"spell\",\
+            \"speed\":0,\
+            \"weight\":1,\
+            \"size\":null,\
+            \"hp_total\":null,\
+            \"hp_current\":null,\
+            \"part_type\":\"Ability\",\
+            \"belongs_to\":1,\
+            \"attributes\":[]}"
+            .to_string();
+
+        let exp = format!("{{\"UpdatePart\":[\"{}\",\"{}\",{}]}}", eur, uuid, part,);
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::UpdatePart(eur, uuid, p1)).unwrap()
+        )
+    }
+    // UpdatePart(String, String, CharacterPart),
+
+    #[test]
+    fn make_delete_character() {
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+        let exp = format!(
+            "{{\"DeleteCharacter\":[\
+        \"{}\",\
+        \"{}\"]}}",
+            eur, uuid
+        );
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::DeleteCharacter(eur, uuid)).unwrap(),
         );
     }
 }

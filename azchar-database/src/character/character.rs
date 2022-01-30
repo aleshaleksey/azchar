@@ -86,6 +86,42 @@ impl Character {
             part_type: Part::Main,
         }
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn character_type(&self) -> &str {
+        &self.character_type
+    }
+
+    pub fn speed(&self) -> i32 {
+        self.speed
+    }
+
+    pub fn weight(&self) -> Option<i32> {
+        self.weight
+    }
+
+    pub fn size(&self) -> &Option<String> {
+        &self.size
+    }
+
+    pub fn part_type(&self) -> Part {
+        self.part_type
+    }
+
+    pub fn hp_total(&self) -> &Option<i32> {
+        &self.hp_total
+    }
+
+    pub fn hp_current(&self) -> &Option<i32> {
+        &self.hp_current
+    }
+
+    pub fn belongs_to(&self) -> &Option<i64> {
+        &self.belongs_to
+    }
 }
 
 #[derive(Debug, Clone, Insertable, Default)]
@@ -208,6 +244,58 @@ pub struct InputCharacter {
     part_type: Part,
 }
 
+impl InputCharacter {
+    pub fn test() -> Self {
+        InputCharacter {
+            name: "Memory Thief".to_string(),
+            character_type: "spell".to_string(),
+            speed: 40,
+            weight: None,
+            size: None,
+            hp_total: Some(30),
+            hp_current: Some(10),
+            belongs_to: Some(1),
+            part_type: Part::Ability,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn character_type(&self) -> &str {
+        &self.character_type
+    }
+
+    pub fn speed(&self) -> i32 {
+        self.speed
+    }
+
+    pub fn weight(&self) -> Option<i32> {
+        self.weight
+    }
+
+    pub fn size(&self) -> &Option<String> {
+        &self.size
+    }
+
+    pub fn part_type(&self) -> Part {
+        self.part_type
+    }
+
+    pub fn hp_total(&self) -> &Option<i32> {
+        &self.hp_total
+    }
+
+    pub fn hp_current(&self) -> &Option<i32> {
+        &self.hp_current
+    }
+
+    pub fn belongs_to(&self) -> &Option<i64> {
+        &self.belongs_to
+    }
+}
+
 /// exists to make working with CompleteCharacter simpler.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CharacterPart {
@@ -220,9 +308,45 @@ pub struct CharacterPart {
     pub(crate) size: Option<String>,
     pub(crate) hp_total: Option<i32>,
     pub(crate) hp_current: Option<i32>,
-    part_type: Part,
+    pub(crate) part_type: Part,
     pub(crate) belongs_to: Option<i64>,
     pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
+}
+
+impl CharacterPart {
+    pub fn test() -> Self {
+        Self {
+            id: Some(5),
+            name: "Memory Thief".to_owned(),
+            uuid: "5936ce00-2275-463c-106a-0f2edde38000".to_owned(),
+            character_type: "spell".to_owned(),
+            speed: 0,
+            weight: Some(1),
+            size: None,
+            hp_total: None,
+            hp_current: None,
+            part_type: Part::Ability,
+            belongs_to: Some(1),
+            attributes: vec![],
+        }
+    }
+
+    pub(crate) fn from_db_character(db_char: Character) -> Self {
+        Self {
+            id: Some(db_char.id),
+            name: db_char.name,
+            uuid: db_char.uuid,
+            character_type: db_char.character_type,
+            speed: db_char.speed,
+            weight: db_char.weight,
+            size: db_char.size,
+            hp_total: db_char.hp_total,
+            hp_current: db_char.hp_current,
+            part_type: db_char.part_type,
+            belongs_to: db_char.belongs_to,
+            attributes: vec![],
+        }
+    }
 }
 
 impl CharacterPart {
@@ -326,20 +450,9 @@ impl CompleteCharacter {
                     break;
                 }
             }
-            subs.push(CharacterPart {
-                id: Some(c.id),
-                name: c.name,
-                uuid: c.uuid,
-                character_type: c.character_type,
-                speed: c.speed,
-                weight: c.weight,
-                size: c.size,
-                hp_total: c.hp_total,
-                hp_current: c.hp_current,
-                part_type: c.part_type,
-                belongs_to: Some(core.id),
-                attributes: c_attrs,
-            });
+            let mut char_part = CharacterPart::from_db_character(c);
+            char_part.attributes = c_attrs;
+            subs.push(char_part);
         }
         let b = then.elapsed().as_micros();
         println!("db-get:{}us, rust-sort: {}us", a, b - a);

@@ -195,7 +195,7 @@ mod system_tests {
     fn load_all_permitted_parts() {
         let mut setup = tests::setup(tests::TestSystem::MemorySphere);
         let (_, parts) = get_all_parts(&mut setup);
-        assert_eq!(parts.len(), 2);
+        assert_eq!(parts.len(), 3);
         assert_eq!(
             parts,
             vec![
@@ -210,6 +210,12 @@ mod system_tests {
                     part_name: String::from("Memory Sphere"),
                     part_type: Part::InventoryItem,
                     obligatory: true,
+                },
+                PermittedPart {
+                    id: 3,
+                    part_name: String::from("spell"),
+                    part_type: Part::Ability,
+                    obligatory: false,
                 },
             ]
         );

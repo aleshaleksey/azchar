@@ -1,6 +1,7 @@
 //! This file contains the basic setup for most tests.
 use crate::root_db::system_config::SystemConfig;
 use crate::LoadedDbs;
+use diesel::SqliteConnection;
 
 use tempfile::TempDir;
 
@@ -8,6 +9,7 @@ pub(crate) const MEMORY_SPHERE: &str = "\
 permitted_parts = [\
 { part_name = \"main\", part_type = \"Main\", obligatory = true },\
 { part_name = \"Memory Sphere\", part_type = \"InventoryItem\", obligatory = true },\
+{ part_name = \"spell\", part_type = \"Ability\", obligatory = false },\
 ]
 permitted_attributes = [\
 { key = \"race\", obligatory = true, attribute_type = 0, attribute_description = \"The character's race.\", part_name = \"main\", part_type = \"Main\" },\
@@ -49,4 +51,16 @@ pub(crate) fn setup(ts: TestSystem) -> TestSetup {
         root_dir,
         loaded_dbs: system,
     }
+}
+
+pub(crate) fn get_inner_conn<'a>(
+    setup: &'a TestSetup,
+    params: &(String, String),
+) -> &'a SqliteConnection {
+    let conn = setup
+        .loaded_dbs
+        .character_connections()
+        .get(params)
+        .expect("The character exists. We inserted it.");
+    conn.connection.as_ref().expect("yes.")
 }
