@@ -2,15 +2,15 @@
 use super::*;
 use crate::requests::{Request, Response};
 
-use tempfile::TempDir;
 use std::path::PathBuf;
+use tempfile::TempDir;
 
 use azchar_error::ma;
 
-const DND_TOML: &str = "examples/dnd5e0.toml";
-const DND_TOML2: &str = "../examples/dnd5e0.toml";
+const DND_TOML: &str = "examples/dnd5e.toml";
+const DND_TOML2: &str = "../examples/dnd5e.toml";
 
-pub(super) fn create_dnd()-> Result<(Frame, TempDir), String> {
+pub(super) fn create_dnd() -> Result<(Frame, TempDir), String> {
     let new_dir = TempDir::new().map_err(ma)?;
     let storage_path = new_dir.path();
     let sp_s = storage_path.to_string_lossy().to_owned();
@@ -25,14 +25,17 @@ pub(super) fn create_dnd()-> Result<(Frame, TempDir), String> {
     } else {
         panic!("Oh no! No path for system config file.");
     };
-    let create_request = Request::CreateSystem(
-        "dnd5e".to_string(),
-        sp_s.to_string(),
-        toml.to_owned(),
-    );
+    if !storage_path.exists() {
+        panic!("storage path doesn't exist: {:?}", storage_path);
+    }
+    let create_request =
+        Request::CreateSystem("dnd5e_test".to_string(), sp_s.to_string(), toml.to_owned());
 
     match fram.send_and_receive(create_request) {
-        FrameReply::Success(r) => println!("Successfully created system: {:?}", r),
+        FrameReply::Success(Response::CreateSystem(s)) => {
+            println!("Successfully created system: {:?}", s)
+        }
+        FrameReply::Success(x) => return Err(format!("{:?}", x)),
         FrameReply::Fail(e) => return Err(e),
     }
 
@@ -45,14 +48,13 @@ fn create_euridice_and_load() {
     let (mut frame, _db_dir) = create_dnd().expect("Couldn't create.");
     println!("Created frame with system.");
 
-    let create_request = Request::CreateCharacterSheet("Euridice".to_string());
-    let r = frame.send_and_receive(create_request);
-    let reply = match r {
+    let create_euridice_request = Request::CreateCharacterSheet("Euridice".to_string());
+    let reply = match frame.send_and_receive(create_euridice_request) {
         FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
         FrameReply::Success(r) => r,
     };
     println!("Created character sheet. {:?}", reply);
-//     /
+    //     /
     assert!(matches!(reply, Response::CreateCharacterSheet(_)));
     let list = match reply {
         Response::CreateCharacterSheet(list) => list,
@@ -61,4 +63,22 @@ fn create_euridice_and_load() {
     assert_eq!(list.len(), 1, "We should have one character for now.");
     assert_eq!(list[0].name(), "Euridice");
 
+    let name = list[0].name().to_owned();
+    let uuiudi = list[0].uuid().to_owned();
+    let load_euridice_request = Request::LoadCharacter(name, uuiudi);
+    let loaded_euridice = match frame.send_and_receive(load_euridice_request) {
+        FrameReply::Success(Response::LoadCharacter(c)) => c,
+        _ => panic!("We expected a 'Response::LoadCharacter', we really did."),
+    };
+
+    assert_eq!(
+        list[0].name(),
+        loaded_euridice.name(),
+        "This is not a Euridice."
+    );
+    assert_eq!(
+        list[0].uuid(),
+        loaded_euridice.uuid(),
+        "This is not the Euridice we are looking for."
+    );
 }

@@ -383,12 +383,16 @@ pub struct CompleteCharacter {
 }
 
 impl CompleteCharacter {
-    pub(crate) fn id(&self) -> Option<i64> {
+    pub fn id(&self) -> Option<i64> {
         self.id
     }
 
-    pub(crate) fn uuid(&self) -> &str {
+    pub fn uuid(&self) -> &str {
         &self.uuid
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     /// Compare the main parts of two complete characters: NB: Attributes not compared.

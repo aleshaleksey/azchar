@@ -78,12 +78,12 @@ impl SystemConfig {
     /// This function exists to:
     // a) Create the root database with all three tables.
     // b) Insert permitted attributes and parts into it.
-    pub fn into_system(self, path: &str, system: &str) -> Result<LoadedDbs, String> {
+    pub fn into_system(self, path: &str, system_name: &str) -> Result<LoadedDbs, String> {
         // The required tables.
         use crate::root_db::system::permitted_attributes::dsl as pa_dsl;
         use crate::root_db::system::permitted_parts::dsl as pp_dsl;
 
-        let file_name = format!("{}.db", system);
+        let file_name = format!("{}.db", system_name);
         let file_path = PathBuf::from(path).join(&file_name);
         if file_path.exists() {
             return Err(format!(
@@ -93,9 +93,7 @@ impl SystemConfig {
         }
 
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
-        let file_path_string = file_path.canonicalize().map_err(ma)?;
-        let file_path_string = file_path_string.to_string_lossy();
-        println!("path: {:?}", file_path_string);
+        let file_path_string = file_path.to_string_lossy();
 
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;
         let new_root = loaded_dbs.get_inner_root()?;

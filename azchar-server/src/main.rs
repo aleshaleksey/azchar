@@ -14,7 +14,6 @@ extern crate azchar_config;
 extern crate azchar_database;
 extern crate azchar_error;
 
-
 mod main_loop;
 mod requests;
 mod websocket_loop;

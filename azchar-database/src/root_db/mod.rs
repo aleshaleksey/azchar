@@ -144,7 +144,8 @@ impl LoadedDbs {
 
         // Create the file.
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
-        let reference = NewCharacterDbRef::new(name.to_owned(), file_name, uuid.clone());
+        let file_path = file_path.to_string_lossy().to_owned().to_string();
+        let reference = NewCharacterDbRef::new(name.to_owned(), file_path.clone(), uuid.clone());
 
         // Clean up if we can't create the character sheet.
         let root_conn = self.get_inner_root()?;
@@ -161,7 +162,6 @@ impl LoadedDbs {
         }
 
         // Connect to the new character sheet.
-        let file_path = file_path.to_string_lossy();
         let mut sheet_conn_outer = BasicConnection::new(&file_path);
         let sheet_conn = sheet_conn_outer.connect()?;
         crate::set_pragma(sheet_conn)?;

@@ -2,12 +2,12 @@
 //! This will use the ExpClient, which is somewhat limited.
 //! Currently the messagesize is limited to 10MB.
 
+use std::net::{Shutdown, TcpStream};
 use std::path::PathBuf;
 use std::thread::{self, JoinHandle};
-use std::net::{Shutdown, TcpStream};
 
-use crate::{Mode, MainLoop};
 use crate::requests::{Request, Response};
+use crate::{MainLoop, Mode};
 
 mod test_library;
 
@@ -18,8 +18,10 @@ pub(self) struct Frame {
     dir: PathBuf,
     // Thread where the server is run.
     thread: Option<JoinHandle<()>>,
-    // Client TcpStream.
+    // client address.
     address: String,
+    // client.
+    client: Option<TcpStream>,
 }
 
 // Each time a frame sends a message, it expects a certain response.
@@ -32,18 +34,27 @@ impl Drop for Frame {
     fn drop(&mut self) {
         // First drop the client. It should be the easiest part.
         // This is a little defensive, but there we go.
-        let mut stream = TcpStream::connect(&self.address).expect("Bad address?");
         let shutdown_song = serde_json::to_string(&Request::Shutdown).expect("Yes.");
-        send_message(shutdown_song, &mut stream);
-        stream.shutdown(Shutdown::Both).expect("Couldn't shut stream");
-        drop(stream);
+        if let Some(ref mut stream) = self.client {
+            send_message(shutdown_song, stream);
+            stream
+                .shutdown(Shutdown::Both)
+                .expect("Couldn't shut stream");
+        } else {
+            let mut stream = TcpStream::connect(&self.address).expect("Bad address?");
+            send_message(shutdown_song, &mut stream);
+            stream
+                .shutdown(Shutdown::Both)
+                .expect("Couldn't shut stream");
+            drop(stream);
+        };
 
         // Try to drop the directory where we kept all the data.
         if let Err(e1) = std::fs::remove_dir_all(&self.dir) {
-           if let Err(e2) = std::fs::remove_dir_all(&self.dir) {
-               println!("Could not remove own directory: {:?}, {:?}", e1, e2);
-           }
-       }
+            if let Err(e2) = std::fs::remove_dir_all(&self.dir) {
+                println!("Could not remove own directory: {:?}, {:?}", e1, e2);
+            }
+        }
     }
 }
 
@@ -55,19 +66,21 @@ impl Frame {
             dir,
             thread: None,
             address: address.to_string(),
+            client: None,
         };
         let handle = thread::spawn(move || {
             let mode = Mode::Client;
 
             match MainLoop::create_with_connection(&addr) {
-                    Ok(mut ml) => ml.run(mode),
-                    Err(e) => println!("{}", e),
+                Ok(mut ml) => ml.run(mode),
+                Err(e) => println!("{}", e),
             }
         });
         frame.thread = Some(handle);
         // We need to sleep because the server needs a moment to start up.
         // before we can begin accepting signals.
         std::thread::sleep(std::time::Duration::from_millis(10));
+        // frame.client = Some(TcpStream::connect(address).expect("Bad address?"));
         frame
     }
 
@@ -76,11 +89,13 @@ impl Frame {
     /// the reply from the server is what we would expect or not.
     /// This then gives us control over when to end the test case.
     fn send_and_receive(&mut self, message: Request) -> FrameReply {
-        let mut stream = TcpStream::connect(&self.address).expect("Bad address?");
-
         let letter = serde_json::to_string(&message).expect("invalid");
-        let letter_home = send_message(letter, &mut stream);
-
+        let letter_home = if let Some(ref mut stream) = self.client {
+            send_message(letter, stream)
+        } else {
+            let mut stream = TcpStream::connect(&self.address).expect("Bad address?");
+            send_message(letter, &mut stream)
+        };
         match serde_json::from_str(&letter_home) {
             Ok(r) => FrameReply::Success(r),
             Err(e) => FrameReply::Fail(format!("{:?}", e)),
@@ -90,7 +105,7 @@ impl Frame {
 
 /// TODO: Figure out how to import `expclient` properly, so we don't have to use this.
 pub fn send_message(message: String, stream: &mut TcpStream) -> String {
-    use std::io::{Write, Read};
+    use std::io::{Read, Write};
 
     stream.write_all(message.as_bytes()).expect("Can't send");
     stream.flush().expect("Can't flush");
