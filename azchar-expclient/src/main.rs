@@ -7,9 +7,13 @@ fn main() {
     } else {
         "{\"Roll\":\"2d10+1d4+6\"}".to_string()
     };
+    let mut stream = TcpStream::connect("127.0.0.1:55555").expect("Unparseable address");
+    send_message(input, &mut stream);
+}
+// {\"Roll\":\"2d10dl1mx10+1d4+6\"}
 
-    let mut stream = TcpStream::connect("127.0.0.1:55555").unwrap();
-    stream.write_all(input.as_bytes()).expect("Can't send");
+pub fn send_message(message: String, stream: &mut TcpStream) -> String {
+    stream.write_all(message.as_bytes()).expect("Can't send");
     stream.flush().expect("Can't flush");
 
     // Receive.
@@ -17,11 +21,11 @@ fn main() {
     input = match stream.read(&mut input) {
         Err(e) => {
             println!("Bad stream from {:?} because {:?}.", stream.peer_addr(), e);
-            return;
+            return String::new();
         }
         Ok(n) => input[0..n].to_vec(),
     };
     let out = String::from_utf8_lossy(&input);
     println!("{}", out);
+    out.to_owned().to_string()
 }
-// {\"Roll\":\"2d10dl1mx10+1d4+6\"}

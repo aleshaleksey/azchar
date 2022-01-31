@@ -5,8 +5,6 @@
 //! b) Requests and responses.
 #![allow(clippy::field_reassign_with_default)]
 extern crate serde_json;
-#[cfg(test)]
-extern crate tempfile;
 extern crate toml;
 #[macro_use]
 extern crate serde_derive;
@@ -16,9 +14,15 @@ extern crate azchar_config;
 extern crate azchar_database;
 extern crate azchar_error;
 
+
 mod main_loop;
 mod requests;
 mod websocket_loop;
+
+#[cfg(test)]
+mod roundtrip_tests;
+#[cfg(test)]
+extern crate tempfile;
 
 use crate::main_loop::MainLoop;
 use crate::websocket_loop::WsMainLoop;

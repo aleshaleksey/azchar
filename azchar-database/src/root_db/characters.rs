@@ -29,6 +29,14 @@ impl CharacterDbRef {
         use self::character_dbs::dsl::*;
         character_dbs.load(conn).map_err(ma)
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
 }
 
 #[derive(Debug, Clone, Insertable)]
