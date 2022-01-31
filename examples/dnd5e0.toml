@@ -31,7 +31,7 @@ permitted_attributes = [
   { key = "con", obligatory = true, attribute_type = 0, attribute_description = "Hardiness. Eating contest rank.", part_name = "main", part_type = "Main" },
   { key = "int", obligatory = true, attribute_type = 0, attribute_description = "Mathematical brilliance.", part_name = "main", part_type = "Main" },
   { key = "wis", obligatory = true, attribute_type = 0, attribute_description = "Knowing when to go to bed.", part_name = "main", part_type = "Main" },
-  { key = "char", obligatory = true, attribute_type = 0, attribute_description = "Persuading someone to go to bed with you.", part_name = "main", part_type = "Main" },
+  { key = "cha", obligatory = true, attribute_type = 0, attribute_description = "Persuading someone to go to bed with you.", part_name = "main", part_type = "Main" },
   { key = "ac", obligatory = true, attribute_type = 0, attribute_description = "But can you hit me?", part_name = "main", part_type = "Main" },
   { key = "level", obligatory = true, attribute_type = 0, attribute_description = "The character's race.", part_name = "main", part_type = "Main" },
   # { part_name = "spell", part_type = "Ability" }

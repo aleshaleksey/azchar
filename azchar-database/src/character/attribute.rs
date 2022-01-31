@@ -61,11 +61,11 @@ impl Attribute {
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[table_name = "attributes"]
 pub struct NewAttribute {
-    pub(crate) key: String,
-    pub(crate) value_num: Option<i64>,
-    pub(crate) value_text: Option<String>,
-    pub(crate) description: Option<String>,
-    pub(crate) of: i64,
+    pub key: String,
+    pub value_num: Option<i64>,
+    pub value_text: Option<String>,
+    pub description: Option<String>,
+    pub of: i64,
 }
 
 impl NewAttribute {
@@ -136,6 +136,29 @@ impl AttributeValue {
             description: None,
         }
     }
+
+    pub fn update_value_num(mut self, value_num: Option<i64>) -> Self {
+        self.value_num = value_num;
+        self
+    }
+
+    pub fn value_num(&self) -> Option<i64> {
+        self.value_num
+    }
+
+    pub fn update_value_text(mut self, value_text: Option<String>) -> Self {
+        self.value_text = value_text;
+        self
+    }
+
+    pub fn value_text(&self) -> &Option<String> {
+        &self.value_text
+    }
+
+    pub fn update_description(mut self, desc: Option<String>) -> Self {
+        self.description = desc;
+        self
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -150,6 +173,10 @@ impl AttributeKey {
             key: "attack_power".to_string(),
             of: 1,
         }
+    }
+
+    pub fn key(&self) -> &str {
+        &self.key
     }
 }
 

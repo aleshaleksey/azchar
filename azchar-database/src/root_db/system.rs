@@ -295,7 +295,7 @@ mod system_tests {
             &main_attributes[11..14],
             &[
                 PermittedAttribute {
-                    key: String::from("char"),
+                    key: String::from("cha"),
                     attribute_type: 0,
                     attribute_description: String::from(
                         "Persuading someone to go to bed with you."

@@ -1,7 +1,8 @@
 //! I am dumping all the tests here for now.
 use super::*;
 use crate::requests::{Request, Response};
-use azchar_database::character::character::{InputCharacter, CompleteCharacter};
+use azchar_database::character::attribute::InputAttribute;
+use azchar_database::character::character::{CompleteCharacter, InputCharacter};
 use azchar_database::shared::Part;
 
 use std::path::PathBuf;
@@ -170,7 +171,11 @@ fn create_euridice_and_give_her_a_sword() {
         .parts()
         .iter()
         .find(|p| (p.part_type(), p.character_type()) == (Part::InventoryItem, "weapon"));
-    assert!(maybe_sword.is_some(), "We lost a magical sword. Not good. {:?}", maybe_sword);
+    assert!(
+        maybe_sword.is_some(),
+        "We lost a magical sword. Not good. {:?}",
+        maybe_sword
+    );
 
     let sword = maybe_sword.unwrap();
     assert_eq!(sword.name(), "+1 Scimitar");
@@ -179,4 +184,205 @@ fn create_euridice_and_give_her_a_sword() {
     assert_eq!(sword.size, Some("medium".to_owned()));
     assert_eq!(sword.hp_total, None);
     assert_eq!(sword.hp_current, None);
+}
+
+#[test]
+fn create_euridice_and_set_some_stats() {
+    let (mut frame, _dir, euridice) = create_euridice_and_load_inner();
+
+    let uuid = euridice.uuid().to_owned();
+    let name = euridice.name().to_owned();
+    let (sk, sv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "str")
+        .cloned()
+        .unwrap();
+    let (dk, dv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "dex")
+        .cloned()
+        .unwrap();
+    let (ck, cv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "con")
+        .cloned()
+        .unwrap();
+    let (ik, iv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "int")
+        .cloned()
+        .unwrap();
+    let (wk, wv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "wis")
+        .cloned()
+        .unwrap();
+    let (hk, hv) = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "cha")
+        .cloned()
+        .unwrap();
+
+    assert_eq!(sv.value_num(), None);
+    assert_eq!(dv.value_num(), None);
+    assert_eq!(cv.value_num(), None);
+    assert_eq!(iv.value_num(), None);
+    assert_eq!(wv.value_num(), None);
+    assert_eq!(hv.value_num(), None);
+    let new_str = sv.update_value_num(Some(10));
+    let new_dex = dv.update_value_num(Some(16));
+    let new_con = cv.update_value_num(Some(10));
+    let new_int = iv.update_value_num(Some(14));
+    let new_wis = wv.update_value_num(Some(12));
+    let new_cha = hv.update_value_num(Some(14));
+    let str_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), sk, new_str);
+    let dex_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), dk, new_dex);
+    let con_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), ck, new_con);
+    let int_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), ik, new_int);
+    let wis_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), wk, new_wis);
+    let cha_req = Request::UpdateAttribute(name.to_owned(), uuid.to_owned(), hk, new_cha);
+    match frame.send_and_receive(str_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+    match frame.send_and_receive(dex_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+    match frame.send_and_receive(con_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+    match frame.send_and_receive(int_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+    match frame.send_and_receive(wis_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+    match frame.send_and_receive(cha_req) {
+        FrameReply::Success(Response::UpdateAttribute) => {}
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdateAttribute`, got {:?}", r),
+    };
+
+    let summon_euridice_request = Request::LoadCharacter(name, uuid);
+    let loaded_euridice = match frame.send_and_receive(summon_euridice_request) {
+        FrameReply::Success(Response::LoadCharacter(c)) => c,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::UpdatePart`, got {:?}", r),
+    };
+
+    let (_, sv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "str")
+        .cloned()
+        .unwrap();
+    let (_, dv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "dex")
+        .cloned()
+        .unwrap();
+    let (_, cv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "con")
+        .cloned()
+        .unwrap();
+    let (_, iv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "int")
+        .cloned()
+        .unwrap();
+    let (_, wv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "wis")
+        .cloned()
+        .unwrap();
+    let (_, hv) = loaded_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "cha")
+        .cloned()
+        .unwrap();
+    assert_eq!(sv.value_num(), Some(10));
+    assert_eq!(dv.value_num(), Some(16));
+    assert_eq!(cv.value_num(), Some(10));
+    assert_eq!(iv.value_num(), Some(14));
+    assert_eq!(wv.value_num(), Some(12));
+    assert_eq!(hv.value_num(), Some(14));
+}
+
+#[test]
+fn create_euridice_and_give_her_some_experience() {
+    let (mut frame, _dir, euridice) = create_euridice_and_load_inner();
+
+    let uuid = euridice.uuid().to_owned();
+    let name = euridice.name().to_owned();
+    let maybe_exp = euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "exp_current");
+    assert!(
+        maybe_exp.is_none(),
+        "Non-obligatory attributes shouldn't be here yet."
+    );
+
+    let experience = InputAttribute {
+        key: "exp_current".to_owned(),
+        value_num: Some(-999),
+        value_text: Some("Himitsu-desu!".to_string()),
+        description: Some("Mostly running away from dragons and getting drunk.".to_string()),
+        of: euridice.id().unwrap_or(1),
+    };
+    let experience_req = Request::CreateAttribute(name.to_owned(), uuid.to_owned(), experience);
+    let experienced_euridice = match frame.send_and_receive(experience_req) {
+        FrameReply::Success(Response::CreateAttributePart(c)) => c,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::CreateAttribute`, got {:?}", r),
+    };
+
+    let (_, exp_value) = experienced_euridice
+        .attributes()
+        .iter()
+        .find(|(k, _)| k.key() == "exp_current")
+        .cloned()
+        .expect("We just created the exp!");
+    assert_eq!(exp_value.value_num(), Some(-999));
+}
+
+#[test]
+fn create_euridice_and_delete_euridice() {
+    let (mut frame, _dir, euridice) = create_euridice_and_load_inner();
+    let list = match frame.send_and_receive(Request::ListCharacters) {
+        FrameReply::Success(Response::ListCharacters(list)) => list,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::ListCharacters`, got {:?}", r),
+    };
+    assert_eq!(list.len(), 1);
+
+    let uuid = euridice.uuid().to_owned();
+    let name = euridice.name().to_owned();
+    let list = match frame.send_and_receive(Request::DeleteCharacter(name, uuid)) {
+        FrameReply::Success(Response::DeleteCharacter(list)) => list,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::DeleteCharacter`, got {:?}", r),
+    };
+    assert!(list.is_empty());
 }
