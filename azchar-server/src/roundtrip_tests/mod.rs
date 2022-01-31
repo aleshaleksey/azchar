@@ -35,7 +35,7 @@ impl Drop for Frame {
         let mut stream = TcpStream::connect(&self.address).expect("Bad address?");
         let shutdown_song = serde_json::to_string(&Request::Shutdown).expect("Yes.");
         send_message(shutdown_song, &mut stream);
-        stream.shutdown(Shutdown::Both).expect("Stream failed to shut.");
+        stream.shutdown(Shutdown::Both).expect("Couldn't shut stream");
         drop(stream);
 
         // Try to drop the directory where we kept all the data.
