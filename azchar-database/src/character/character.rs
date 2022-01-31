@@ -233,15 +233,15 @@ impl NewCharacter {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// This is used purely for creating new parts.
 pub struct InputCharacter {
-    name: String,
-    character_type: String,
-    speed: i32,
-    weight: Option<i32>,
-    size: Option<String>,
-    hp_total: Option<i32>,
-    hp_current: Option<i32>,
-    belongs_to: Option<i64>,
-    part_type: Part,
+    pub name: String,
+    pub character_type: String,
+    pub speed: i32,
+    pub weight: Option<i32>,
+    pub size: Option<String>,
+    pub hp_total: Option<i32>,
+    pub hp_current: Option<i32>,
+    pub belongs_to: Option<i64>,
+    pub part_type: Part,
 }
 
 impl InputCharacter {
@@ -303,17 +303,37 @@ pub struct CharacterPart {
     pub(crate) name: String,
     uuid: String,
     pub(crate) character_type: String,
-    pub(crate) speed: i32,
-    pub(crate) weight: Option<i32>,
-    pub(crate) size: Option<String>,
-    pub(crate) hp_total: Option<i32>,
-    pub(crate) hp_current: Option<i32>,
+    pub speed: i32,
+    pub weight: Option<i32>,
+    pub size: Option<String>,
+    pub hp_total: Option<i32>,
+    pub hp_current: Option<i32>,
     pub(crate) part_type: Part,
-    pub(crate) belongs_to: Option<i64>,
-    pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
+    pub belongs_to: Option<i64>,
+    pub attributes: Vec<(AttributeKey, AttributeValue)>,
 }
 
 impl CharacterPart {
+    pub fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    pub fn part_type(&self) -> Part {
+        self.part_type
+    }
+
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn character_type(&self) -> &str {
+        &self.character_type
+    }
+
     pub fn test() -> Self {
         Self {
             id: Some(5),
@@ -393,6 +413,31 @@ impl CompleteCharacter {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn parts(&self) -> &[CharacterPart] {
+        &self.parts
+    }
+
+    pub fn attributes(&self) -> &[(AttributeKey, AttributeValue)] {
+        &self.attributes
+    }
+
+    pub fn to_bare_part(&self) -> CharacterPart {
+        CharacterPart {
+            id: self.id,
+            name: self.name.to_owned(),
+            uuid: self.uuid.to_owned(),
+            character_type: self.character_type.to_owned(),
+            speed: self.speed,
+            weight: self.weight,
+            size: self.size.to_owned(),
+            hp_total: self.hp_total,
+            hp_current: self.hp_current,
+            part_type: Part::Main,
+            belongs_to: None,
+            attributes: vec![],
+        }
     }
 
     /// Compare the main parts of two complete characters: NB: Attributes not compared.

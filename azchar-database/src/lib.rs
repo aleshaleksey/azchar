@@ -24,7 +24,7 @@ use diesel::{Connection, SqliteConnection};
 
 pub mod character;
 pub mod root_db;
-mod shared;
+pub mod shared;
 
 pub use root_db::{CharacterDbRef, LoadedDbs};
 

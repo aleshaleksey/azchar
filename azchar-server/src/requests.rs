@@ -12,6 +12,7 @@ use azchar_database::LoadedDbs;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum Request {
     /// String is a config file as a TOML.
+    // The strings are name && uuid
     CreateSystem(String, String, String),
     /// This is the path of the system to load.
     InitialiseFromPath(String),
@@ -20,14 +21,19 @@ pub(crate) enum Request {
     /// The string is a CompleteCharacter JSON/TOML.
     CreateUpdateCharacter(CompleteCharacter),
     /// This needs no arguments and uses the current root. [Need identifier]
+    // The strings are name && uuid
     UpdateAttribute(String, String, AttributeKey, AttributeValue),
     /// Purely for creating an attribute.
+    // The strings are name && uuid
     CreateAttribute(String, String, InputAttribute),
     /// Update a single character part. [Need identifier]
+    // The strings are name && uuid
     UpdatePart(String, String, CharacterPart),
     /// A function particularly for adding new parts.
+    // The strings are name && uuid
     CreatePart(String, String, InputCharacter),
     /// Delete a character.
+    // The strings are name && uuid
     DeleteCharacter(String, String),
     /// This needs no arguments and uses the current root.
     ListCharacters,

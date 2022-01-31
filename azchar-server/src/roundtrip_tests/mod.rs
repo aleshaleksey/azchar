@@ -48,6 +48,8 @@ impl Drop for Frame {
                 .expect("Couldn't shut stream");
             drop(stream);
         };
+        // Let's see if theis helps.
+        std::thread::sleep(std::time::Duration::from_millis(10));
 
         // Try to drop the directory where we kept all the data.
         if let Err(e1) = std::fs::remove_dir_all(&self.dir) {
