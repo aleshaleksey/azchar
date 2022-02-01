@@ -379,10 +379,11 @@ fn create_euridice_and_delete_euridice() {
 
     let uuid = euridice.uuid().to_owned();
     let name = euridice.name().to_owned();
-    let list = match frame.send_and_receive(Request::DeleteCharacter(name, uuid)) {
+    let get_rid_of_ce = Request::DeleteCharacter(name, uuid);
+    let list = match frame.send_and_receive(get_rid_of_ce) {
         FrameReply::Success(Response::DeleteCharacter(list)) => list,
         FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
         FrameReply::Success(r) => panic!("Expect `Response::DeleteCharacter`, got {:?}", r),
     };
-    assert!(list.is_empty());
+    assert!(list.is_empty(), "Die! Die! Why won't you die?");
 }
