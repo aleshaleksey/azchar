@@ -109,6 +109,7 @@ impl SystemConfig {
             permitted_parts.into_iter().map(Into::into).collect();
 
         embedded_migrations::run(new_root).map_err(ma)?;
+
         new_root
             .immediate_transaction::<_, DsError, _>(|| {
                 // Insert values as needed.
@@ -123,7 +124,9 @@ impl SystemConfig {
             .map_err(ma)?;
 
         let pp = DbPermittedPart::load_all(new_root)?;
+
         let pa = DbPermittedAttribute::load_all(new_root)?;
+
         loaded_dbs.permitted_parts = pp;
         loaded_dbs.permitted_attrs = pa;
 

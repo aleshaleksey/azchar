@@ -88,12 +88,13 @@ impl NewAttribute {
     ) -> Result<usize, String> {
         use self::attributes::dsl::*;
         use super::character::characters::dsl as c_dsl;
+        use crate::diesel::NullableExpressionMethods;
         use crate::diesel::OptionalExtension;
         // First check if this is allowed.
         if let Some(perm) = permitted_attrs.iter().find(|a| a.key == self.key) {
             // Then check if the part to receive the attribute exists.
             if c_dsl::characters
-                .filter(c_dsl::part_type.eq(perm.part_type))
+                .filter(c_dsl::part_type.nullable().eq(perm.part_type))
                 .select(c_dsl::id)
                 .first::<i64>(conn)
                 .optional()

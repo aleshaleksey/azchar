@@ -5,8 +5,10 @@ use azchar_error::ma;
 
 use crate::character::NewCharacter;
 
+use diesel::backend::Backend;
+use diesel::types::FromSqlRow;
 use diesel::{BoolExpressionMethods, ExpressionMethods};
-use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
+use diesel::{QueryDsl, Queryable, RunQueryDsl, SqliteConnection};
 
 use std::default::Default;
 
@@ -15,8 +17,8 @@ table!(
         key -> Text,
         attribute_type -> Integer,
         attribute_description -> Text,
-        part_name -> Text,
-        part_type -> Integer,
+        part_name -> Nullable<Text>,
+        part_type -> Nullable<Integer>,
         obligatory -> Bool,
     }
 );
@@ -42,16 +44,33 @@ pub struct PermittedPart {
 }
 
 /// This represents a permitted attribute, to be created on a new sheet.
-#[derive(Debug, Clone, PartialEq, Queryable)]
-// #[table_name = "permitted_attributes"]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PermittedAttribute {
     pub(crate) key: String,
     pub(crate) attribute_type: i32,
     pub(crate) attribute_description: String,
-    pub(crate) part_name: String,
-    #[diesel(deserialize_as = "i32")]
-    pub(crate) part_type: Part,
+    pub(crate) part_name: Option<String>,
+    pub(crate) part_type: Option<Part>,
     pub(crate) obligatory: bool,
+}
+
+impl<DB, ST> Queryable<ST, DB> for PermittedAttribute
+where
+    DB: Backend,
+    (String, i32, String, Option<String>, Option<i32>, bool): FromSqlRow<ST, DB>,
+{
+    type Row = (String, i32, String, Option<String>, Option<i32>, bool);
+
+    fn build(row: Self::Row) -> Self {
+        PermittedAttribute {
+            key: row.0,
+            attribute_type: row.1,
+            attribute_description: row.2,
+            part_name: row.3,
+            part_type: row.4.map(Into::into),
+            obligatory: row.5,
+        }
+    }
 }
 
 impl From<&PermittedPart> for NewCharacter {
@@ -270,24 +289,24 @@ mod system_tests {
                     key: String::from("race"),
                     attribute_type: 0,
                     attribute_description: String::from("The character's race."),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("class"),
                     attribute_type: 0,
                     attribute_description: String::from("The character's class."),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("character_alignment"),
                     attribute_type: 0,
                     attribute_description: String::from("The character's alignment."),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
             ]
@@ -310,24 +329,24 @@ mod system_tests {
                     attribute_description: String::from(
                         "Persuading someone to go to bed with you."
                     ),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("ac"),
                     attribute_type: 0,
                     attribute_description: String::from("But can you hit me?"),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
                 PermittedAttribute {
                     key: String::from("level"),
                     attribute_type: 0,
                     attribute_description: String::from("The character's race."),
-                    part_name: String::from("main"),
-                    part_type: Part::Main,
+                    part_name: Some(String::from("main")),
+                    part_type: Some(Part::Main),
                     obligatory: true,
                 },
             ]
@@ -347,32 +366,32 @@ mod system_tests {
                 key: String::from("mana_type"),
                 attribute_type: 0,
                 attribute_description: String::from("The type of mana that the memory sphere consumes."),
-                part_name: String::from("Memory Sphere"),
-                part_type: Part::InventoryItem,
+                part_name: Some(String::from("Memory Sphere")),
+                part_type: Some(Part::InventoryItem),
                 obligatory: true,
             },
             PermittedAttribute {
                 key: String::from("mana_consumption"),
                 attribute_type: 0,
                 attribute_description: String::from("The amount of mana the memory sphere consumes per recollection."),
-                part_name: String::from("Memory Sphere"),
-                part_type: Part::InventoryItem,
+                part_name: Some(String::from("Memory Sphere")),
+                part_type: Some(Part::InventoryItem),
                 obligatory: true,
             },
             PermittedAttribute {
                 key: String::from("memory_capacity"),
                 attribute_type: 0,
                 attribute_description: String::from("The number of memories that the memory sphere can hold before it breaks."),
-                part_name: String::from("Memory Sphere"),
-                part_type: Part::InventoryItem,
+                part_name: Some(String::from("Memory Sphere")),
+                part_type: Some(Part::InventoryItem),
                 obligatory: true,
             },
             PermittedAttribute {
                 key: String::from("memory_sphere_alignment"),
                 attribute_type: 0,
                 attribute_description: String::from("The alignment of the memory sphere determines the kind of memories it prefers."),
-                part_name: String::from("Memory Sphere"),
-                part_type: Part::InventoryItem,
+                part_name: Some(String::from("Memory Sphere")),
+                part_type: Some(Part::InventoryItem),
                 obligatory: true,
             },]
         );

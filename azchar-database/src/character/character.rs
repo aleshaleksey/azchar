@@ -570,13 +570,8 @@ impl CompleteCharacter {
 
             let permitted_attrs_map = permitted_attrs
                 .iter()
-                .map(|a| {
-                    (
-                        a.key.as_ref(),
-                        (a.obligatory, a.part_type, a.part_name.as_ref()),
-                    )
-                })
-                .collect::<FnvHashMap<&str, (bool, Part, &str)>>();
+                .map(|a| (a.key.as_ref(), (a.obligatory, a.part_type, &a.part_name)))
+                .collect::<FnvHashMap<&str, (bool, Option<Part>, &Option<String>)>>();
             let obligatory_attrs = permitted_attrs
                 .iter()
                 .filter(|a| a.obligatory)
@@ -719,14 +714,16 @@ impl CompleteCharacter {
 
 fn check_attributes_vs_db(
     own_attributes: &[(AttributeKey, AttributeValue)],
-    permitted: &FnvHashMap<&str, (bool, Part, &str)>,
+    permitted: &FnvHashMap<&str, (bool, Option<Part>, &Option<String>)>,
     (part_name, part_type): (&str, Part),
     obligatory: &[&PermittedAttribute],
 ) -> Result<(), String> {
     // First attribute check.
     for (ak, _) in own_attributes.iter() {
         if let Some(v) = permitted.get(&ak.key.as_ref()) {
-            if (part_type != v.1) && (part_name != v.2) {
+            let part_type_ok = v.1.map(|x| x == part_type).unwrap_or(true);
+            let part_name_ok = v.2.as_ref().map(|x| x == part_name).unwrap_or(true);
+            if !part_type_ok || !part_name_ok {
                 let msg = format!(
                     "Can't save sheet: Attribute '{}' not allowed for '{}'",
                     ak.key, part_name
@@ -742,10 +739,15 @@ fn check_attributes_vs_db(
         .iter()
         .map(|a| &a.0.key)
         .collect::<FnvHashSet<_>>();
-    for a in obligatory
-        .iter()
-        .filter(|pa| pa.part_name == part_name && pa.part_type == part_type)
-    {
+    for a in obligatory.iter().filter(|pa| {
+        let part_type_ok = pa.part_type.map(|x| x == part_type).unwrap_or(true);
+        let part_name_ok = pa
+            .part_name
+            .as_ref()
+            .map(|x| x == part_name)
+            .unwrap_or(true);
+        part_type_ok && part_name_ok
+    }) {
         if !attrs.contains(&a.key) {
             let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
             return Err(m);

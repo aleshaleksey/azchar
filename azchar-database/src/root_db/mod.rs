@@ -214,9 +214,13 @@ impl LoadedDbs {
                         .permitted_attrs
                         .iter()
                         .filter(|a| {
+                            // Fucking shit condition.
                             a.obligatory
-                                && a.part_name == p.character_type
-                                && a.part_type == p.part_type
+                                && a.part_name
+                                    .as_ref()
+                                    .map(|x| x == &p.character_type)
+                                    .unwrap_or(true)
+                                && a.part_type.map(|x| x == p.part_type).unwrap_or(true)
                         })
                         .map(|a| NewAttribute {
                             key: a.key.to_owned(),
