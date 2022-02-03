@@ -112,9 +112,10 @@ impl Request {
                 } else {
                     toml::from_str(&system).map_err(ma)?
                 };
+                println!("Valid sys description created.");
                 let dbs = sys.into_system(&path, &name);
                 if let Err(ref e) = dbs {
-                    println!("{:?}", e);
+                    println!("Error in creation: {:?}", e);
                 }
                 *main_loop = Some(dbs?);
                 Response::CreateSystem(format!("Created \"{}\" in \"{}\"", name, path))

@@ -7,13 +7,13 @@ create table character_dbs(
 );
 
 create table permitted_attributes(
-	key TEXT NOT NULL primary key,
+	key TEXT NOT NULL,
 	attribute_type INTEGER NOT NULL,
 	attribute_description TEXT NOT NULL,
-	part_name TEXT NOT NULL,
-	part_type INTEGER NOT NULL,
-	obligatory BOOLEAN NOT NULL
-	-- UNIQUE(part_name, part_type)
+	part_name TEXT,
+	part_type INTEGER,
+	obligatory BOOLEAN NOT NULL,
+	PRIMARY KEY(key, part_name, part_type)
 );
 
 create table permitted_parts(
@@ -23,3 +23,6 @@ create table permitted_parts(
 	part_type INTEGER NOT NULL,
 	obligatory BOOLEAN NOT NULL
 );
+
+create index if not exists attributes_idx on permitted_attributes(part_name, part_type);
+create index if not exists parts_idx on permitted_parts(id);

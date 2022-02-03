@@ -86,18 +86,24 @@ impl PermittedPart {
 }
 
 impl PermittedAttribute {
-    // Load permitted attributes for the part from the root database.
+    /// Load permitted attributes for the part from the root database.
+    /// Permitted attributes are:
+    ///
+    /// a) Attributes which are general (no part name or part type)
+    ///
+    /// b) type specific attributes (no part name, part type equals)
+    ///
+    /// c) Specific attribtues (both p-name and p-type are equal)
     pub(crate) fn load_for_part(
         part: &PermittedPart,
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         use self::permitted_attributes::dsl::*;
+        let filter = part_type.is_null()
+            .or(part_type.eq(part.part_type).and(part_name.is_null()))
+            .or(part_type.eq(part.part_type).and(part_name.eq(&part.part_name)));
         permitted_attributes
-            .filter(
-                part_name
-                    .eq(&part.part_name)
-                    .and(part_type.eq(part.part_type)),
-            )
+            .filter(filter)
             .order_by(part_type.asc())
             .load(root_conn)
             .map_err(ma)
@@ -108,13 +114,11 @@ impl PermittedAttribute {
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         use self::permitted_attributes::dsl::*;
+        let filter = part_type.is_null()
+            .or(part_type.eq(part.part_type).and(part_name.is_null()))
+            .or(part_type.eq(part.part_type).and(part_name.eq(&part.part_name)));
         permitted_attributes
-            .filter(
-                part_name
-                    .eq(&part.part_name)
-                    .and(part_type.eq(part.part_type))
-                    .and(obligatory.eq(true)),
-            )
+            .filter(filter.and(obligatory.eq(true)))
             .order_by(part_type.asc())
             .load(root_conn)
             .map_err(ma)
@@ -154,8 +158,8 @@ pub(crate) struct NewPermittedAttribute {
     pub(crate) key: String,
     pub(crate) attribute_type: i32,
     pub(crate) attribute_description: String,
-    pub(crate) part_name: String,
-    pub(crate) part_type: Part,
+    pub(crate) part_name: Option<String>,
+    pub(crate) part_type: Option<Part>,
     pub(crate) obligatory: bool,
 }
 
