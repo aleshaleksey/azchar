@@ -99,9 +99,12 @@ impl PermittedAttribute {
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         use self::permitted_attributes::dsl::*;
-        let filter = part_type.is_null()
+        let filter = part_type
+            .is_null()
             .or(part_type.eq(part.part_type).and(part_name.is_null()))
-            .or(part_type.eq(part.part_type).and(part_name.eq(&part.part_name)));
+            .or(part_type
+                .eq(part.part_type)
+                .and(part_name.eq(&part.part_name)));
         permitted_attributes
             .filter(filter)
             .order_by(part_type.asc())
@@ -114,9 +117,12 @@ impl PermittedAttribute {
         root_conn: &SqliteConnection,
     ) -> Result<Vec<Self>, String> {
         use self::permitted_attributes::dsl::*;
-        let filter = part_type.is_null()
+        let filter = part_type
+            .is_null()
             .or(part_type.eq(part.part_type).and(part_name.is_null()))
-            .or(part_type.eq(part.part_type).and(part_name.eq(&part.part_name)));
+            .or(part_type
+                .eq(part.part_type)
+                .and(part_name.eq(&part.part_name)));
         permitted_attributes
             .filter(filter.and(obligatory.eq(true)))
             .order_by(part_type.asc())
