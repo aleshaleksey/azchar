@@ -124,7 +124,6 @@ impl SystemConfig {
             .map_err(ma)?;
 
         let pp = DbPermittedPart::load_all(new_root)?;
-
         let pa = DbPermittedAttribute::load_all(new_root)?;
 
         loaded_dbs.permitted_parts = pp;

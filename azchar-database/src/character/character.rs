@@ -1,4 +1,5 @@
 //! This deals with the character columns.
+use crate::character::attribute::NewAttribute;
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::Part;
 
@@ -190,8 +191,10 @@ impl NewCharacter {
         self,
         conn: &SqliteConnection,
         permitted_parts: &[PermittedPart],
+        permitted_attrs: &[PermittedAttribute],
     ) -> Result<(), String> {
         use self::characters::dsl::*;
+        use crate::character::attribute::attributes::dsl as adsl;
         // First check if this is allowed.
         if !permitted_parts
             .iter()
@@ -224,6 +227,22 @@ impl NewCharacter {
         }
         diesel::insert_into(characters)
             .values(&self)
+            .execute(conn)
+            .map_err(ma)?;
+
+        let pid = characters
+            .order_by(id.desc())
+            .select(id)
+            .first(conn)
+            .map_err(ma)?;
+        let new_attributes = permitted_attrs
+            .iter()
+            .filter(|pa| pa.obligatory_for_part(self.part_type, &self.character_type))
+            .map(|a| NewAttribute::from_permitted(pid, a))
+            .collect::<Vec<_>>();
+
+        diesel::insert_into(adsl::attributes)
+            .values(&new_attributes)
             .execute(conn)
             .map_err(ma)?;
         Ok(())
@@ -567,7 +586,7 @@ impl CompleteCharacter {
                 return Ok(());
             }
 
-            let permitted_parts = permitted_parts
+            let permitted_parts_map = permitted_parts
                 .iter()
                 .map(|p| ((p.part_name.as_ref(), p.part_type), p.obligatory))
                 .collect::<FnvHashMap<(&str, Part), bool>>();
@@ -582,7 +601,7 @@ impl CompleteCharacter {
                 .collect::<Vec<_>>();
 
             // Do the work.
-            if permitted_parts
+            if permitted_parts_map
                 .get(&(self.character_type.as_ref(), Part::Main))
                 .is_none()
             {
@@ -591,7 +610,9 @@ impl CompleteCharacter {
             }
             let mut own_oblig_part_count = 1;
             for p in self.parts.iter() {
-                if let Some(val) = permitted_parts.get(&(p.character_type.as_ref(), p.part_type)) {
+                if let Some(val) =
+                    permitted_parts_map.get(&(p.character_type.as_ref(), p.part_type))
+                {
                     if *val {
                         own_oblig_part_count += 1;
                     }
@@ -601,7 +622,7 @@ impl CompleteCharacter {
                 }
             }
 
-            let opc = permitted_parts.into_iter().filter(|(_, ob)| *ob).count();
+            let opc = permitted_parts_map.into_iter().filter(|(_, ob)| *ob).count();
             if own_oblig_part_count < opc {
                 error_string = "Obligatory part missing.".to_string();
                 return Err(DbError::NotFound);
@@ -660,10 +681,13 @@ impl CompleteCharacter {
                 }
             }
 
-            for chunk in new_chars.chunks(999) {
-                diesel::insert_into(characters)
-                    .values(chunk)
-                    .execute(conn)?;
+            for new_char in new_chars.into_iter() {
+                new_char
+                    .checked_insert(conn, permitted_parts, permitted_attrs)
+                    .map_err(|e| {
+                        error_string = e;
+                        DbError::NotFound
+                    })?;
             }
             for chunk in upd_chars.chunks(999) {
                 diesel::replace_into(characters)
@@ -688,10 +712,12 @@ impl CompleteCharacter {
     pub(crate) fn insert_update_character_part(
         chp: CharacterPart,
         conn: &SqliteConnection,
+        permitted_parts: &[PermittedPart],
+        permitted_attrs: &[PermittedAttribute],
     ) -> Result<(), String> {
         use self::characters::dsl::*;
         if let Some(ch_id) = chp.id {
-            diesel::update(characters.filter(id.eq(ch_id)))
+            return diesel::update(characters.filter(id.eq(ch_id)))
                 .set((
                     name.eq(&chp.name),
                     uuid.eq(&chp.uuid),
@@ -705,14 +731,10 @@ impl CompleteCharacter {
                     belongs_to.eq(chp.belongs_to),
                 ))
                 .execute(conn)
-        } else {
-            let new_part = NewCharacter::from_part(&chp);
-            diesel::insert_into(characters)
-                .values(&new_part)
-                .execute(conn)
+                .map(|_| ())
+                .map_err(ma);
         }
-        .map(|_| ())
-        .map_err(ma)
+        NewCharacter::from_part(&chp).checked_insert(conn, permitted_parts, permitted_attrs)
     }
 }
 
@@ -743,15 +765,10 @@ fn check_attributes_vs_db(
         .iter()
         .map(|a| &a.0.key)
         .collect::<FnvHashSet<_>>();
-    for a in obligatory.iter().filter(|pa| {
-        let part_type_ok = pa.part_type.map(|x| x == part_type).unwrap_or(true);
-        let part_name_ok = pa
-            .part_name
-            .as_ref()
-            .map(|x| x == part_name)
-            .unwrap_or(true);
-        part_type_ok && part_name_ok
-    }) {
+    for a in obligatory
+        .iter()
+        .filter(|pa| pa.permitted_for_part(part_type, part_name))
+    {
         if !attrs.contains(&a.key) {
             let m = format!("Can't save sheet: Obligatory attribute missing '{}'", a.key);
             return Err(m);

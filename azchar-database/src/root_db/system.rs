@@ -105,6 +105,16 @@ impl PermittedPart {
 }
 
 impl PermittedAttribute {
+    /// A DRY function to check if a part is permitted for a character.
+    pub(crate) fn permitted_for_part(&self, p_type: Part, c_type: &str) -> bool {
+        self.part_type.map(|x| x == p_type).unwrap_or(true)
+            && self.part_name.as_ref().map(|x| x == c_type).unwrap_or(true)
+    }
+    /// A DRY function to check if a part is permitted for a character.
+    pub(crate) fn obligatory_for_part(&self, p_type: Part, c_type: &str) -> bool {
+        self.obligatory && self.permitted_for_part(p_type, c_type)
+    }
+
     /// Load permitted attributes for the part from the root database.
     /// Permitted attributes are:
     ///

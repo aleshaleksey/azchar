@@ -78,6 +78,16 @@ impl NewAttribute {
             of: 1,
         }
     }
+
+    pub(crate) fn from_permitted(ch_id: i64, permitted: &PermittedAttribute) -> Self {
+        NewAttribute {
+            key: permitted.key.to_owned(),
+            value_num: None,
+            value_text: None,
+            description: Some(permitted.attribute_description.to_owned()),
+            of: ch_id,
+        }
+    }
 }
 
 impl NewAttribute {
@@ -94,6 +104,7 @@ impl NewAttribute {
         if let Some(perm) = permitted_attrs.iter().find(|a| a.key == self.key) {
             // Then check if the part to receive the attribute exists.
             if c_dsl::characters
+                // NB: We are simplifying here.
                 .filter(c_dsl::part_type.nullable().eq(perm.part_type))
                 .select(c_dsl::id)
                 .first::<i64>(conn)

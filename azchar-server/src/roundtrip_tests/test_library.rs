@@ -440,7 +440,6 @@ fn create_euridice_and_fiddle_with_euridice() {
     }
 
     let nrc_req = Request::LoadCharacter(euridice.name().to_owned(), euridice.uuid().to_owned());
-    std::thread::sleep(std::time::Duration::from_millis(500));
     let newridice_loaded = match frame.send_and_receive(nrc_req) {
         FrameReply::Success(Response::LoadCharacter(newridice)) => newridice,
         _ => panic!("`Response::CreateUpdateCharacter`."),

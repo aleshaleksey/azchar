@@ -213,22 +213,8 @@ impl LoadedDbs {
                     let attr_iter = self
                         .permitted_attrs
                         .iter()
-                        .filter(|a| {
-                            // Fucking shit condition.
-                            a.obligatory
-                                && a.part_name
-                                    .as_ref()
-                                    .map(|x| x == &p.character_type)
-                                    .unwrap_or(true)
-                                && a.part_type.map(|x| x == p.part_type).unwrap_or(true)
-                        })
-                        .map(|a| NewAttribute {
-                            key: a.key.to_owned(),
-                            value_num: None,
-                            value_text: None,
-                            description: Some(a.attribute_description.to_owned()),
-                            of: p.id,
-                        });
+                        .filter(|a| a.obligatory_for_part(p.part_type, &p.character_type))
+                        .map(|a| NewAttribute::from_permitted(p.id, a));
                     new_attributes.extend(attr_iter);
                 }
 
@@ -351,7 +337,12 @@ impl LoadedDbs {
         key: (String, String),
     ) -> Result<(), String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
-            CompleteCharacter::insert_update_character_part(part, conn.connect()?)
+            CompleteCharacter::insert_update_character_part(
+                part,
+                conn.connect()?,
+                &self.permitted_parts,
+                &self.permitted_attrs,
+            )
         } else {
             Err(format!(
                 "Character with identifier {}-{} not found.",
@@ -367,7 +358,11 @@ impl LoadedDbs {
     ) -> Result<CompleteCharacter, String> {
         if let Some(ref mut conn) = self.connections.get_mut(&key) {
             let c = conn.connect()?;
-            NewCharacter::from_input(new_part).checked_insert(c, &self.permitted_parts)?;
+            NewCharacter::from_input(new_part).checked_insert(
+                c,
+                &self.permitted_parts,
+                &self.permitted_attrs,
+            )?;
             CompleteCharacter::load(c)
         } else {
             Err(format!(
