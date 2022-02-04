@@ -63,10 +63,10 @@ impl MainLoop {
             }
             Ok(n) => input[0..n].to_vec(),
         };
-        println!("{}", String::from_utf8_lossy(&input));
+        // println!("About to handle input: {}", String::from_utf8_lossy(&input));
         let mut echo = match String::from_utf8(input) {
             Ok(s) => s,
-            Err(e) => format!("{:?}", e),
+            Err(e) => format!("Client receiving error: {:?}", e),
         };
         let ln = echo.chars().count();
 
@@ -77,7 +77,7 @@ impl MainLoop {
                 echo = echo.replace(a, b);
             }
             let req = Request::convert(echo.clone());
-            println!("{:?}", req);
+            // println!("{:?}", req);
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
@@ -105,7 +105,7 @@ impl MainLoop {
             Ok(n) => input[0..n].to_vec(),
         };
         let mut echo = String::from_utf8(input).unwrap();
-        println!("{}", echo);
+        // println!("{}", echo);
         let ln = echo.chars().count();
 
         echo = echo.split_once(END).unwrap_or(("", "")).0.to_owned();
@@ -119,7 +119,7 @@ impl MainLoop {
                 echo = echo.replace(a, b);
             }
             let req = Request::convert(echo.clone());
-            println!("{:?}", req);
+            // println!("{:?}", req);
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),
                 Ok(r) => serde_json::to_string(&r),
@@ -138,7 +138,6 @@ impl MainLoop {
 }
 
 fn send_and_flush(s: &mut TcpStream, msg: &str, peer: &str) -> Result<(), String> {
-    println!("{}", msg);
     if let Err(e) = s.write(msg.as_bytes()) {
         return Err(format!("POST Can't reply to {:?} because {:?}.", peer, e));
     }

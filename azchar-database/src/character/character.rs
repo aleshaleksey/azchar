@@ -376,11 +376,11 @@ impl CharacterPart {
             && self.part_type == other.part_type
             && self.speed == other.speed
             && self.weight == other.weight
+            && self.size == other.size
             && self.hp_total == other.hp_total
             && self.hp_current == other.hp_current
             && self.belongs_to == other.belongs_to
             && self.character_type == other.character_type
-            && self.size == other.size
             && self.name == other.name
             && self.uuid == other.uuid
     }
@@ -415,12 +415,29 @@ impl CompleteCharacter {
         &self.name
     }
 
+    pub fn weight(&self) -> Option<i32> {
+        self.weight
+    }
+
     pub fn parts(&self) -> &[CharacterPart] {
         &self.parts
     }
 
     pub fn attributes(&self) -> &[(AttributeKey, AttributeValue)] {
         &self.attributes
+    }
+
+    /// Compare the main parts of two complete characters: NB: Attributes not compared.
+    fn compare_main(&self, other: &CompleteCharacter) -> bool {
+        self.id == other.id
+            && self.name == other.name
+            && self.uuid == other.uuid
+            && self.character_type == other.character_type
+            && self.speed == other.speed
+            && self.weight == other.weight
+            && self.size == other.size
+            && self.hp_total == other.hp_total
+            && self.hp_current == other.hp_current
     }
 
     pub fn to_bare_part(&self) -> CharacterPart {
@@ -438,19 +455,6 @@ impl CompleteCharacter {
             belongs_to: None,
             attributes: vec![],
         }
-    }
-
-    /// Compare the main parts of two complete characters: NB: Attributes not compared.
-    fn compare_main(&self, other: &CompleteCharacter) -> bool {
-        self.id == other.id
-            && self.speed == other.speed
-            && self.weight == other.weight
-            && self.hp_total == other.hp_current
-            && self.hp_current == other.hp_current
-            && self.name == other.name
-            && self.uuid == other.uuid
-            && self.character_type == other.character_type
-            && self.size == other.size
     }
 
     pub fn load(conn: &SqliteConnection) -> Result<CompleteCharacter, String> {
@@ -553,7 +557,7 @@ impl CompleteCharacter {
             }
 
             let old_complete = CompleteCharacter::load(conn).map_err(|e| {
-                error_string = format!("{:?}", e);
+                error_string = format!("Save error: {:?}", e);
                 DbError::NotFound
             })?;
             if &old_complete == self {
@@ -646,7 +650,7 @@ impl CompleteCharacter {
                     let p = old_complete.parts.iter().find(|p| p.id == sub_char.id);
                     if let Some(part) = p {
                         if !part.compare_part(sub_char) {
-                            upd_chars.push(Character::from_complete(self));
+                            upd_chars.push(Character::from_part(sub_char));
                         }
                     } else {
                         new_chars.push(NewCharacter::from_part(sub_char));
@@ -661,7 +665,7 @@ impl CompleteCharacter {
                     .values(chunk)
                     .execute(conn)?;
             }
-            for chunk in new_chars.chunks(999) {
+            for chunk in upd_chars.chunks(999) {
                 diesel::replace_into(characters)
                     .values(chunk)
                     .execute(conn)?;
@@ -754,6 +758,62 @@ fn check_attributes_vs_db(
         }
     }
     Ok(())
+}
+
+impl CompleteCharacter {
+    /// Compare the main parts of two complete characters: NB: Attributes not compared.
+    pub fn compare_main_test(&self, other: &CompleteCharacter) -> bool {
+        let mut result = true;
+        if self.id != other.id {
+            println!("self.id={:?}, other.id={:?}", self.id, other.id);
+            result = false;
+        }
+        if self.speed != other.speed {
+            println!("self.speed={}, other.speed={}", self.speed, other.speed);
+            result = false;
+        }
+        if self.weight != other.weight {
+            println!(
+                "self.weight={:?}, other.weight={:?}",
+                self.weight, other.weight
+            );
+            result = false;
+        }
+        if self.hp_total != other.hp_total {
+            println!(
+                "self.hp_total={:?}, other.hp_total={:?}",
+                self.hp_total, other.hp_total
+            );
+            result = false;
+        }
+        if self.hp_current != other.hp_current {
+            println!(
+                "self.hp_current={:?}, other.hp_current={:?}",
+                self.hp_current, other.hp_current
+            );
+            result = false;
+        }
+        if self.name != other.name {
+            println!("self.name={:?}, other.name={:?}", self.name, other.name);
+            result = false;
+        }
+        if self.uuid != other.uuid {
+            println!("self.uuid={:?}, other.uuid={:?}", self.uuid, other.uuid);
+            result = false;
+        }
+        if self.character_type != other.character_type {
+            println!(
+                "self.character_type={:?}, other.character_type={:?}",
+                self.character_type, other.character_type
+            );
+            result = false;
+        }
+        if self.size != other.size {
+            println!("self.size={:?}, other.size={:?}", self.size, other.size);
+            result = false;
+        }
+        result
+    }
 }
 
 #[cfg(test)]

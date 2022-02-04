@@ -38,7 +38,7 @@ pub(super) fn create_dnd() -> Result<(Frame, TempDir), String> {
         FrameReply::Success(Response::CreateSystem(s)) => {
             println!("Successfully created system: {:?}", s)
         }
-        FrameReply::Success(x) => return Err(format!("{:?}", x)),
+        FrameReply::Success(x) => return Err(format!("Wrong success: {:?}", x)),
         FrameReply::Fail(e) => return Err(e),
     }
 
@@ -386,4 +386,86 @@ fn create_euridice_and_delete_euridice() {
         FrameReply::Success(r) => panic!("Expect `Response::DeleteCharacter`, got {:?}", r),
     };
     assert!(list.is_empty(), "Die! Die! Why won't you die?");
+}
+
+#[test]
+fn create_euridice_and_create_more_characters_than_barney() {
+    let (mut frame, _dir, _) = create_euridice_and_load_inner();
+    for x in [
+        "Saloth", "Zeb", "Nil", "Drauchir", "Narli", "Narumi", "Eirei", "Morgil", "Ezel",
+    ] {
+        match frame.send_and_receive(Request::CreateCharacterSheet(x.to_owned())) {
+            FrameReply::Success(Response::CreateCharacterSheet(_)) => {}
+            _ => panic!("Expected `Response::CreateCharacterSheet`, got some kind of crap."),
+        }
+    }
+    let mut list = match frame.send_and_receive(Request::ListCharacters) {
+        FrameReply::Success(Response::ListCharacters(list)) => list,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `Response::ListCharacters`, got {:?}", r),
+    };
+    assert_eq!(list.len(), 10);
+    list.sort_by(|a, b| a.name().cmp(b.name()));
+    let name_list = list.iter().map(|x| x.name()).collect::<Vec<_>>();
+    assert_eq!(
+        &name_list,
+        &[
+            "Drauchir", "Eirei", "Euridice", "Ezel", "Morgil", "Narli", "Narumi", "Nil", "Saloth",
+            "Zeb"
+        ],
+    );
+}
+
+#[test]
+fn create_euridice_and_fiddle_with_euridice() {
+    let (mut frame, _dir, euridice) = create_euridice_and_load_inner();
+    assert_eq!(euridice.weight(), None, "Euridice should be weightless!");
+    for part in euridice.parts() {
+        assert_eq!(
+            part.weight,
+            None,
+            "{} should be weightless too..",
+            part.name()
+        );
+    }
+    let mut stringridice = serde_json::to_string(&euridice).expect("Yes me can.");
+    stringridice = stringridice.replace("\"weight\":null", "\"weight\":999");
+
+    let newridice: CompleteCharacter = serde_json::from_str(&stringridice).expect("We can string.");
+
+    let update_euridice_req = Request::CreateUpdateCharacter(newridice.clone());
+    match frame.send_and_receive(update_euridice_req) {
+        FrameReply::Success(Response::CreateUpdateCharacter(_)) => {}
+        _ => panic!("`Response::CreateUpdateCharacter`."),
+    }
+
+    let nrc_req = Request::LoadCharacter(euridice.name().to_owned(), euridice.uuid().to_owned());
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    let newridice_loaded = match frame.send_and_receive(nrc_req) {
+        FrameReply::Success(Response::LoadCharacter(newridice)) => newridice,
+        _ => panic!("`Response::CreateUpdateCharacter`."),
+    };
+
+    assert!(
+        newridice.compare_main_test(&newridice_loaded),
+        "We loaded not what we saved!"
+    );
+    assert_eq!(newridice, newridice_loaded, "We loaded not what we saved!");
+    assert_ne!(
+        euridice, newridice,
+        "Euridice should not be the same as Neuridice."
+    );
+    assert_ne!(
+        euridice, newridice_loaded,
+        "Euridice should not be the same as NeuridiceL."
+    );
+    assert_eq!(newridice_loaded.weight(), Some(999));
+    for part in newridice_loaded.parts() {
+        assert_eq!(
+            part.weight,
+            Some(999),
+            "{} should not be weightless..",
+            part.name()
+        );
+    }
 }

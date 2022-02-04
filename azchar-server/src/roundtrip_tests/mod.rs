@@ -75,14 +75,13 @@ impl Frame {
 
             match MainLoop::create_with_connection(&addr) {
                 Ok(mut ml) => ml.run(mode),
-                Err(e) => println!("{}", e),
+                Err(e) => println!("Error in main loop: {}", e),
             }
         });
         frame.thread = Some(handle);
         // We need to sleep because the server needs a moment to start up.
         // before we can begin accepting signals.
         std::thread::sleep(std::time::Duration::from_millis(10));
-        // frame.client = Some(TcpStream::connect(address).expect("Bad address?"));
         frame
     }
 
@@ -100,7 +99,7 @@ impl Frame {
         };
         match serde_json::from_str(&letter_home) {
             Ok(r) => FrameReply::Success(r),
-            Err(e) => FrameReply::Fail(format!("{:?}", e)),
+            Err(e) => FrameReply::Fail(format!("Framereply is an error: {:?}", e)),
         }
     }
 }
@@ -122,7 +121,5 @@ pub fn send_message(message: String, stream: &mut TcpStream) -> String {
         Ok(n) => input[0..n].to_vec(),
     };
     let out = String::from_utf8_lossy(&input);
-    println!("{}", out);
     out.to_owned().to_string()
-    // String::new()
 }
