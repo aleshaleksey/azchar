@@ -406,7 +406,8 @@ mod tests {
             \"hp_current\":null,\
             \"part_type\":\"Ability\",\
             \"belongs_to\":1,\
-            \"attributes\":[]}"
+            \"attributes\":[],\
+            \"image\":null}"
             .to_string();
 
         let exp = format!("{{\"UpdatePart\":[\"{}\",\"{}\",{}]}}", eur, uuid, part,);

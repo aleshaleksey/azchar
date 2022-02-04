@@ -61,7 +61,7 @@ impl NewCharacterDbRef {
 }
 
 #[cfg(test)]
-mod character_tests {
+pub(crate) mod character_tests {
     use crate::character::attribute::Attribute;
     use crate::character::character::CompleteCharacter;
     use crate::root_db::tests::*;
@@ -85,12 +85,12 @@ mod character_tests {
     pub(crate) fn create_char_with_name_and_connect<'a>(
         setup: &'a mut TestSetup,
         name: &str,
-    ) -> &'a BasicConnection {
+    ) -> &'a mut BasicConnection {
         let (name, uuid) = create_char_with_name(setup, name);
         setup
             .loaded_dbs
-            .character_connections()
-            .get(&(name, uuid))
+            .connections
+            .get_mut(&(name, uuid))
             .expect("The character exists. We inserted it.")
     }
 

@@ -32,9 +32,25 @@ create table attributes(
   UNIQUE(key, of)
 );
 
+-- A place where notes can be stored.
+create table notes(
+  id INTEGER primary key AUTOINCREMENT,
+  date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  title TEXT NOT NULL,
+  content TEXT
+);
+
+-- A place to store my cute little character tokens ^-^
+create table images(
+  id INTEGER primary key AUTOINCREMENT,
+  of BIGINT references characters(id),
+  format TEXT,
+  content BLOB
+);
+
 create index if not exists attributes_idx on attributes(id);
 create index if not exists attributes_ofx on attributes(of);
 create index if not exists attributes_keyx on attributes(key);
 create index if not exists characters_idx on characters(id);
 create index if not exists characters_belonx on characters(belongs_to);
-create index if not exists characters_belonx on characters(part_type);
+create index if not exists characters_partx on characters(part_type);

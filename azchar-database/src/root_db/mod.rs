@@ -17,7 +17,7 @@ pub mod characters;
 pub mod system;
 pub mod system_config;
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use characters::{CharacterDbRef, NewCharacterDbRef};
 
@@ -362,6 +362,7 @@ impl LoadedDbs {
                 c,
                 &self.permitted_parts,
                 &self.permitted_attrs,
+                &None,
             )?;
             CompleteCharacter::load(c)
         } else {

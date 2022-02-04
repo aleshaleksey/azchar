@@ -1,14 +1,15 @@
 //! This deals with the character columns.
 use crate::character::attribute::NewAttribute;
+use crate::character::image::{Image, NewImage};
+use crate::character::note::{Note};
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::Part;
 
 use azchar_error::ma;
 
 use diesel::result::Error as DbError;
-use diesel::OptionalExtension;
-use diesel::SqliteConnection;
 use diesel::{ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl};
+use diesel::{OptionalExtension, SqliteConnection};
 use fnv::{FnvHashMap, FnvHashSet};
 
 use super::attribute::{Attribute, AttributeKey, AttributeValue, Attributes};
@@ -192,6 +193,7 @@ impl NewCharacter {
         conn: &SqliteConnection,
         permitted_parts: &[PermittedPart],
         permitted_attrs: &[PermittedAttribute],
+        image: &Option<Image>,
     ) -> Result<(), String> {
         use self::characters::dsl::*;
         use crate::character::attribute::attributes::dsl as adsl;
@@ -245,6 +247,14 @@ impl NewCharacter {
             .values(&new_attributes)
             .execute(conn)
             .map_err(ma)?;
+        if let Some(image) = image {
+            NewImage {
+                of: pid,
+                format: image.format.clone(),
+                content: image.content.clone(),
+            }
+            .insert_new(conn)?;
+        }
         Ok(())
     }
 }
@@ -330,6 +340,7 @@ pub struct CharacterPart {
     pub(crate) part_type: Part,
     pub belongs_to: Option<i64>,
     pub attributes: Vec<(AttributeKey, AttributeValue)>,
+    pub image: Option<Image>,
 }
 
 impl CharacterPart {
@@ -367,6 +378,7 @@ impl CharacterPart {
             part_type: Part::Ability,
             belongs_to: Some(1),
             attributes: vec![],
+            image: None,
         }
     }
 
@@ -384,6 +396,7 @@ impl CharacterPart {
             part_type: db_char.part_type,
             belongs_to: db_char.belongs_to,
             attributes: vec![],
+            image: None,
         }
     }
 }
@@ -419,6 +432,8 @@ pub struct CompleteCharacter {
     pub(crate) hp_current: Option<i32>,
     pub(crate) parts: Vec<CharacterPart>,
     pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
+    pub(crate) image: Option<Image>,
+    pub(crate) notes: Vec<Note>,
 }
 
 impl CompleteCharacter {
@@ -446,6 +461,10 @@ impl CompleteCharacter {
         &self.attributes
     }
 
+    pub fn image(&self) -> &Option<Image> {
+        &self.image
+    }
+
     /// Compare the main parts of two complete characters: NB: Attributes not compared.
     fn compare_main(&self, other: &CompleteCharacter) -> bool {
         self.id == other.id
@@ -457,8 +476,10 @@ impl CompleteCharacter {
             && self.size == other.size
             && self.hp_total == other.hp_total
             && self.hp_current == other.hp_current
+            && self.image == other.image
     }
 
+    // Used essentially in tests.
     pub fn to_bare_part(&self) -> CharacterPart {
         CharacterPart {
             id: self.id,
@@ -473,15 +494,19 @@ impl CompleteCharacter {
             part_type: Part::Main,
             belongs_to: None,
             attributes: vec![],
+            image: self.image.clone(),
         }
     }
 
     pub fn load(conn: &SqliteConnection) -> Result<CompleteCharacter, String> {
         use self::characters::dsl::*;
         use super::attribute::attributes::dsl as attr_dsl;
+
         let then = std::time::Instant::now();
 
         let mut chars: Vec<Character> = characters.load(conn).map_err(ma)?;
+        let notes = Note::load_all(conn).map_err(ma)?;
+        let mut images = Image::load_all(conn).map_err(ma)?;
         let attrs: Vec<Attribute> = attr_dsl::attributes.load(conn).map_err(ma)?;
 
         let a = then.elapsed().as_micros();
@@ -493,6 +518,11 @@ impl CompleteCharacter {
             return Err("No parts found for character.".to_string());
         }
         let core = chars.pop().expect("We have at least one.");
+        let core_image = if images.last().map(|i| i.of == core.id).unwrap_or(false) {
+            images.pop()
+        } else {
+            None
+        };
 
         let mut core_attrs = Vec::with_capacity(50);
         let mut next_vec = Vec::with_capacity(50);
@@ -522,8 +552,14 @@ impl CompleteCharacter {
                     break;
                 }
             }
+            let image = if images.last().map(|i| i.of == c.id).unwrap_or(false) {
+                images.pop()
+            } else {
+                None
+            };
             let mut char_part = CharacterPart::from_db_character(c);
             char_part.attributes = c_attrs;
+            char_part.image = image;
             subs.push(char_part);
         }
         let b = then.elapsed().as_micros();
@@ -540,6 +576,8 @@ impl CompleteCharacter {
             hp_current: core.hp_current,
             parts: subs,
             attributes: core_attrs,
+            image: core_image,
+            notes,
         })
     }
 
@@ -548,11 +586,13 @@ impl CompleteCharacter {
     /// NB: The sheet should already exist.
     /// NB2: We disallow characters lacking obligatory parts, or that have parts that are disallowed.
     pub fn save(
-        &self,
+        mut self,
         conn: &SqliteConnection,
         (permitted_attrs, permitted_parts): (&[PermittedAttribute], &[PermittedPart]),
     ) -> Result<(), String> {
         use self::characters::dsl::*;
+        use super::image::images::dsl::images;
+        use super::note::notes::dsl::notes;
         let then = std::time::Instant::now();
         let mut error_string = "DbError::NotFound".to_string();
 
@@ -579,7 +619,7 @@ impl CompleteCharacter {
                 error_string = format!("Save error: {:?}", e);
                 DbError::NotFound
             })?;
-            if &old_complete == self {
+            if old_complete == self {
                 let b = then.elapsed().as_micros();
                 println!("same ret: {}", b);
                 println!("same ret check: {}", b - a);
@@ -622,7 +662,10 @@ impl CompleteCharacter {
                 }
             }
 
-            let opc = permitted_parts_map.into_iter().filter(|(_, ob)| *ob).count();
+            let opc = permitted_parts_map
+                .into_iter()
+                .filter(|(_, ob)| *ob)
+                .count();
             if own_oblig_part_count < opc {
                 error_string = "Obligatory part missing.".to_string();
                 return Err(DbError::NotFound);
@@ -641,19 +684,23 @@ impl CompleteCharacter {
             attribute_refs.extend(self.attributes.iter().map(|(k, v)| (k, v)));
             let mut new_chars = Vec::new();
             let mut upd_chars = Vec::new();
+            let mut upd_images = Vec::new();
             // Insert or update main character.
             if existing.is_none() {
-                new_chars.push(NewCharacter::from_complete(self));
+                new_chars.push((self.image.take(), NewCharacter::from_complete(&self)));
             } else if let Some(_own_id) = self.id {
                 if !self.compare_main(&old_complete) {
-                    upd_chars.push(Character::from_complete(self));
+                    upd_chars.push(Character::from_complete(&self));
+                    if let Some(i) = self.image.take() {
+                        upd_images.push(i);
+                    }
                 }
             } else {
-                new_chars.push(NewCharacter::from_complete(self));
+                new_chars.push((self.image.take(), NewCharacter::from_complete(&self)));
             }
 
             // Insert or update sub-characters.
-            for sub_char in self.parts.iter() {
+            for sub_char in self.parts.iter_mut() {
                 if let Err(e) = check_attributes_vs_db(
                     &sub_char.attributes,
                     &permitted_attrs_map,
@@ -672,18 +719,21 @@ impl CompleteCharacter {
                     if let Some(part) = p {
                         if !part.compare_part(sub_char) {
                             upd_chars.push(Character::from_part(sub_char));
+                            if let Some(i) = sub_char.image.take() {
+                                upd_images.push(i);
+                            }
                         }
                     } else {
-                        new_chars.push(NewCharacter::from_part(sub_char));
+                        new_chars.push((sub_char.image.take(), NewCharacter::from_part(sub_char)));
                     }
                 } else {
-                    new_chars.push(NewCharacter::from_part(sub_char));
+                    new_chars.push((sub_char.image.take(), NewCharacter::from_part(sub_char)));
                 }
             }
 
-            for new_char in new_chars.into_iter() {
+            for (image, new_char) in new_chars.into_iter() {
                 new_char
-                    .checked_insert(conn, permitted_parts, permitted_attrs)
+                    .checked_insert(conn, permitted_parts, permitted_attrs, &image)
                     .map_err(|e| {
                         error_string = e;
                         DbError::NotFound
@@ -693,6 +743,12 @@ impl CompleteCharacter {
                 diesel::replace_into(characters)
                     .values(chunk)
                     .execute(conn)?;
+            }
+            for chunk in upd_images.chunks(999) {
+                diesel::replace_into(images).values(chunk).execute(conn)?;
+            }
+            for chunk in self.notes.chunks(999) {
+                diesel::replace_into(notes).values(chunk).execute(conn)?;
             }
 
             Attributes::insert_update_vec(attribute_refs.into_iter(), conn)?;
@@ -716,6 +772,10 @@ impl CompleteCharacter {
         permitted_attrs: &[PermittedAttribute],
     ) -> Result<(), String> {
         use self::characters::dsl::*;
+        // Insert/update the image if it exists.
+        if let Some(ref i) = chp.image {
+            i.update(conn).map_err(ma)?;
+        }
         if let Some(ch_id) = chp.id {
             return diesel::update(characters.filter(id.eq(ch_id)))
                 .set((
@@ -734,7 +794,12 @@ impl CompleteCharacter {
                 .map(|_| ())
                 .map_err(ma);
         }
-        NewCharacter::from_part(&chp).checked_insert(conn, permitted_parts, permitted_attrs)
+        NewCharacter::from_part(&chp).checked_insert(
+            conn,
+            permitted_parts,
+            permitted_attrs,
+            &chp.image,
+        )
     }
 }
 
@@ -827,6 +892,10 @@ impl CompleteCharacter {
         }
         if self.size != other.size {
             println!("self.size={:?}, other.size={:?}", self.size, other.size);
+            result = false;
+        }
+        if self.image != other.image {
+            println!("Images don't match.");
             result = false;
         }
         result
