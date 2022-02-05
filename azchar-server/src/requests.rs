@@ -2,6 +2,8 @@
 use azchar_database::character::attribute::{AttributeKey, AttributeValue, InputAttribute};
 use azchar_database::character::character::InputCharacter;
 use azchar_database::character::character::{CharacterPart, CompleteCharacter};
+use azchar_database::character::image::{Image, InputImage};
+use azchar_database::character::note::{InputNote, Note};
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::CharacterDbRef;
 use azchar_error::ma;
@@ -32,6 +34,13 @@ pub(crate) enum Request {
     /// A function particularly for adding new parts.
     // The strings are name && uuid
     CreatePart(String, String, InputCharacter),
+    /// Inserting an image requires the (name, uuid) and main character,
+    /// as well as the InputImage (an id and path).
+    InsertUpdateImage(String, String, InputImage),
+    /// Adds a new note. Requires the (name, uuid) of the character it belongs to.
+    InsertNote(String, String, InputNote),
+    /// Update Note. Requires the (name, uuid) of the character it belongs to.
+    UpdateNote(String, String, Note),
     /// Delete a character.
     // The strings are name && uuid
     DeleteCharacter(String, String),
@@ -64,6 +73,12 @@ pub(crate) enum Response {
     UpdatePart,
     /// We must update the whole character when create an utterly new_attribute o part.
     CreateAttributePart(CompleteCharacter),
+    /// We need the actual image data here.
+    InsertUpdateImage(Image),
+    /// We do not need to retrieve anything for this.
+    UpdateNote,
+    /// When creating a note we need to return the id and date.
+    InsertNote(Note),
     /// Delete Character, return the list.
     DeleteCharacter(Vec<CharacterDbRef>),
     /// Returns a list of characters.
@@ -154,6 +169,23 @@ impl Request {
                     Response::UpdatePart
                 }
                 None => Response::load_db_error(Self::UpdatePart(name, uuid, character)),
+            },
+            Self::InsertUpdateImage(name, uuid, input_image) => match main_loop {
+                Some(ref mut dbs) => {
+                    Response::InsertUpdateImage(dbs.create_update_image(name, uuid, input_image)?)
+                }
+                None => Response::load_db_error(Self::InsertUpdateImage(name, uuid, input_image)),
+            },
+            Self::InsertNote(name, uuid, new_note) => match main_loop {
+                Some(ref mut dbs) => Response::InsertNote(dbs.add_note(name, uuid, new_note)?),
+                None => Response::load_db_error(Self::InsertNote(name, uuid, new_note)),
+            },
+            Self::UpdateNote(name, uuid, note) => match main_loop {
+                Some(ref mut dbs) => {
+                    dbs.update_note(name, uuid, note)?;
+                    Response::UpdateNote
+                }
+                None => Response::load_db_error(Self::UpdateNote(name, uuid, note)),
             },
             Self::CreatePart(name, uuid, part) => match main_loop {
                 Some(ref mut dbs) => {

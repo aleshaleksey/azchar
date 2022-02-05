@@ -54,6 +54,12 @@ impl Note {
         notes.order_by(date.desc()).load(conn)
     }
 
+    /// Get the latest after insertion.
+    pub fn get_latest(conn: &SqliteConnection) -> Result<Self, String> {
+        use self::notes::dsl::*;
+        notes.order_by(id.desc()).first(conn).map_err(ma)
+    }
+
     /// A convenience function.
     pub(crate) fn update(&self, conn: &SqliteConnection) -> Result<usize, String> {
         use self::notes::dsl::*;

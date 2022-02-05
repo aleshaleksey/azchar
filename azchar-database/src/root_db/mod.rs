@@ -3,6 +3,8 @@ use super::BasicConnection;
 use crate::character::attribute::{AttributeKey, AttributeValue, Attributes, NewAttribute};
 use crate::character::character::InputCharacter;
 use crate::character::character::{Character, CharacterPart, CompleteCharacter, NewCharacter};
+use crate::character::image::{Image, InputImage};
+use crate::character::note::{InputNote, Note};
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::*;
 use crate::Config;
@@ -394,6 +396,54 @@ impl LoadedDbs {
                 "Character with identifier {}-{} not found.",
                 key.0, key.1
             ))
+        }
+    }
+
+    // Create an image or update an old one.
+    pub fn create_update_image(
+        &mut self,
+        char_name: String,
+        char_uuid: String,
+        image: InputImage,
+    ) -> Result<Image, String> {
+        let key = (char_name, char_uuid);
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let conn = conn.connect()?;
+            image.convert_to_new()?.insert_new(conn)?;
+            Image::get_latest(conn)
+        } else {
+            Err(format!("Character with identifier {:?} not found.", key,))
+        }
+    }
+
+    pub fn add_note(
+        &mut self,
+        char_name: String,
+        char_uuid: String,
+        new_note: InputNote,
+    ) -> Result<Note, String> {
+        let key = (char_name, char_uuid);
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let conn = conn.connect()?;
+            new_note.insert_new(conn)?;
+            Note::get_latest(conn)
+        } else {
+            Err(format!("Character with identifier {:?} not found.", key,))
+        }
+    }
+
+    pub fn update_note(
+        &mut self,
+        char_name: String,
+        char_uuid: String,
+        note: Note,
+    ) -> Result<(), String> {
+        let key = (char_name, char_uuid);
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let conn = conn.connect()?;
+            note.update(conn).map(|_| ())
+        } else {
+            Err(format!("Character with identifier {:?} not found.", key,))
         }
     }
 }

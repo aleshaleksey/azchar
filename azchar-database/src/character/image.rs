@@ -19,6 +19,7 @@ allow_tables_to_appear_in_same_query!(characters, images);
 // joinable!(images -> characters(of));
 
 /// A link to a character image.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct InputImage {
     /// The character to which it belongs to.
     pub of: i64,
@@ -27,7 +28,7 @@ pub struct InputImage {
 }
 
 impl InputImage {
-    fn convert_to_new(self) -> Result<NewImage, String> {
+    pub(crate) fn convert_to_new(self) -> Result<NewImage, String> {
         let path = std::path::PathBuf::from(&self.link);
         let ext = match path.extension() {
             Some(e) => e,
@@ -80,6 +81,13 @@ impl Image {
         use self::images::dsl::*;
         images.order_by(of.desc()).load(conn)
     }
+
+    /// Get the latest after insertion.
+    pub fn get_latest(conn: &SqliteConnection) -> Result<Self, String> {
+        use self::images::dsl::*;
+        images.order_by(id.desc()).first(conn).map_err(ma)
+    }
+
     /// A convenience function.
     pub(crate) fn update(&self, conn: &SqliteConnection) -> Result<usize, String> {
         use self::images::dsl::*;

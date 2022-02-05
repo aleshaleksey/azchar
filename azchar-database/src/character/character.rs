@@ -1,7 +1,7 @@
 //! This deals with the character columns.
 use crate::character::attribute::NewAttribute;
 use crate::character::image::{Image, NewImage};
-use crate::character::note::{Note};
+use crate::character::note::Note;
 use crate::root_db::system::{PermittedAttribute, PermittedPart};
 use crate::shared::Part;
 
