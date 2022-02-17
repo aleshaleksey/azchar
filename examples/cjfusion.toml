@@ -68,13 +68,13 @@ permitted_parts = [
 permitted_attributes = [
   # NB: We do not need name, speed, weight, size, hp_total/current.
   # { part_name = "main", part_type = "Main" }
-  { key = "race", obligatory = true, attribute_type = 0, attribute_description = "The character's race.", part_name = "main", part_type = "Main" },
-  { key = "alignment", obligatory = true, attribute_type = 0, attribute_description = "Good, evil, chaotic, lawful, neutral? Do you eat babies?", part_name = "main", part_type = "Main" },
+  { key = "Race", obligatory = true, attribute_type = 0, attribute_description = "The character's race.", part_name = "main", part_type = "Main" },
+  { key = "Alignment", obligatory = true, attribute_type = 0, attribute_description = "Good, evil, chaotic, lawful, neutral? Do you eat babies?", part_name = "main", part_type = "Main" },
   { key = "exp_current", obligatory = false, attribute_type = 0, attribute_description = "Current experience in good old i32...", part_name = "main", part_type = "Main" },
   { key = "exp_next", obligatory = false, attribute_type = 0, attribute_description = "Experience to next level in good old i32...", part_name = "main", part_type = "Main" },
   { key = "level", obligatory = true, attribute_type = 0, attribute_description = "The character's level.", part_name = "main", part_type = "Main" },
   { key = "proficiency", obligatory = true, attribute_type = 0, attribute_description = "Technically a function of level.", part_name = "main", part_type = "Main" },
-  { key = "player", obligatory = false, attribute_type = 0, attribute_description = "Who's hands are these that pull my string?", part_name = "main", part_type = "Main" },
+  { key = "player", obligatory = true, attribute_type = 0, attribute_description = "Who's hands are these that pull my string?", part_name = "main", part_type = "Main" },
   { key = "strength", obligatory = true, attribute_type = 0, attribute_description = "I. Is. Stronk.", part_name = "main", part_type = "Main" },
   { key = "reflex", obligatory = true, attribute_type = 0, attribute_description = "Dodging fireballs and threading needles.", part_name = "main", part_type = "Main" },
   { key = "toughness", obligatory = true, attribute_type = 0, attribute_description = "Dictactes physical toughness.", part_name = "main", part_type = "Main" },
@@ -100,11 +100,12 @@ permitted_attributes = [
   { key = "surge_current", obligatory = true, attribute_type = 0, attribute_description = "Surge is used like flair.", part_name = "main", part_type = "Main" },
   { key = "strain", obligatory = true, attribute_type = 0, attribute_description = "Tiredness, the higher the worse. You probably die at about five.", part_name = "main", part_type = "Main" },
   # Random stuff.
-  { key = "height", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
-  { key = "hair", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
-  { key = "eyes", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
-  { key = "age", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
-  { key = "skin", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Height", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Hair", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Eyes", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Age", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Skin", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
+  { key = "Player", obligatory = true, attribute_type = 0, attribute_description = ".", part_name = "main", part_type = "Main" },
   # d20 skills are a fixed bunch.
   { key = "d20_skill_awareness_proficiency", obligatory = true, attribute_type = 0, attribute_description = "A d20 skill: proficiency multiplier.", part_name = "main", part_type = "Main" },
   { key = "d20_skill_awareness_bonus", obligatory = true, attribute_type = 0, attribute_description = "A d20 skill: static bonus.", part_name = "main", part_type = "Main" },

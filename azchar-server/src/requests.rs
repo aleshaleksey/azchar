@@ -111,7 +111,10 @@ impl Request {
             Ok(r) => r,
             Err(_) => match serde_json::from_str(&input) {
                 Ok(r) => r,
-                Err(_) => Self::Invalid(input),
+                Err(e) => {
+                    println!("parse error: {:?}", e);
+                    Self::Invalid(input)
+                }
             },
         }
     }
@@ -180,8 +183,11 @@ impl Request {
                 Some(ref mut dbs) => Response::InsertNote(dbs.add_note(name, uuid, new_note)?),
                 None => Response::load_db_error(Self::InsertNote(name, uuid, new_note)),
             },
-            Self::UpdateNote(name, uuid, note) => match main_loop {
+            Self::UpdateNote(name, uuid, mut note) => match main_loop {
                 Some(ref mut dbs) => {
+                    if let Some(ref mut c) = note.content {
+                        *c = c.replace("[[enter]]","\n");
+                    }
                     dbs.update_note(name, uuid, note)?;
                     Response::UpdateNote
                 }

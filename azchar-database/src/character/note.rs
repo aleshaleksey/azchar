@@ -34,6 +34,26 @@ pub struct Note {
     pub content: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PreNote {
+    pub id: i64,
+    pub date: String,
+    pub title: String,
+    pub content: Vec<u8>,
+}
+
+impl PreNote {
+    pub fn into_note(self) -> Note {
+        let content = String::from_utf8_lossy(&self.content).to_string();
+        Note {
+            id: self.id,
+            date: self.date,
+            title: self.title,
+            content: Some(content),
+        }
+    }
+}
+
 impl InputNote {
     /// Just in case.
     pub fn new_note(title: String, content: Option<String>) -> Self {
