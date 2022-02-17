@@ -50,7 +50,7 @@ impl WsMainLoop {
                 }
                 Ok(OwnedMessage::Text(t)) => {
                     let then = std::time::Instant::now();
-                    let res = match Request::convert(t.clone()).execute(dbs) {
+                    let res = match Request::convert(&t).execute(dbs) {
                         Ok(Response::Shutdown) => return Ok(()),
                         Ok(r) => serde_json::to_string(&r),
                         Err(e) => serde_json::to_string(&Response::Err(t, ma(e))),

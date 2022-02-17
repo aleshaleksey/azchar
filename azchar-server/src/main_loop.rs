@@ -76,7 +76,7 @@ impl MainLoop {
             for (a, b) in ESC.iter().zip(ESC2.iter()) {
                 echo = echo.replace(a, b);
             }
-            let req = Request::convert(echo.clone());
+            let req = Request::convert(&echo);
             // println!("{:?}", req);
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),
@@ -118,7 +118,7 @@ impl MainLoop {
             for (a, b) in ESC.iter().zip(ESC2.iter()) {
                 echo = echo.replace(a, b);
             }
-            let req = Request::convert(echo.clone());
+            let req = Request::convert(&echo);
             // println!("{:?}", req);
             match req.execute(dbs) {
                 Ok(Response::Shutdown) => return Ok(false),

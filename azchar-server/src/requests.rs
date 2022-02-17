@@ -106,14 +106,14 @@ impl Response {
 
 impl Request {
     /// Converts an incoming JSON string into a bona-fide request.
-    pub(crate) fn convert(input: String) -> Self {
-        match toml::from_str(&input) {
+    pub(crate) fn convert(input: &str) -> Self {
+        match toml::from_str(input) {
             Ok(r) => r,
-            Err(_) => match serde_json::from_str(&input) {
+            Err(_) => match serde_json::from_str(input) {
                 Ok(r) => r,
                 Err(e) => {
                     println!("parse error: {:?}", e);
-                    Self::Invalid(input)
+                    Self::Invalid(input.to_owned())
                 }
             },
         }
