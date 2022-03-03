@@ -4,3 +4,7 @@
 /x.json
 Cargo.lock
 /.cargo
+/x86_64-win
+/sqlite-tools-osx-x86-3370200
+/i686-win
+/third/node_modules

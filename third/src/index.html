@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <title>AzChar Fusion</title>
+  </head>
+  <body>
+    <p></p>
+    <input id="input-address" class="addressbox" value="ws://127.0.0.1:55555"></input>
+    <button id="submit-address" class="clickme" type="submit">click-me</button>
+    <p></p>
+    <input id="input-system" width=160px class="addressbox" value="fusion.db"></input>
+    <button id="submit-system" class="clickme" class="submit">click-me</button>
+    <p></p>
+    System Loaded: <span id="display-system">None</span>
+    <p></p>
+    <table id="character-table"></table>
+    <p></p>
+    <table id='hide-main-wrap' hidden="true">
+      <th><row><cell>Basics</cell id="hide-main"></row></th>
+    </table>
+    <table id="character-main"></table>
+    <p></p>
+    <table id="level-table"></table>
+    <p></p>
+    <table id="main-attributes-stats"></table>
+    <p></p>
+    <div>
+      <table class="stuff" id="character-cosmetic"></table>
+      <table class="stuff" id="main-attributes-resources"></table>
+      <table class="stuff" id="main-body-parts"></table>
+    </div>
+    <table id='hide-skills-wrap' hidden="true">
+      <th><row><cell>Skills Tables</cell id="hide-skills"></row></th>
+    </table>
+    <div>
+      <table class="skill" id="d20-skills"></table>
+      <table class="skill" id="d100-skills"></table>
+    </div>
+    <p></p>
+    <table id="character-notes"></table>
+    <p></p>
+    <textarea id="input-request" class="textarea_a">{"Roll":"1d20"}</textarea>
+    <button id="submit-request" type="submit">click-me-next</button>
+    <p></p>
+    <textarea id="output-request" class="textarea_a" name="out_a"></textarea>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
