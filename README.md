@@ -21,3 +21,4 @@ The project aims to create an integrated "server" that facilitates the storing, 
 - Rust
 - Diesel (https://docs.rs/diesel/)
 - libazdice. (https://github.com/aleshaleksey/libazdice)
+- Javascript / Electron frontennd.
