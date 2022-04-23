@@ -60,7 +60,8 @@ function set_sheet_list_listeners(sheets, character) {
           set_update_skills_listeners(character);
           set_update_main_attributes_listeners(character);
           set_update_main_attributes_cosmetic_listeners(character);
-          set_main_attributes_resource_listeners(character);
+          set_update_main_attributes_resource_listeners(character);
+          set_update_main_attributes_body_listeners(character);
           set_update_skills_listeners(character);
           set_skill_rollers(character);
           // TODO: Listeners for character sheet: Main part:
@@ -295,7 +296,7 @@ function set_update_main_attributes_cosmetic_listeners(ch) {
   }
 }
 
-function set_main_attributes_resource_listeners(ch) {
+function set_update_main_attributes_resource_listeners(ch) {
   // make most of the things.
   for(let x of ["flair_current", "flair_maximum", "surge_current", "surge_maximum",
                 "mp_current", "mp_maximum", "mp_use_day", "mp_use_day_max", "ki_current",
@@ -312,6 +313,26 @@ function set_main_attributes_resource_listeners(ch) {
       };
       await update_attribute(connection, a[0], a[1], ch);
     })
+  }
+}
+
+function set_update_main_attributes_body_listeners(ch) {
+  // Outer parts loop.
+  for(let s of ch["parts"]) {
+    if(s.part_type === "Body") {
+      for(let inner of ["hitpoints_current", "hitpoints_maximum", "armour"]) {
+        let el = document.getElementById(inner + s.character_type);
+        el.addEventListener('keyup', async () => {
+            let a = s.attributes.find(att => att[0].key == inner);
+            if(el.value) {
+              a[1].value_num = el.value;
+            } else {
+              a[1].value_num = null;
+            };
+            await update_attribute(connection, a[0], a[1], ch);
+        })
+      }
+    }
   }
 }
 

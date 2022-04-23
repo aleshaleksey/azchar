@@ -231,6 +231,62 @@ function set_main_attributes_resources(char) {
   }
 }
 
+// Set what all the body parts do.
+function set_body_attributes(ch) {
+  console.log("In `set_body_attributes`.");
+  let table = document.getElementById("main-body-parts");
+  clear_table(table);
+  for(let s of ch["parts"]) {
+    if(s.part_type === "Body") {
+      let attributes = s.attributes;
+      // Create the row label.
+      let row = table.insertRow();
+      create_cell(row, document.createTextNode(s.character_type));
+
+      // Create hit-range
+      let range_box = document.createElement("th");
+      let min = attributes.find(att => att[0].key == "hit_min")[1].value_num;
+      let max = attributes.find(att => att[0].key == "hit_max")[1].value_num;
+      create_cell(row, document.createTextNode(min + ' - ' + max));
+
+      // Create HP
+      let hp_c = document.createElement("INPUT");
+      let key_c = "hitpoints_current";
+      let val_c = attributes.find(att => att[0].key == key_c)[1].value_num;
+      hp_c.value = val_c;
+      console.log("value of hp_c = " + hp_c.value);
+      hp_c.id = key_c + s.character_type;
+
+      let hp_m = document.createElement("INPUT");
+      let key_m = "hitpoints_maximum";
+      let val_m = attributes.find(att => att[0].key == key_m)[1].value_num;
+      hp_m.value = val_m;
+      hp_m.id = key_m + s.character_type;
+
+      let hp_cell = row.insertCell();
+      hp_cell.appendChild(hp_c);
+      hp_cell.appendChild(document.createTextNode('/'));
+      hp_cell.appendChild(hp_m);
+
+      // Create Toughness
+      // TODO: Add the attribute in the `cjfusion.toml` file!
+      // Create armour.
+      let ac_cell = document.createElement("INPUT");
+      let key_ac = "armour";
+      let val_ac = attributes.find(att => att[0].key == key_ac)[1].value_num;
+      ac_cell.value = val_ac;
+      ac_cell.id = key_ac + s.character_type;
+      create_cell(row, ac_cell);
+    }
+  }
+  let thead = table.createTHead();
+  for (let x of ["Body part", "Hit-range", "Hitpoints", "Armour"]) {
+    let th = document.createElement("th");
+    th.appendChild(document.createTextNode(x));
+    thead.appendChild(th);
+  }
+}
+
 /// This function sets the d20 skills table.
 /// The three components are 'd20_skill_'+'skill_name'+(`proficiency`/'bonux'/'governed_by')
 function set_d20_skills(ch) {
