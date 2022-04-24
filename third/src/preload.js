@@ -76,7 +76,9 @@ contextBridge.exposeInMainWorld('builder', {
   },
   character_set: (character) => {
     document.getElementById('hide-main-wrap').hidden = false;
+    document.getElementById('hide-resources-wrap').hidden = false;
     document.getElementById('hide-skills-wrap').hidden = false;
+    document.getElementById('hide-inventory-wrap').hidden = false;
     set_main(character);
     set_level_table(character);
     set_main_attributes(character);
