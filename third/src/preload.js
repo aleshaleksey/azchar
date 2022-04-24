@@ -412,22 +412,26 @@ function set_inventory(char) {
       let id = item.uuid;
       // Item Name
       gen_input.value = item.name;
-      gen_input.id = 'item-name' + id;
+      gen_input.id = 'name' + id;
       create_cell(row, gen_input);
       // Item Type.
       gen_input = document.createElement('INPUT');
       gen_input.value = item.character_type;
-      gen_input.id = 'item-type' + id;
+      gen_input.id = 'character_type' + id;
       create_cell(row, gen_input);
       // Item Size.
       gen_input = document.createElement('INPUT');
       gen_input.value = item.size;
-      gen_input.id = 'item-size' + id;
+      gen_input.id = 'size' + id;
       create_cell(row, gen_input);
       // Item weight.
       gen_input = document.createElement('INPUT');
-      gen_input.value = item.weight;
-      gen_input.id = 'item-weight' + id;
+      if(item.weight) {
+        gen_input.value = 0 + item.weight;
+      } else {
+        gen_input.value = 0;
+      }
+      gen_input.id = 'weight' + id;
       create_cell(row, gen_input);
       // Item weight.
       gen_input = document.createElement('BUTTON');

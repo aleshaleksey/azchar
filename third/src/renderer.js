@@ -163,6 +163,38 @@ function set_update_notes_listeners(name, uuid, notes) {
   }
 }
 
+// NB: A main character is a little bit different from a character part,
+// So the inner updater is a little different.
+function update_character_part(conn, ch, part) {
+  let cht = "Main";
+  if(part.part_type) {
+    cht = part.part_type;
+  }
+  let belongs_to = null;
+  if(part.belongs_to) {
+    belongs_to = part.belongs_to;
+  }
+  conn.send(
+    'keyup',
+    "{\"UpdatePart\":[\""
+      +ch["name"]+"\",\""
+      +ch["uuid"]+"\","
+      +"{\"id\":"+part.id
+      +",\"name\":\""+part.name
+      +"\",\"uuid\":\""+part.uuid
+      +"\",\"character_type\":\""+part.character_type
+      +"\",\"speed\":"+part.speed
+      +",\"weight\":"+part.weight
+      +",\"size\":\""+part.size
+      +"\",\"hp_total\":"+part.hp_total
+      +",\"hp_current\":"+part.hp_current
+      +",\"part_type\":\""+cht
+      +"\",\"belongs_to\":"+belongs_to
+      +",\"attributes\":[],\"image\":"+part.image
+      +"}]}"
+  );
+}
+
 /// An inner function for DRY, as updating attributes is generally the same.
 /// NB: `att_val` is the updated attribute value structure.
 function update_attribute(conn, att_key, att_val, ch) {
@@ -331,6 +363,7 @@ function set_update_main_attributes_resource_listeners(ch) {
   }
 }
 
+// NB: This also sets the inventory listeners.
 function set_update_main_attributes_body_listeners(ch) {
   // Outer parts loop.
   for(let s of ch["parts"]) {
@@ -347,8 +380,44 @@ function set_update_main_attributes_body_listeners(ch) {
             await update_attribute(connection, a[0], a[1], ch);
         })
       }
+    } else if(s.part_type === "InventoryItem") {
+      set_inventory_item_listeners(s, ch)
     }
   }
+}
+
+function set_inventory_item_listeners(part, ch) {
+  // Text values.
+  for(let inner of ["name", "character_type", "size"]) {
+    let el = document.getElementById(inner + part.uuid);
+    el.addEventListener('keyup', async () => {
+        part[inner] = el.value;
+        await update_character_part(connection, ch, part);
+    })
+  }
+  // Num values.
+  let el = document.getElementById("weight" + part.uuid);
+  el.addEventListener('keyup', async () => {
+    console.log(el);
+    console.log(el.value);
+    if(el.value) {
+      part.weight = el.value;
+    } else {
+      part.weight = null;
+    };
+    await update_character_part(connection, ch, part);
+  })
+  // Deletion of items.
+  let eld = document.getElementById('delete' + part.uuid);
+  eld.addEventListener('click', async () => {
+    console.log("We pretend to delete the inventory item!");
+  })
+  // Deletion of items.
+  let eli = document.getElementById('add-inventory-item');
+  eli.addEventListener('click', async () => {
+    console.log("We pretend to create the inventory item!");
+  })
+
 }
 
 function set_create_character_listener() {
@@ -376,21 +445,7 @@ function set_update_main_listeners_for(ch, text_array) {
         intermediate = part.value;
       }
       ch[x] = intermediate;
-      await window.connection.send(
-        'keyup',
-        "{\"UpdatePart\":[\""
-          +ch["name"]+"\",\""
-          +ch["uuid"]+"\","
-          +"{\"id\":"+ch["id"]
-          +",\"name\":\""+ch["name"]
-          +"\",\"uuid\":\""+ch["uuid"]
-          +"\",\"character_type\":\"main\",\"speed\":"+ch["speed"]
-          +",\"weight\":"+ch["weight"]
-          +",\"size\":\""+ch["size"]
-          +"\",\"hp_total\":"+ch["hp_total"]
-          +",\"hp_current\":"+ch["hp_current"]
-          +",\"part_type\":\"Main\",\"belongs_to\":null,\"attributes\":[],\"image\":"+ch["image"]+"}]}"
-      );
+      await update_character_part(connection, ch, ch);
     });
   }
 }
