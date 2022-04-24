@@ -45,6 +45,12 @@ table.skill {
 table.stuff {
   width: 25%;
 }
+table.medium_stuff {
+  width: 50%;
+}
+table.big_stuff {
+  width: 100%;
+}
 button {
   width: 98%;
   background-color: #AA9999;

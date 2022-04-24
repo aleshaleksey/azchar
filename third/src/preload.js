@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld('builder', {
     set_main_attributes_cosmetic(character);
     set_main_attributes_resources(character);
     set_body_attributes(character);
+    set_inventory(character);
     set_notes(character);
 
     set_d20_skills(character);
@@ -392,6 +393,59 @@ function set_d100_skills(ch) {
   let thead = table.createTHead();
   let row = thead.insertRow();
   for(let t of ["Skill", "Proficiency", "Bonus", "Total"]) {
+    let th = document.createElement("th");
+    th.appendChild(document.createTextNode(t));
+    row.appendChild(th);
+  };
+}
+
+function set_inventory(char) {
+  // The aim of this is to create a table is to show basic information on
+  // all inventory types items.
+  let table = document.getElementById('character-inventory');
+  clear_table(table);
+  // Create main body.
+  for (let item of char.parts) {
+    if(item.part_type === "InventoryItem") {
+      let row = table.insertRow();
+      let gen_input = document.createElement('INPUT');
+      let id = item.uuid;
+      // Item Name
+      gen_input.value = item.name;
+      gen_input.id = 'item-name' + id;
+      create_cell(row, gen_input);
+      // Item Type.
+      gen_input = document.createElement('INPUT');
+      gen_input.value = item.character_type;
+      gen_input.id = 'item-type' + id;
+      create_cell(row, gen_input);
+      // Item Size.
+      gen_input = document.createElement('INPUT');
+      gen_input.value = item.size;
+      gen_input.id = 'item-size' + id;
+      create_cell(row, gen_input);
+      // Item weight.
+      gen_input = document.createElement('INPUT');
+      gen_input.value = item.weight;
+      gen_input.id = 'item-weight' + id;
+      create_cell(row, gen_input);
+      // Item weight.
+      gen_input = document.createElement('BUTTON');
+      gen_input.innerText = 'Delete item';
+      gen_input.id = 'delete' + id;
+      create_cell(row, gen_input);
+    }
+  }
+  let row = table.insertRow();
+  let btn = document.createElement('BUTTON');
+  btn.innerText = 'Add item';
+  btn.id = 'add-inventory-item';
+  create_cell(row, btn);
+
+  // Create header.
+  let thead = table.createTHead();
+  row = thead.insertRow();
+  for(let t of ["Item", "Item type", "Item size", "Item weight", ""]) {
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(t));
     row.appendChild(th);
