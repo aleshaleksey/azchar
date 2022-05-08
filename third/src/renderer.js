@@ -327,7 +327,7 @@ function set_skill_rollers(ch) {
       await new Promise(r => setTimeout(r, 5));
 
       let res = await window.connection.get_roll_res();
-      window.builder.roll_window_20(s, s + "roll result", res);
+      window.builder.roll_window_20(s, s + " roll result", res);
     });
   }
   for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering",

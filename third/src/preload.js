@@ -1,4 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const {
+  clear_table,
+  create_cell,
+  set_th,
+  set_input,
+  set_button,
+  set_span
+} = require('./preload-bp.js');
 
 
 contextBridge.exposeInMainWorld('connection', {
@@ -12,20 +20,6 @@ contextBridge.exposeInMainWorld('connection', {
   get_roll_res: (event, arg) => ipcRenderer.invoke('connection:get-roll-res', arg),
 });
 
-// A function that exists for DRY.
-function clear_table(table) {
-  table.deleteTHead();
-  let len = table.rows.length;
-  for(let i=len-1;i>=0;--i) {
-    table.deleteRow(i);
-  }
-}
-
-function create_cell(row, element) {
-  let cell = row.insertCell();
-  cell.appendChild(element);
-}
-
 contextBridge.exposeInMainWorld('builder', {
   character_list: (data) => {
     let table = document.getElementById('character-table');
@@ -35,14 +29,10 @@ contextBridge.exposeInMainWorld('builder', {
     // Create elements.
     let row = table.insertRow();
     create_cell(row, document.createTextNode("^-^"));
-    let el = document.createElement("INPUT");
-    el.id = "create-character-input";
-    create_cell(row, el);
 
-    el = document.createElement('BUTTON');
-    el.id = "create-character-button";
-    el.innerText = "Create New Character";
-    create_cell(row, el);
+    set_input(row, "create-character-input", "")
+    set_button(row, "create-character-button", "Create New Character");
+
     if(!data) { return; }
     if(data.length === 0) { return; }
     // For created characters
@@ -55,24 +45,16 @@ contextBridge.exposeInMainWorld('builder', {
       text = document.createTextNode(element["name"]);
       create_cell(row, text);
       // Insert 'name'
-      let btn = document.createElement("BUTTON");
-      btn.id = element["name"]+"load";
-      btn.innerText = "Load "+element["name"];
-      create_cell(row, btn);
+      set_button(row, element["name"]+"load", "Load "+element["name"]);
     }
     ////////////////////////////////
     // Create header
     row = thead.insertRow();
     let headings = Object.keys(data[0]);
     for(let i=0;i<2;i++) {
-      let th = document.createElement("th");
-      let text = document.createTextNode(headings[i]);
-      th.appendChild(text);
-      row.appendChild(th);
+      set_th(row, headings[i]);
     }
-    let th = document.createElement("th");
-    th.appendChild(document.createTextNode("Character Loader"));
-    row.appendChild(th);
+    set_th(row, "Character Loader");
     ////////////////////////////////////
   },
   character_set: (character) => {
@@ -88,7 +70,7 @@ contextBridge.exposeInMainWorld('builder', {
     set_body_attributes(character);
     set_inventory(character);
     set_notes(character);
-
+    //
     set_d20_skills(character);
     set_d100_skills(character);
   },
@@ -122,17 +104,12 @@ function set_main(char) {
     // Create elements.
     // Create header
     for(let x of ["Name","Speed","Weight","Size","HP","HP Total"]) {
-      let th = document.createElement("th");
-      th.appendChild(document.createTextNode(x));
-      row.appendChild(th);
+      set_th(row, x);
     }
     ////////////////////////////////////
     row = thead.insertRow();
     for(let x of ["name","speed","weight","size","hp_current","hp_total"]) {
-      let tbox = document.createElement("INPUT");
-      tbox.id = x;
-      tbox.value = char[x];
-      create_cell(row, tbox);
+      set_input(row, x, char[x]);
     }
 }
 
@@ -145,28 +122,21 @@ function set_main_attributes(char) {
     // Create elements.
     // Create header
     for(let x of ["STR","REF","TOU","END","INT","JUD","CHA","WIL"]) {
-      let th = document.createElement("th");
-      th.appendChild(document.createTextNode(x));
-      row.appendChild(th);
+      set_th(row, x);
     }
     ////////////////////////////////////
     row = table.insertRow();
     for(let x of ["strength","reflex","toughness","endurance",
                   "intelligence","judgement","charm","will"]) {
-      let tbox = document.createElement("INPUT");
-      tbox.id = x + "input";
-      tbox.value = char.attributes.find(att => att[0].key == x)[1].value_num;
-      create_cell(row, tbox);
+      let val = char.attributes.find(att => att[0].key == x)[1].value_num;
+      set_input(row, x + "input", val);
     }
     ////////////////////////////////////
     row = table.insertRow();
     for(let x of ["strength","reflex","toughness","endurance",
                   "intelligence","judgement","charm","will"]) {
-      let el = document.createElement('SPAN');
       let val = (document.getElementById(x + 'input').value - 10) / 2;
-      el.innerText = val;
-      el.id = x + 'bonus';
-      create_cell(row, el);
+      set_span(row, x + 'bonus', val);
     }
 }
 
@@ -177,17 +147,12 @@ function set_level_table(char) {
     let thead = table.createTHead();
     let row = thead.insertRow();
     for(let x of ["Level", "Proficiency"]) {
-      let th = document.createElement("th");
-      th.appendChild(document.createTextNode(x));
-      row.appendChild(th);
+      set_th(row, x);
     }
     ///////////////////////
     row = table.insertRow();
     for(let x of ["Level","Proficiency"]) {
-      let el = document.createElement('INPUT');
-      el.value = char.attributes.find(att => att[0].key == x)[1].value_num;
-      el.id = x;
-      create_cell(row, el);
+      set_input(row, x, char.attributes.find(att => att[0].key == x)[1].value_num);
     }
 }
 
@@ -198,13 +163,9 @@ function set_main_attributes_cosmetic(char) {
     // Create header
     for(let x of ["Race", "Alignment", "Height", "Hair", "Eyes", "Age", "Skin", "Player"]) {
       let row = table.insertRow();
-      let cell = row.insertCell();
-      cell.appendChild(document.createTextNode(x));
-
-      let tbox = document.createElement("INPUT");
-      tbox.id = x + "input";
-      tbox.value = char.attributes.find(att => att[0].key == x)[1].value_text;
-      create_cell(row, tbox);
+      create_cell(row, document.createTextNode(x));
+      let value = char.attributes.find(att => att[0].key == x)[1].value_text;
+      set_input(row, x + "input", value);
     }
 }
 
@@ -215,13 +176,9 @@ function set_main_attributes_core(char) {
     // Create header
     for(let x of ["Race", "Alignment", "Height", "Hair", "Eyes", "Age", "Skin", "Player"]) {
       let row = table.insertRow();
-      let cell = row.insertCell();
-      cell.appendChild(document.createTextNode(x));
-
-      let tbox = document.createElement("INPUT");
-      tbox.id = x + "input";
-      tbox.value = char.attributes.find(att => att[0].key == x)[1].value_text;
-      create_cell(row, tbox);
+      create_cell(row, document.createTextNode(x));
+      let value = char.attributes.find(att => att[0].key == x)[1].value_text;
+      set_input(row, x + "input", value);
     }
 }
 
@@ -236,7 +193,7 @@ function set_main_attributes_resources(char) {
                 ["Strain", "strain"]]) {
     let row = table.insertRow();
     create_cell(row, document.createTextNode(a[0]));
-
+    // NB: complex input that cannot be made with `set_input`.
     let npt = document.createElement('INPUT');
     npt.id = a[1];
     npt.value = char.attributes.find(att => att[0].key == a[1])[1].value_num;
@@ -267,12 +224,11 @@ function set_body_attributes(ch) {
       create_cell(row, document.createTextNode(s.character_type));
 
       // Create hit-range
-      let range_box = document.createElement("th");
       let min = attributes.find(att => att[0].key == "hit_min")[1].value_num;
       let max = attributes.find(att => att[0].key == "hit_max")[1].value_num;
       create_cell(row, document.createTextNode(min + ' - ' + max));
 
-      // Create HP
+      // Create HP (NB: complex input that cannot be made with `set_input`)
       let hp_c = document.createElement("INPUT");
       let key_c = "hitpoints_current";
       let val_c = attributes.find(att => att[0].key == key_c)[1].value_num;
@@ -294,19 +250,13 @@ function set_body_attributes(ch) {
       // Create Toughness
       // TODO: Add the attribute in the `cjfusion.toml` file!
       // Create armour.
-      let ac_cell = document.createElement("INPUT");
-      let key_ac = "armour";
-      let val_ac = attributes.find(att => att[0].key == key_ac)[1].value_num;
-      ac_cell.value = val_ac;
-      ac_cell.id = key_ac + s.character_type;
-      create_cell(row, ac_cell);
+      let val_ac = attributes.find(att => att[0].key == "armour")[1].value_num;
+      set_input(row, "armour" + s.character_type, val_ac);
     }
   }
   let thead = table.createTHead();
   for (let x of ["Body part", "Hit-range", "Hitpoints", "Armour"]) {
-    let th = document.createElement("th");
-    th.appendChild(document.createTextNode(x));
-    thead.appendChild(th);
+    set_th(thead, x);
   }
 }
 
@@ -323,49 +273,32 @@ function set_d20_skills(ch) {
                 ["scrutiny","intelligence"], ["strong_arm","strength"], ["stealth","reflex"],
                 ["survival","judgement"], ["trickery","reflex"]]) {
     let row = table.insertRow();
-    // Name + roll
-    let btn = document.createElement("BUTTON");
-    btn.id = s[0]+"-roll";
-    btn.innerText = s[0];
-    create_cell(row, btn);
+    set_button(row, s[0]+"-roll", s[0]);
 
     // Governed by.
     let total = (document.getElementById(s[1] + 'input').value - 10) / 2;
     create_cell(row, document.createTextNode(s[1]));
 
     // Proficient.
-    let npt = document.createElement('INPUT');
-    npt.type = "checkbox";
     let attr_key = "d20_skill_"+s[0]+"_proficiency";
     let v = attributes.find(att => att[0].key == attr_key)[1].value_num;
-    if(v && v > 0) { npt.checked = true } else { npt.checked = false };
+    let checked = false;
+    if(v && v > 0) { checked = true };
     if(v > 0) { v = 1; }
     total += v * prof_val;
-    npt.id = attr_key;
-    create_cell(row, npt);
+    set_input(row, attr_key, checked, "checkbox");
 
     // Extra bonus.
-    npt = document.createElement('INPUT');
     attr_key = "d20_skill_"+s[0]+"_bonus";
-    npt.id = attr_key;
     v = attributes.find(att => att[0].key == attr_key)[1].value_num;
     total += v;
-    npt.value = v;
-    create_cell(row, npt);
-
-    // Total
-    npt = document.createElement('SPAN');
-    npt.innerText = total;
-    npt.id = s[0]+'total';
-    create_cell(row, npt);
-    // cell.appendChild(document.createTextNode(total));
+    set_input(row, attr_key, v);
+    set_span(row, s[0]+'total', total);
   }
   let thead = table.createTHead();
   let row = thead.insertRow();
   for(let t of ["Skill", "Governed by..", "Proficient", "Bonus", "Total"]) {
-    let th = document.createElement("th");
-    th.appendChild(document.createTextNode(t));
-    row.appendChild(th);
+    set_th(row, t);
   };
 }
 
@@ -379,43 +312,25 @@ function set_d100_skills(ch) {
   for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering", "firearms",
                 "hacking", "melee", "piloting", "research", "surgery", "unarmed", "underworld"]) {
     let row = table.insertRow();
-    // Name + roll
-    let btn = document.createElement("BUTTON");
-    btn.id = s+"-roll";
-    btn.innerText = s;
-    create_cell(row, btn);
+    set_button(row, s+"-roll", s);
 
     // Proficiency
-    let npt = document.createElement('INPUT');
     attr_key = "d100_skill_"+s+"_proficiency";
-    npt.id = attr_key;
     let val = attributes.find(att => att[0].key == attr_key)[1].value_num;
-    npt.value = val;
     let total = val;
-    create_cell(row, npt);
+    set_input(row, attr_key, val);
 
     // Extra bonus.
-    npt = document.createElement('INPUT');
     attr_key = "d100_skill_"+s+"_bonus";
-    npt.id = attr_key;
     val = attributes.find(att => att[0].key == attr_key)[1].value_num;
-    npt.value = val;
     total += val;
-    create_cell(row, npt);
-
-    // Total.
-    npt = document.createElement('SPAN');
-    npt.innerText = total;
-    npt.id = s+'total';
-    console.log(npt);
-    create_cell(row, npt);
+    set_input(row, attr_key, val);
+    set_span(row, s+'total', total);
   }
   let thead = table.createTHead();
   let row = thead.insertRow();
   for(let t of ["Skill", "Proficiency", "Bonus", "Total"]) {
-    let th = document.createElement("th");
-    th.appendChild(document.createTextNode(t));
-    row.appendChild(th);
+    set_th(row, t);
   };
 }
 
@@ -428,51 +343,28 @@ function set_inventory(char) {
   for (let item of char.parts) {
     if(item.part_type === "InventoryItem") {
       let row = table.insertRow();
-      let gen_input = document.createElement('INPUT');
       let id = item.uuid;
-      // Item Name
-      gen_input.value = item.name;
-      gen_input.id = 'name' + id;
-      create_cell(row, gen_input);
-      // Item Type.
-      gen_input = document.createElement('INPUT');
-      gen_input.value = item.character_type;
-      gen_input.id = 'character_type' + id;
-      create_cell(row, gen_input);
-      // Item Size.
-      gen_input = document.createElement('INPUT');
-      gen_input.value = item.size;
-      gen_input.id = 'size' + id;
-      create_cell(row, gen_input);
-      // Item weight.
-      gen_input = document.createElement('INPUT');
+
+      set_input(row, 'name' + id, item.name);
+      set_input(row, 'character_type' + id, item.character_type);
+      set_input(row, 'size' + id, item.size);
       if(item.weight) {
-        gen_input.value = 0 + item.weight;
+        set_input(row, 'weight' + id, 0 + item.weight);
       } else {
-        gen_input.value = 0;
+        set_input(row, 'weight' + id, 0);
       }
-      gen_input.id = 'weight' + id;
-      create_cell(row, gen_input);
       // Item weight.
-      gen_input = document.createElement('BUTTON');
-      gen_input.innerText = 'Delete item';
-      gen_input.id = 'delete' + id;
-      create_cell(row, gen_input);
+      set_button(row, 'delete' + id, 'Delete item');
     }
   }
   let row = table.insertRow();
-  let btn = document.createElement('BUTTON');
-  btn.innerText = 'Add item';
-  btn.id = 'addInventoryItem';
-  create_cell(row, btn);
+  set_button(row, 'addInventoryItem', 'Add item');
 
   // Create header.
   let thead = table.createTHead();
   row = thead.insertRow();
   for(let t of ["Item", "Item type", "Item size", "Item weight", ""]) {
-    let th = document.createElement("th");
-    th.appendChild(document.createTextNode(t));
-    row.appendChild(th);
+    set_th(row, t);
   };
 }
 
@@ -481,10 +373,8 @@ function set_notes(char) {
   clear_table(table);
   // Create elements.
   let row = table.insertRow();
-  let btn = document.createElement("BUTTON");
-  btn.id = "create-note";
-  btn.innerText = "Create New Note";
-  create_cell(row, btn);
+  set_button(row, "create-note", "Create New Note");
+
   for (let x of char["notes"]) {
     let note_title = document.createElement("INPUT");
     note_title.id = "note-title" + x["id"];
@@ -505,9 +395,7 @@ function set_notes(char) {
   let thead = table.createTHead();
   thead.id = "hide-notes";
   row = thead.insertRow();
-  let th = document.createElement("th");
-  th.appendChild(document.createTextNode("Character Notes."));
-  row.appendChild(th);
+  set_th(row, "Character Notes.");
 }
 
 // All of the Node.js APIs are available in the preload process.
