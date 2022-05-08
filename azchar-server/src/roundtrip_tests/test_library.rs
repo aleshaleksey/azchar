@@ -162,7 +162,7 @@ fn create_euridice_and_give_her_a_sword() {
 
     let sword_request = Request::CreatePart(e_name.to_owned(), e_uuid.to_owned(), scimitar);
     let armed_euridice = match frame.send_and_receive(sword_request) {
-        FrameReply::Success(Response::CreateAttributePart(c)) => c,
+        FrameReply::Success(Response::CreateDeleteAttributePart(c)) => c,
         FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
         FrameReply::Success(r) => panic!("Expect `CreateAttributePart`, got {:?}", r),
     };
@@ -184,6 +184,23 @@ fn create_euridice_and_give_her_a_sword() {
     assert_eq!(sword.size, Some("medium".to_owned()));
     assert_eq!(sword.hp_total, None);
     assert_eq!(sword.hp_current, None);
+    assert_eq!(sword.id(), Some(4));
+
+    // Now delete the sword:
+    let sword_request = Request::DeletePart(e_name.to_owned(), e_uuid.to_owned(), 4);
+    let disarmed_euridice = match frame.send_and_receive(sword_request) {
+        FrameReply::Success(Response::CreateDeleteAttributePart(c)) => c,
+        FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
+        FrameReply::Success(r) => panic!("Expect `CreateAttributePart`, got {:?}", r),
+    };
+    let maybe_sword = disarmed_euridice
+        .parts()
+        .iter()
+        .find(|p| (p.part_type(), p.character_type()) == (Part::InventoryItem, "weapon"));
+    assert!(
+        maybe_sword.is_none(),
+        "We should have disarmed euridice, but we failed! How?"
+    );
 }
 
 #[test]
@@ -353,7 +370,7 @@ fn create_euridice_and_give_her_some_experience() {
     };
     let experience_req = Request::CreateAttribute(name.to_owned(), uuid.to_owned(), experience);
     let experienced_euridice = match frame.send_and_receive(experience_req) {
-        FrameReply::Success(Response::CreateAttributePart(c)) => c,
+        FrameReply::Success(Response::CreateDeleteAttributePart(c)) => c,
         FrameReply::Fail(e) => panic!("Failed to send and receive: {}", e),
         FrameReply::Success(r) => panic!("Expect `Response::CreateAttribute`, got {:?}", r),
     };

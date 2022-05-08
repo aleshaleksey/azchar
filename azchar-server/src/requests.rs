@@ -465,7 +465,6 @@ mod tests {
             serde_json::to_string(&Request::UpdatePart(eur, uuid, p1)).unwrap()
         )
     }
-    // UpdatePart(String, String, CharacterPart),
 
     #[test]
     fn make_delete_character() {
@@ -480,6 +479,24 @@ mod tests {
         assert_eq!(
             exp,
             serde_json::to_string(&Request::DeleteCharacter(eur, uuid)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn make_delete_character_part() {
+        let eur = "Euridice".to_string();
+        let uuid = "5936ce00-2275-463c-106a-0f2edde38175".to_string();
+        let id = 42;
+        let exp = format!(
+            "{{\"DeletePart\":[\
+        \"{}\",\
+        \"{}\",\
+        {}]}}",
+            eur, uuid, id
+        );
+        assert_eq!(
+            exp,
+            serde_json::to_string(&Request::DeletePart(eur, uuid, id)).unwrap(),
         );
     }
 }
