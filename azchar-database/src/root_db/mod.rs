@@ -375,6 +375,23 @@ impl LoadedDbs {
         }
     }
 
+    pub fn delete_part(
+        &mut self,
+        part_id: i64,
+        key: (String, String),
+    ) -> Result<CompleteCharacter, String> {
+        if let Some(ref mut conn) = self.connections.get_mut(&key) {
+            let c = conn.connect()?;
+            CompleteCharacter::delete_part(part_id, c)?;
+            CompleteCharacter::load(c)
+        } else {
+            Err(format!(
+                "Character with identifier {}-{} not found.",
+                key.0, key.1
+            ))
+        }
+    }
+
     pub fn delete_character(&mut self, char_name: String, char_uuid: String) -> Result<(), String> {
         use crate::diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl};
         use crate::root_db::characters::character_dbs::dsl::*;

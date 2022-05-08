@@ -581,6 +581,19 @@ impl CompleteCharacter {
         })
     }
 
+    /// This function deletes a character part and all of its attributes.
+    pub fn delete_part(part_id: i64, conn: &SqliteConnection) -> Result<(), String> {
+        use self::characters::dsl;
+        use super::attribute::attributes::dsl as a_dsl;
+
+        let res = conn.immediate_transaction::<_, DbError, _>(|| {
+            diesel::dsl::delete(dsl::characters.filter(dsl::id.eq(part_id))).execute(conn)?;
+            diesel::dsl::delete(a_dsl::attributes.filter(a_dsl::of.eq(part_id))).execute(conn)?;
+            Ok(())
+        });
+        res.map_err(|e| format!("Error deleting character part: {:?}", e))
+    }
+
     /// Store a character in an existing sheet.
     /// If the sheet is empty a new character is created, otherwise it is updated.
     /// NB: The sheet should already exist.

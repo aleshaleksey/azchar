@@ -34,6 +34,9 @@ pub(crate) enum Request {
     /// A function particularly for adding new parts.
     // The strings are name && uuid
     CreatePart(String, String, InputCharacter),
+    /// A function particularly for removing a part.
+    /// The strings are name && uuid of the character, the id is the part id.
+    DeletePart(String, String, i64),
     /// Inserting an image requires the (name, uuid) and main character,
     /// as well as the InputImage (an id and path).
     InsertUpdateImage(String, String, InputImage),
@@ -72,7 +75,8 @@ pub(crate) enum Response {
     /// Update a single character part.
     UpdatePart,
     /// We must update the whole character when create an utterly new_attribute o part.
-    CreateAttributePart(CompleteCharacter),
+    /// Same applies when we destroy a part.
+    CreateDeleteAttributePart(CompleteCharacter),
     /// We need the actual image data here.
     InsertUpdateImage(Image),
     /// We do not need to retrieve anything for this.
@@ -173,6 +177,13 @@ impl Request {
                 }
                 None => Response::load_db_error(Self::UpdatePart(name, uuid, character)),
             },
+            Self::DeletePart(name, uuid, part_id) => match main_loop {
+                Some(ref mut dbs) => {
+                    let updated = dbs.delete_part(part_id, (name, uuid))?;
+                    Response::CreateDeleteAttributePart(updated)
+                }
+                None => Response::load_db_error(Self::DeletePart(name, uuid, part_id)),
+            },
             Self::InsertUpdateImage(name, uuid, input_image) => match main_loop {
                 Some(ref mut dbs) => {
                     Response::InsertUpdateImage(dbs.create_update_image(name, uuid, input_image)?)
@@ -186,7 +197,7 @@ impl Request {
             Self::UpdateNote(name, uuid, mut note) => match main_loop {
                 Some(ref mut dbs) => {
                     if let Some(ref mut c) = note.content {
-                        *c = c.replace("[[enter]]","\n");
+                        *c = c.replace("[[enter]]", "\n");
                     }
                     dbs.update_note(name, uuid, note)?;
                     Response::UpdateNote
@@ -195,14 +206,14 @@ impl Request {
             },
             Self::CreatePart(name, uuid, part) => match main_loop {
                 Some(ref mut dbs) => {
-                    Response::CreateAttributePart(dbs.create_part(part, (name, uuid))?)
+                    Response::CreateDeleteAttributePart(dbs.create_part(part, (name, uuid))?)
                 }
                 None => Response::load_db_error(Self::CreatePart(name, uuid, part)),
             },
             Self::CreateAttribute(name, uuid, attr) => match main_loop {
                 Some(ref mut dbs) => {
                     let res = dbs.create_attribute(attr, (name, uuid))?;
-                    Response::CreateAttributePart(res)
+                    Response::CreateDeleteAttributePart(res)
                 }
                 None => Response::load_db_error(Self::CreateAttribute(name, uuid, attr)),
             },
