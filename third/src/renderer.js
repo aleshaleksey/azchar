@@ -37,7 +37,7 @@ document.getElementById('submit-request').addEventListener('click', async () => 
   document.getElementById('output-request').value = await window.connection.receive('click', '');
 })
 
-function set_sheet_list_listeners(sheets, character) {
+function set_sheet_list_listeners(sheets) {
   if(!sheets) { return; }
   if(sheets.length > 0) {
     for (let char of sheets) {
@@ -51,24 +51,30 @@ function set_sheet_list_listeners(sheets, character) {
 
         // Then we set the character sheet.
         let character = await window.connection.get_sheet('click', '');
-        if(character) {
-          console.log("Character in main: " + character["name"]);
-          await window.builder.character_set(character);
-          set_create_hide_listeners();
-          set_create_note_listener(character);
-          set_update_notes_listeners(character["name"], character["uuid"], character["notes"]);
-          set_update_skills_listeners(character);
-          set_update_main_attributes_listeners(character);
-          set_update_main_attributes_cosmetic_listeners(character);
-          set_update_main_attributes_resource_listeners(character);
-          set_update_main_attributes_body_listeners(character);
-          set_update_skills_listeners(character);
-          set_skill_rollers(character);
-          // TODO: Listeners for character sheet: Main part:
-          set_update_main_listeners_for(character, ["name","speed","weight","size","hp_current","hp_total"]);
-        }
+        await set_all_listeners(character);
       })
     }
+  }
+}
+
+async function set_all_listeners(ch) {
+  if(ch) {
+    console.log("Character in main: " + ch["name"]);
+    await window.builder.character_set(ch);
+    set_create_hide_listeners();
+    set_create_note_listener(ch);
+    set_update_notes_listeners(ch.name, ch.uuid, ch.notes);
+    set_update_skills_listeners(ch);
+    set_update_main_attributes_listeners(ch);
+    set_update_main_attributes_cosmetic_listeners(ch);
+    set_update_main_attributes_resource_listeners(ch);
+    set_update_main_attributes_body_listeners(ch);
+    set_update_skills_listeners(ch);
+    set_skill_rollers(ch);
+    // TODO: Listeners for character sheet: Main part:
+    set_update_main_listeners_for(ch, ["name","speed","weight","size","hp_current","hp_total"]);
+  } else {
+    console.log("Could not set listeners as character is null.");
   }
 }
 
@@ -97,9 +103,10 @@ function set_create_hide_listeners() {
     }
   });
   document.getElementById('hide-inventory-wrap').addEventListener('click', async () => {
-    console.log("hide notes header clicked");
+    console.log("hide inventory header clicked");
     let table = document.getElementById('character-inventory');
     let len = table.rows.length;
+    table.tHead.hidden = !table.tHead.hidden;
     for(let i=len-1;i>=1;--i) {
       table.rows[i].hidden = !table.rows[i].hidden;
     }
@@ -133,9 +140,8 @@ function set_create_note_listener(ch) {
       notes.push(n);
     }
     ch.notes = notes;
-    await window.builder.character_set(ch);
-    set_create_note_listener(ch);
-    set_update_notes_listeners(ch);
+    character = ch;
+    await set_all_listeners(ch);
   })
 }
 
@@ -192,6 +198,28 @@ function update_character_part(conn, ch, part) {
       +"\",\"belongs_to\":"+belongs_to
       +",\"attributes\":[],\"image\":"+part.image
       +"}]}"
+  );
+}
+
+// The part type and name must be specified to make this universal.
+// NB: `character_type` is a more or less free-form string, while
+// `part_type` comes from a set selection of enums.
+function create_character_part(conn, ch, character_type, part_type) {
+  conn.send(
+    'keyup',
+    "{\"CreatePart\":[\""
+      +ch["name"]+"\",\""
+      +ch["uuid"]+"\","
+      +"{\"name\":\""+""
+      +"\",\"character_type\":\""+character_type
+      +"\",\"speed\":"+0
+      +",\"weight\":"+0
+      +",\"size\":\""+"medium"
+      +"\",\"hp_total\":"+0
+      +",\"hp_current\":"+0
+      +",\"belongs_to\":"+ch.id
+      +",\"part_type\":\""+part_type
+      +"\"}]}"
   );
 }
 
@@ -384,6 +412,16 @@ function set_update_main_attributes_body_listeners(ch) {
       set_inventory_item_listeners(s, ch)
     }
   }
+  // Creation of items.
+  let eli = document.getElementById("addInventoryItem");
+  eli.addEventListener('click', async () => {
+    await create_character_part(connection, ch, "weapon", "InventoryItem");
+    await new Promise(r => setTimeout(r, 100));
+
+    ch = await window.connection.get_sheet('click', '');
+    character = ch;
+    await set_all_listeners(ch);
+  })
 }
 
 function set_inventory_item_listeners(part, ch) {
@@ -410,14 +448,17 @@ function set_inventory_item_listeners(part, ch) {
   // Deletion of items.
   let eld = document.getElementById('delete' + part.uuid);
   eld.addEventListener('click', async () => {
-    console.log("We pretend to delete the inventory item!");
-  })
-  // Deletion of items.
-  let eli = document.getElementById('add-inventory-item');
-  eli.addEventListener('click', async () => {
-    console.log("We pretend to create the inventory item!");
-  })
+    console.log("ch.parts:" + ch.parts.length);
+    await connection.send(
+      'click',
+      "{\"DeletePart\":[\""+ch["name"]+"\",\""+ch["uuid"]+"\","+part.id+"]}",
+    );
+    await new Promise(r => setTimeout(r, 100));
 
+    ch = await window.connection.get_sheet('click', '');
+    character = ch;
+    await set_all_listeners(ch);
+  })
 }
 
 function set_create_character_listener() {

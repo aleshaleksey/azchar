@@ -443,7 +443,7 @@ function set_inventory(char) {
   let row = table.insertRow();
   let btn = document.createElement('BUTTON');
   btn.innerText = 'Add item';
-  btn.id = 'add-inventory-item';
+  btn.id = 'addInventoryItem';
   create_cell(row, btn);
 
   // Create header.

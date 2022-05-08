@@ -36,7 +36,7 @@ class ReplyKey {
     static CreateUpdateCharacter = new ReplyKey('CreateUpdateCharacter');
     static UpdateAttribute = new ReplyKey('UpdateAttribute');
     static UpdatePart = new ReplyKey('UpdatePart');
-    static CreateAttributePart = new ReplyKey('CreateAttributePart');
+    static CreateDeleteAttributePart = new ReplyKey('CreateDeleteAttributePart');
     static InsertUpdateImage = new ReplyKey('InsertUpdateImage');
     static UpdateNote = new ReplyKey('UpdateNote');
     static InsertNote = new ReplyKey('InsertNote');
@@ -90,9 +90,9 @@ function process_reply(json_input, flow) {
   } else if (json_input[ReplyKey.UpdateAttribute.name]) {
     console.log("Attribute updated.");
   // When reating an attribute or part we refresh the character.
-  } else if (json_input[ReplyKey.CreateAttributePart.name]) {
+  } else if (json_input[ReplyKey.CreateDeleteAttributePart.name]) {
     console.log("Major character update.");
-    flow.character = json_input[ReplyKey.CreateAttributePart.name];
+    flow.character = json_input[ReplyKey.CreateDeleteAttributePart.name];
     console.log(flow.character);
   // Load the character.
   } else if (json_input[ReplyKey.LoadCharacter.name]) {
@@ -115,7 +115,7 @@ function process_reply(json_input, flow) {
     }
     flow.sheets = json_input[ReplyKey.DeleteCharacter.name];
   // Deal with Character listing..
-} else if (json_input[ReplyKey.ListCharacters.name]) {
+  } else if (json_input[ReplyKey.ListCharacters.name]) {
     console.log("Listing Character:");
     let l = json_input[ReplyKey.ListCharacters.name].length;
     for (let i=0; i<l;i++) {
@@ -139,7 +139,7 @@ function process_reply(json_input, flow) {
     }
     flow.sheets = json_input[ReplyKey.CreateUpdateCharacter.name];
   // Deal wih note insertion.
-} else if (JSON.stringify(json_input)=="\""+ReplyKey.UpdatePart.name+"\"") {
+  } else if (JSON.stringify(json_input)=="\""+ReplyKey.UpdatePart.name+"\"") {
     console.log("Part updated.");
   } else if (JSON.stringify(json_input)=="\""+ReplyKey.UpdateAttribute.name+"\"") {
     console.log("Attribute updated.");
