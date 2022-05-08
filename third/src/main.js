@@ -45,6 +45,9 @@ const createWindow = () => {
   ipcMain.handle('connection:get-new-note', (event, arg) => {
     return flow_controller.new_note;
   });
+  ipcMain.handle('connection:get-roll-res', (event, arg) => {
+    return flow_controller.last_roll;
+  });
 }
 
 

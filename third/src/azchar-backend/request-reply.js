@@ -73,7 +73,8 @@ function process_reply(json_input, flow) {
     console.log("Original content: " + json_input[ReplyKey.Err.name][1]);
   // deal with rolls.
   } else if (json_input[ReplyKey.Roll.name]) {
-    console.log("Roll is: " + json_input[ReplyKey.Roll.name]);
+    flow.last_roll = json_input[ReplyKey.Roll.name];
+    console.log("Roll is: " + flow.last_roll);
   // Deal with Shutdown.
   } else if (json_input[ReplyKey.Shutdown.name]) {
     console.log("Shutting down the server.");

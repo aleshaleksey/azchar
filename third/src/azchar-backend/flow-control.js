@@ -3,6 +3,7 @@ var FlowController = {
   sheets: [],
   character: null,
   last_sender_id: null,
-  new_note: null
+  new_note: null,
+  last_roll: null,
 };
 module.exports = { FlowController };

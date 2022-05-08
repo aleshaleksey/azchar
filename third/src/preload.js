@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('connection', {
   get_list: (event, arg) => ipcRenderer.invoke('connection:get-list', arg),
   get_sheet: (event, arg) => ipcRenderer.invoke('connection:get-sheet', arg),
   get_new_note: (event, arg) => ipcRenderer.invoke('connection:get-new-note', arg),
+  get_roll_res: (event, arg) => ipcRenderer.invoke('connection:get-roll-res', arg),
 });
 
 // A function that exists for DRY.
@@ -90,6 +91,25 @@ contextBridge.exposeInMainWorld('builder', {
 
     set_d20_skills(character);
     set_d100_skills(character);
+  },
+  // This function creates the sort of not-quite popup display with the roll.
+  roll_window_100: (rolled_item, description, roll) => {
+    let box = document.getElementById('rr-box');
+    box.hidden = false;
+    let thr = Number.parseInt(roll[1]);
+    if(thr < 5) { thr = 5; }
+    box.innerText = 'We rolled: ' + rolled_item + '\n'
+      + description + ':\n'
+      + 'Roll [' + roll[0] + '] vs Threshold [' + thr + ']';
+  },
+  // This function creates the sort of not-quite popup display with the roll.
+  roll_window_20: (rolled_item, description, roll) => {
+    let box = document.getElementById('rr-box');
+    box.hidden = false;
+    let res = Number.parseInt(roll[0]) + Number.parseInt(roll[1]);
+    box.innerText = 'We rolled: ' + rolled_item + '\n'
+      + description + ':\n'
+      + 'Roll = ' + res + ' ([' + roll[0] + '] + ' + roll[1] + ')';
   }
 });
 

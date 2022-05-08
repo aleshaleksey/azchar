@@ -71,6 +71,7 @@ async function set_all_listeners(ch) {
     set_update_main_attributes_body_listeners(ch);
     set_update_skills_listeners(ch);
     set_skill_rollers(ch);
+    set_roll_dialog_listener();
     // TODO: Listeners for character sheet: Main part:
     set_update_main_listeners_for(ch, ["name","speed","weight","size","hp_current","hp_total"]);
   } else {
@@ -312,15 +313,21 @@ function set_skill_rollers(ch) {
                 "survival","trickery"]) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
-      let v = Number.parseInt(document.getElementById(s+'total'));
+      let v = Number.parseInt(document.getElementById(s+'total').innerText);
       let roll;
       if(isNaN(v)) {
         roll = "{\"Roll\":\"1d20\"}";
-      } else {
+      } else if(v >= 0) {
         roll = "{\"Roll\":\"1d20+"+v+"\"}";
+      } else {
+        roll = "{\"Roll\":\"1d20"+v+"\"}";
       }
-      console.log(roll);
+
       await window.connection.send('click', roll);
+      await new Promise(r => setTimeout(r, 5));
+
+      let res = await window.connection.get_roll_res();
+      window.builder.roll_window_20(s, s + "roll result", res);
     });
   }
   for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering",
@@ -328,15 +335,22 @@ function set_skill_rollers(ch) {
                 "unarmed", "underworld"]) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
-      let v = Number.parseInt(document.getElementById(s+'total'));
+      let v = Number.parseInt(document.getElementById(s+'total').innerText);
+      console.log("bonus for d100:" + v);
       let roll;
       if(isNaN(v)) {
         roll = "{\"Roll\":\"1d100+5\"}";
+      } else if(v >= 0) {
+        roll = "{\"Roll\":\"1d100+"+v+"\"}";
       } else {
-        roll = "{\"Roll\":\"1d100\"+"+v+"}";
+        roll = "{\"Roll\":\"1d100"+v+"\"}";
       }
-      console.log(roll);
+
       await window.connection.send('click', roll);
+      await new Promise(r => setTimeout(r, 5));
+
+      let res = await window.connection.get_roll_res('click');
+      window.builder.roll_window_100(s, s + " roll result", res);
     });
   }
 }
@@ -480,7 +494,7 @@ function set_update_main_listeners_for(ch, text_array) {
   for (let x of text_array) {
     let part = document.getElementById(x);
     part.addEventListener('keyup', async () => {
-      // This is a guard against invalid values.
+      // This is a guard against invalid valuest.
       let intermediate = null;
       if(part.value.length > 0) {
         intermediate = part.value;
@@ -489,4 +503,13 @@ function set_update_main_listeners_for(ch, text_array) {
       await update_character_part(connection, ch, ch);
     });
   }
+}
+
+// This function hides and clears the roll window:
+function set_roll_dialog_listener() {
+  let box = document.getElementById('rr-box');
+  box.addEventListener('dblclick', async () => {
+    box.hidden = true;
+    box.innerText = null;
+  });
 }
