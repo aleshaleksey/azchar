@@ -26,12 +26,15 @@ function set_th(row, text) {
 // Create an input.
 // Takes an id, a vlue and a row to stick it in.
 function set_input(row, id, value, npt_type) {
-    let ibox = document.createElement("INPUT");
-    ibox.id = id;
+  let ibox = document.createElement("INPUT");
+  ibox.id = id;
+  if(npt_type) {
+    ibox.type = npt_type;
+    ibox.checked = value;
+  } else {
     ibox.value = value;
-    if(npt_type) { ibox.type = npt_type; }
-
-    create_cell(row, ibox);
+  }
+  create_cell(row, ibox);
 }
 
 function set_button(row, id, inner_text) {
