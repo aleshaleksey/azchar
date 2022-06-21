@@ -4,16 +4,16 @@
   "description": "fusion-azchar-electron",
   "main": "src/main.js",
   "dependencies": {
-    "web-vitals": "^2.1.2",
-    "ws": "^8.4"
+    "web-vitals": "^2.1.4",
+    "ws": "^8.8.0"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --no-sandbox",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "aleshaleksey (Aleksey Zholobenko)",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^17.0.0"
+      "electron": "^19.0.4"
   }
 }

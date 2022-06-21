@@ -261,9 +261,9 @@ async function prepare_attr_update(conn, el, ch, s, skill) {
 
 // Set listeners for skills (d20 and d100 in one function)
 function set_update_skills_listeners(ch) {
-  for(let s of ["awareness","acting","agility","beast_mastery","convince","cunning",
-                "faith","intuition","knowledge","scrutiny","strong_arm","stealth",
-                "survival","trickery"]) {
+  for(let s of ["Awareness","Acting","Agility","Beast Mastery","Convince","Cunning",
+                "Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
+                "Survival","Trickery"]) {
     let el = document.getElementById('d20_skill_'+s+'_proficiency');
     // Checkbox detects click.
     el.addEventListener('click', async () => {
@@ -292,9 +292,9 @@ function set_update_skills_listeners(ch) {
     });
   }
   /////////////////////////////////////////////////////////////////////////////////
-  for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering",
-                "firearms", "hacking", "melee", "piloting", "research", "surgery",
-                "unarmed", "underworld"]) {
+  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering",
+                "Firearms", "Hacking", "Melee", "Piloting", "Research", "Surgery",
+                "Unarmed", "Underworld"]) {
     let el = document.getElementById('d100_skill_'+s+'_proficiency')
      el.addEventListener('keyup', async () => {
       prepare_attr_update(connection, el, ch, s, 'd100_skill_'+s+'_proficiency');
@@ -308,9 +308,9 @@ function set_update_skills_listeners(ch) {
 }
 
 function set_skill_rollers(ch) {
-  for(let s of ["awareness","acting","agility","beast_mastery","convince","cunning",
-                "faith","intuition","knowledge","scrutiny","strong_arm","stealth",
-                "survival","trickery"]) {
+  for(let s of ["Awareness","Acting","Agility","Beast Mastery","Convince","Cunning",
+                "Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
+                "Survival","Trickery"]) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
@@ -330,9 +330,9 @@ function set_skill_rollers(ch) {
       window.builder.roll_window_20(s, s + " roll result", res);
     });
   }
-  for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering",
-                "firearms", "hacking", "melee", "piloting", "research", "surgery",
-                "unarmed", "underworld"]) {
+  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering",
+                "Firearms", "Hacking", "Melee", "Piloting", "Research", "Surgery",
+                "Unarmed", "Underworld"]) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
@@ -358,8 +358,8 @@ function set_skill_rollers(ch) {
 // Set listeners for base character stats.
 function set_update_main_attributes_listeners(ch) {
   // Set them.
-  for(let x of ["strength","reflex","toughness","endurance",
-                "intelligence","judgement","charm","will"]) {
+  for(let x of ["Strength","Reflex","Toughness","Endurance",
+                "Intelligence","Judgement","Charm","Will"]) {
     let n = document.getElementById(x+'input');
     n.addEventListener('keyup', async () => {
       let a = ch.attributes.find(attr => attr[0].key == x);

@@ -126,15 +126,15 @@ function set_main_attributes(char) {
     }
     ////////////////////////////////////
     row = table.insertRow();
-    for(let x of ["strength","reflex","toughness","endurance",
-                  "intelligence","judgement","charm","will"]) {
+    for(let x of ["Strength","Reflex","Toughness","Endurance",
+                  "Intelligence","Judgement","Charm","Will"]) {
       let val = char.attributes.find(att => att[0].key == x)[1].value_num;
       set_input(row, x + "input", val);
     }
     ////////////////////////////////////
     row = table.insertRow();
-    for(let x of ["strength","reflex","toughness","endurance",
-                  "intelligence","judgement","charm","will"]) {
+    for(let x of ["Strength","Reflex","Toughness","Endurance",
+                  "Intelligence","Judgement","Charm","Will"]) {
       let val = (document.getElementById(x + 'input').value - 10) / 2;
       set_span(row, x + 'bonus', val);
     }
@@ -267,11 +267,11 @@ function set_d20_skills(ch) {
   let attributes = ch.attributes;
   let prof_val = attributes.find(a => a[0].key == "Proficiency")[1].value_num;
   clear_table(table);
-  for(let s of [["awareness","reflex"], ["acting","charm"], ["agility","reflex"],
-                ["beast_mastery","judgement"], ["convince","charm"],["cunning","charm"],
-                ["faith","judgement"], ["intuition","judgement"], ["knowledge","intelligence"],
-                ["scrutiny","intelligence"], ["strong_arm","strength"], ["stealth","reflex"],
-                ["survival","judgement"], ["trickery","reflex"]]) {
+  for(let s of [["Awareness","Reflex"], ["Acting","Charm"], ["Agility","Reflex"],
+                ["Beast Mastery","Judgement"], ["Convince","Charm"],["Cunning","Charm"],
+                ["Faith","Judgement"], ["Intuition","Judgement"], ["Knowledge","Intelligence"],
+                ["Scrutiny","Intelligence"], ["Strong Arm","Strength"], ["Stealth","Reflex"],
+                ["Survival","Judgement"], ["Trickery","Reflex"]]) {
     let row = table.insertRow();
     set_button(row, s[0]+"-roll", s[0]);
 
@@ -309,8 +309,8 @@ function set_d100_skills(ch) {
   let table = document.getElementById('d100-skills');
   let attributes = ch.attributes;
   clear_table(table);
-  for(let s of ["armourer", "biomedicine", "combat_medicine", "demolition", "engineering", "firearms",
-                "hacking", "melee", "piloting", "research", "surgery", "unarmed", "underworld"]) {
+  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering", "Firearms",
+                "Hacking", "Melee", "Piloting", "Research", "Surgery", "Unarmed", "Underworld"]) {
     let row = table.insertRow();
     set_button(row, s+"-roll", s);
 
