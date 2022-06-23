@@ -348,11 +348,11 @@ function set_inventory(char) {
       set_input(row, 'name' + id, item.name);
       set_input(row, 'character_type' + id, item.character_type);
       set_input(row, 'size' + id, item.size);
+      let w = 0;
       if(item.weight) {
-        set_input(row, 'weight' + id, 0 + item.weight);
-      } else {
-        set_input(row, 'weight' + id, 0);
+        w +=item.weight;
       }
+      set_input(row, 'weight' + id, w);
       // Item weight.
       set_button(row, 'delete' + id, 'Delete item');
     }
@@ -366,6 +366,28 @@ function set_inventory(char) {
   for(let t of ["Item", "Item type", "Item size", "Item weight", ""]) {
     set_th(row, t);
   };
+
+  // The item creation is set here.
+  let item_creation_table = document.getElementById("item-creation-table");
+  {
+    clear_table(item_creation_table);
+    // Main rows
+    let row = item_creation_table.insertRow();
+    set_input(row, 'name-new', 'Spanky');
+    set_input(row, 'type-new', 'tool');
+    set_input(row, 'size-new', 'small');
+    set_input(row, 'weight-new', 1);
+    // Create/cancel buttons.
+    row = item_creation_table.insertRow();
+    set_button(row,'addInventoryItemYes', 'Create');
+    set_button(row,'addInventoryItemNo', 'Cancel');
+    // Header
+    let thead = item_creation_table.createTHead();
+    row = thead.insertRow();
+    for(let t of ["Item", "Item type", "Item size", "Item weight"]) {
+      set_th(row, t);
+    };
+  }
 }
 
 function set_notes(char) {

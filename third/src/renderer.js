@@ -205,17 +205,24 @@ function update_character_part(conn, ch, part) {
 // The part type and name must be specified to make this universal.
 // NB: `character_type` is a more or less free-form string, while
 // `part_type` comes from a set selection of enums.
-function create_character_part(conn, ch, character_type, part_type) {
+function create_character_part(
+  conn,
+  ch,
+  character_type,
+  part_type,
+  part_name,
+  part_size,
+  part_weight) {
   conn.send(
     'keyup',
     "{\"CreatePart\":[\""
       +ch["name"]+"\",\""
       +ch["uuid"]+"\","
-      +"{\"name\":\""+""
+      +"{\"name\":\""+part_name
       +"\",\"character_type\":\""+character_type
       +"\",\"speed\":"+0
-      +",\"weight\":"+0
-      +",\"size\":\""+"medium"
+      +",\"weight\":"+part_weight
+      +",\"size\":\""+part_size
       +"\",\"hp_total\":"+0
       +",\"hp_current\":"+0
       +",\"belongs_to\":"+ch.id
@@ -429,12 +436,34 @@ function set_update_main_attributes_body_listeners(ch) {
   // Creation of items.
   let eli = document.getElementById("addInventoryItem");
   eli.addEventListener('click', async () => {
-    await create_character_part(connection, ch, "weapon", "InventoryItem");
-    await new Promise(r => setTimeout(r, 100));
-
-    ch = await window.connection.get_sheet('click', '');
-    character = ch;
-    await set_all_listeners(ch);
+    let table = document.getElementById('item-box');
+    table.hidden = false;
+    document.getElementById('addInventoryItemNo').addEventListener(
+      'click',
+      async () => {
+      table.hidden = true;
+    })
+    document.getElementById('addInventoryItemYes').addEventListener(
+      'click',
+      async () => {
+      table.hidden = true;
+      // Set parameters.
+      let weight = document.getElementById('weight-new').value;
+      let size = document.getElementById('size-new').value;
+      let name = document.getElementById('name-new').value;
+      // To do: Convert `itype` to lowercase.
+      let itype = document.getElementById('type-new').value;
+      if(!weight) { weight = 0; }
+      if(!size) { size = 'medium'; }
+      if(!name) { name = 'Spanky'; }
+      if(!itype) { itype = 'tool'; }
+      // Create.
+      await create_character_part(connection, ch, itype, "InventoryItem", name, size, weight);
+      await new Promise(r => setTimeout(r, 100));
+      ch = await window.connection.get_sheet('click', '');
+      character = ch;
+      await set_all_listeners(ch);
+    })
   })
 }
 
