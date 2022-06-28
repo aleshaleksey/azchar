@@ -74,6 +74,7 @@ contextBridge.exposeInMainWorld('builder', {
     set_d20_skills(character);
     set_d100_skills(character);
   },
+  set_inventory_details: (part) => set_inventory_details(part),
   // This function creates the sort of not-quite popup display with the roll.
   roll_window_100: (rolled_item, description, roll) => {
     let box = document.getElementById('rr-box');
@@ -345,14 +346,14 @@ function set_inventory(char) {
       let row = table.insertRow();
       let id = item.uuid;
 
-      set_input(row, 'name' + id, item.name);
-      set_input(row, 'character_type' + id, item.character_type);
-      set_input(row, 'size' + id, item.size);
+      set_span(row, 'name' + id, item.name);
+      set_span(row, 'character_type' + id, item.character_type);
+      set_span(row, 'size' + id, item.size);
       let w = 0;
       if(item.weight) {
         w +=item.weight;
       }
-      set_input(row, 'weight' + id, w);
+      set_span(row, 'weight' + id, w);
       // Item weight.
       set_button(row, 'delete' + id, 'Delete item');
     }
@@ -387,6 +388,42 @@ function set_inventory(char) {
     for(let t of ["Item", "Item type", "Item size", "Item weight"]) {
       set_th(row, t);
     };
+  }
+}
+
+// Sets inventory details when an item is clicked.
+function set_inventory_details(part) {
+  let table = document.getElementById("item-detail-table");
+  {
+    clear_table(table);
+    // Main rows
+    let row = table.insertRow();
+    set_th(row, 'Name');
+    set_input(row, 'name-detail', part.name);
+    row = table.insertRow();
+    set_th(row, 'Type');
+    set_input(row, 'character_type-detail', part.character_type);
+    row = table.insertRow();
+    set_th(row, 'Size');
+    set_input(row, 'size-detail', part.size);
+    row = table.insertRow();
+    set_th(row, 'Weight');
+    set_input(row, 'weight-detail', part.weight);
+    row = table.insertRow();
+    set_th(row, 'Speed');
+    set_input(row, 'speed-detail', part.speed);
+    row = table.insertRow();
+    set_th(row, 'HP total');
+    set_input(row, 'hp_total-detail', part.hp_total);
+    row = table.insertRow();
+    set_th(row, 'HP current');
+    set_input(row, 'hp_current-detail', part.hp_current);
+
+    // Header
+    let thead = table.createTHead();
+    row = thead.insertRow();
+    set_th(row, "Characteristic");
+    set_th(row, "Value");
   }
 }
 

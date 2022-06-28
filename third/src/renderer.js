@@ -37,20 +37,25 @@ document.getElementById('submit-request').addEventListener('click', async () => 
   document.getElementById('output-request').value = await window.connection.receive('click', '');
 })
 
+async function get_char_by_name_uuid(name, uuid, delay) {
+  await window.connection.send(
+    'click',
+    "{\"LoadCharacter\":[\""+name+"\",\""+uuid+"\"]}"
+  );
+  await new Promise(r => setTimeout(r, delay));
+  // Then we set the character sheet.
+  let character = await window.connection.get_sheet('click', '');
+  return character;
+}
+
 function set_sheet_list_listeners(sheets) {
   if(!sheets) { return; }
   if(sheets.length > 0) {
     for (let char of sheets) {
       document.getElementById(char["name"]+"load").addEventListener('click', async () => {
         console.log("We have: " + char["name"] + "load");
-        await window.connection.send(
-          'click',
-          "{\"LoadCharacter\":[\""+char["name"]+"\",\""+char["uuid"]+"\"]}"
-        );
-        await new Promise(r => setTimeout(r, 10));
-
         // Then we set the character sheet.
-        let character = await window.connection.get_sheet('click', '');
+        let character = await get_char_by_name_uuid(char.name, char.uuid, 20);
         await set_all_listeners(character);
       })
     }
@@ -467,27 +472,54 @@ function set_update_main_attributes_body_listeners(ch) {
   })
 }
 
-function set_inventory_item_listeners(part, ch) {
+async function pseudo_update_inventory_item(part, ch, inner) {
+  console.log("Pretending to update "+inner);
+  window.builder.set_inventory_details(part);
+  console.log("done");
+  // Deal with the box.
+  let box = document.getElementById('item-box-details');
+  box.hidden = false;
+  box.addEventListener('dblclick', async () => {
+    // When closing the box, reload the character and have it updated.
+    // TODO: Currently fails.
+    ch = await get_char_by_name_uuid(ch.name, ch.uuid, 50);
+    await set_all_listeners(ch);
+    character = ch;
+    box.hidden = true;
+  });
+
   // Text values.
-  for(let inner of ["name", "character_type", "size"]) {
-    let el = document.getElementById(inner + part.uuid);
+  for(let inner of ['name', 'character_type', 'size']) {
+    let el = document.getElementById(inner + '-detail');
     el.addEventListener('keyup', async () => {
         part[inner] = el.value;
         await update_character_part(connection, ch, part);
-    })
+    });
   }
-  // Num values.
-  let el = document.getElementById("weight" + part.uuid);
-  el.addEventListener('keyup', async () => {
-    console.log(el);
-    console.log(el.value);
-    if(el.value) {
-      part.weight = el.value;
-    } else {
-      part.weight = null;
-    };
-    await update_character_part(connection, ch, part);
-  })
+  // Numerical values.
+  for(let inner of ['weight', 'speed', 'hp_total',
+                    'hp_current']) {
+    let el = document.getElementById(inner+'-detail');
+    el.addEventListener('keyup', async () => {
+      if(el.value) {
+        part[inner] = el.value;
+      } else {
+        part[inner] = null;
+      };
+      await update_character_part(connection, ch, part);
+    });
+  }
+}
+
+function set_inventory_item_listeners(part, ch) {
+  // For any of the normal buttons, open the detail dialog.
+  for(let inner of ["name", "character_type", "size", "weight"]) {
+    document.getElementById(inner + part.uuid).addEventListener(
+      'click',
+      async () => await pseudo_update_inventory_item(part, ch, inner)
+    );
+  }
+
   // Deletion of items.
   let eld = document.getElementById('delete' + part.uuid);
   eld.addEventListener('click', async () => {
@@ -500,7 +532,7 @@ function set_inventory_item_listeners(part, ch) {
 
     ch = await window.connection.get_sheet('click', '');
     character = ch;
-    await set_all_listeners(ch);
+    await set_all_listeners(character);
   })
 }
 
