@@ -457,7 +457,8 @@ function set_update_main_attributes_body_listeners(ch) {
       let size = document.getElementById('size-new').value;
       let name = document.getElementById('name-new').value;
       // To do: Convert `itype` to lowercase.
-      let itype = document.getElementById('type-new').value;
+      let sel = document.getElementById('type-new');
+      let itype = sel.options[sel.selectedIndex].innerText
       if(!weight) { weight = 0; }
       if(!size) { size = 'medium'; }
       if(!name) { name = 'Spanky'; }
@@ -489,13 +490,19 @@ async function pseudo_update_inventory_item(part, ch, inner) {
   });
 
   // Text values.
-  for(let inner of ['name', 'character_type', 'size']) {
+  for(let inner of ['name', 'size']) {
     let el = document.getElementById(inner + '-detail');
     el.addEventListener('keyup', async () => {
         part[inner] = el.value;
         await update_character_part(connection, ch, part);
     });
   }
+  // Character type is a selection which is a pain.
+  let sel = document.getElementById('character_type-detail');
+  sel.addEventListener('change', async () => {
+      part.character_type = sel.options[sel.selectedIndex].innerText;
+      await update_character_part(connection, ch, part);
+  });
   // Numerical values.
   for(let inner of ['weight', 'speed', 'hp_total',
                     'hp_current']) {

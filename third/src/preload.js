@@ -375,7 +375,17 @@ function set_inventory(char) {
     // Main rows
     let row = item_creation_table.insertRow();
     set_input(row, 'name-new', 'Spanky');
-    set_input(row, 'type-new', 'tool');
+    // Create the type options.
+    let select = document.createElement("SELECT");
+    select.id = 'character_type-detail';
+    for(let t of ['weapon', 'armour', 'tool', 'consumable', 'wealth']) {
+      let option = new Option(t, t);
+      if(t == 'tool') {
+        option.selected = true;
+      }
+      select.options.add(option);
+    }
+    create_cell(row, select);
     set_input(row, 'size-new', 'small');
     set_input(row, 'weight-new', 1);
     // Create/cancel buttons.
@@ -402,7 +412,17 @@ function set_inventory_details(part) {
     set_input(row, 'name-detail', part.name);
     row = table.insertRow();
     set_th(row, 'Type');
-    set_input(row, 'character_type-detail', part.character_type);
+    // Create the type options.
+    let select = document.createElement("SELECT");
+    select.id = 'type-new';
+    for(let t of ['weapon', 'armour', 'tool', 'consumable', 'wealth']) {
+      let option = new Option(t, t);
+      if(t == part.character_type) {
+        option.selected = true;
+      }
+      select.options.add(option);
+    }
+    create_cell(row, select);
     row = table.insertRow();
     set_th(row, 'Size');
     set_input(row, 'size-detail', part.size);
