@@ -62,11 +62,29 @@ function set_sheet_list_listeners(sheets) {
   }
 }
 
+async function prepare_attr_update(conn, el, ch, s, skill) {
+   let sum = document.getElementById(s+'total');
+   let sum_temp = 0;
+   if(sum.innerText && !isNaN(sum.innerText)) {
+     sum_temp = Number.parseInt(sum.innerText);
+   }
+   let n = Number.parseInt(el.value);
+   if(isNaN(n)) { n = 0; }
+
+   let a = ch.attributes.find(attr => attr[0].key == skill);
+   if(!a[1].value_num || isNaN(a[1].value_num)) { a[1].value_num = 0; }
+   sum_temp -= a[1].value_num;
+   a[1].value_num = n;
+   await update_attribute(conn, a[0], a[1], ch);
+   sum_temp += a[1].value_num;
+   sum.innerText = sum_temp;
+}
+
 async function set_all_listeners(ch) {
   if(ch) {
     console.log("Character in main: " + ch["name"]);
     await window.builder.character_set(ch);
-    set_create_hide_listeners();
+    await window.builder.set_create_hide_listeners();
     set_create_note_listener(ch);
     set_update_notes_listeners(ch.name, ch.uuid, ch.notes);
     set_update_skills_listeners(ch);
@@ -76,7 +94,7 @@ async function set_all_listeners(ch) {
     set_update_main_attributes_body_listeners(ch);
     set_update_skills_listeners(ch);
     set_skill_rollers(ch);
-    set_roll_dialog_listener();
+    await window.builder.set_roll_dialog_listener();
     // TODO: Listeners for character sheet: Main part:
     set_update_main_listeners_for(ch, ["name","speed","weight","size","hp_current","hp_total"]);
   } else {
@@ -87,9 +105,7 @@ async function set_all_listeners(ch) {
 function set_create_hide_listeners() {
   document.getElementById('hide-main-wrap').addEventListener('click', async () => {
     console.log("hide main wrap clicked.");
-    for(let x of ["character-main","level-table","main-attributes-stats","character-cosmetic",
-                  "main-body-parts","main-attributes-resources"]) {
-
+    for(let x of ["character-main","level-table","main-attributes-stats"]) {
       let el = document.getElementById(x);
       el.hidden = !el.hidden;
     }
@@ -111,10 +127,11 @@ function set_create_hide_listeners() {
   document.getElementById('hide-inventory-wrap').addEventListener('click', async () => {
     console.log("hide inventory header clicked");
     let table = document.getElementById('character-inventory');
+    table.hidden = !table.hidden;
     let len = table.rows.length;
-    table.tHead.hidden = !table.tHead.hidden;
+    table.tHead.hidden = table.hidden;
     for(let i=len-1;i>=1;--i) {
-      table.rows[i].hidden = !table.rows[i].hidden;
+      table.rows[i].hidden = table.hidden;
     }
   });
   document.getElementById('hide-notes').addEventListener('click', async () => {
@@ -457,8 +474,8 @@ function set_update_main_attributes_body_listeners(ch) {
       let size = document.getElementById('size-new').value;
       let name = document.getElementById('name-new').value;
       // To do: Convert `itype` to lowercase.
-      let sel = document.getElementById('type-new');
-      let itype = sel.options[sel.selectedIndex].innerText
+      let sel = document.getElementById('character_type-detail');
+      let itype = sel.options[sel.selectedIndex].innerText;
       if(!weight) { weight = 0; }
       if(!size) { size = 'medium'; }
       if(!name) { name = 'Spanky'; }

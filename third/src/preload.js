@@ -7,7 +7,10 @@ const {
   set_button,
   set_span
 } = require('./preload-bp.js');
-
+const {
+  set_create_hide_listeners,
+  set_roll_dialog_listener
+} = require('./set-listeners.js');
 
 contextBridge.exposeInMainWorld('connection', {
   make: (event, arg) => ipcRenderer.invoke('connection:make', arg),
@@ -58,10 +61,6 @@ contextBridge.exposeInMainWorld('builder', {
     ////////////////////////////////////
   },
   character_set: (character) => {
-    document.getElementById('hide-main-wrap').hidden = false;
-    document.getElementById('hide-resources-wrap').hidden = false;
-    document.getElementById('hide-skills-wrap').hidden = false;
-    document.getElementById('hide-inventory-wrap').hidden = false;
     set_main(character);
     set_level_table(character);
     set_main_attributes(character);
@@ -73,6 +72,14 @@ contextBridge.exposeInMainWorld('builder', {
     //
     set_d20_skills(character);
     set_d100_skills(character);
+    for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes',
+    'hide-inventory-wrap','character-main','main-attributes-stats','level-table']) {
+      document.getElementById(x).hidden = false;
+    }
+    for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
+    'character-notes',"main-attributes-resources",'character-inventory']) {
+      document.getElementById(x).hidden = true;
+    }
   },
   set_inventory_details: (part) => set_inventory_details(part),
   // This function creates the sort of not-quite popup display with the roll.
@@ -93,6 +100,15 @@ contextBridge.exposeInMainWorld('builder', {
     box.innerText = 'We rolled: ' + rolled_item + '\n'
       + description + ':\n'
       + 'Roll = ' + res + ' ([' + roll[0] + '] + ' + roll[1] + ')';
+  },
+  set_create_hide_listeners: () => {
+    set_create_hide_listeners();
+  },
+  prepare_attr_update: () => {
+    prepare_attr_update();
+  },
+  set_roll_dialog_listener: () => {
+    set_roll_dialog_listener();
   }
 });
 
@@ -347,6 +363,7 @@ function set_inventory(char) {
       let id = item.uuid;
 
       set_span(row, 'name' + id, item.name);
+      console.log(item);
       set_span(row, 'character_type' + id, item.character_type);
       set_span(row, 'size' + id, item.size);
       let w = 0;
