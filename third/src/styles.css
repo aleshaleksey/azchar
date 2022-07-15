@@ -1,3 +1,16 @@
+option {
+  background-color: #331111;
+  color: #BBFFBB;
+}
+html body form fieldset#custom select datalist div.option:focus {
+  background-color: #99BB99;
+  color: #331111;
+}
+select {
+  background-color: #331111;
+  color: #BBFFBB;
+  border: 3px solid  #444433;
+}
 textarea {
   width: 95%;
   height: 200px;
