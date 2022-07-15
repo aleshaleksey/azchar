@@ -60,7 +60,7 @@ contextBridge.exposeInMainWorld('builder', {
     set_th(row, "Character Loader");
     ////////////////////////////////////
   },
-  character_set: (character) => {
+  character_set: (character, reset) => {
     set_main(character);
     set_level_table(character);
     set_main_attributes(character);
@@ -72,13 +72,15 @@ contextBridge.exposeInMainWorld('builder', {
     //
     set_d20_skills(character);
     set_d100_skills(character);
-    for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes-wrap',
-    'hide-inventory-wrap','character-main','main-attributes-stats','level-table']) {
-      document.getElementById(x).hidden = false;
-    }
-    for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
-    'main-attributes-resources','character-inventory','character-notes']) {
-      document.getElementById(x).hidden = true;
+    if(reset) {
+      for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes-wrap',
+      'hide-inventory-wrap','character-main','main-attributes-stats','level-table']) {
+        document.getElementById(x).hidden = false;
+      }
+      for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
+      'main-attributes-resources','character-inventory','character-notes']) {
+        document.getElementById(x).hidden = true;
+      }
     }
   },
   set_inventory_details: (part) => {

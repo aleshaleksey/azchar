@@ -56,7 +56,7 @@ function set_sheet_list_listeners(sheets) {
         console.log("We have: " + char["name"] + "load");
         // Then we set the character sheet.
         let character = await get_char_by_name_uuid(char.name, char.uuid, 20);
-        await set_all_listeners(character);
+        await set_all_listeners(character, true);
       })
     }
   }
@@ -80,10 +80,10 @@ async function prepare_attr_update(conn, el, ch, s, skill) {
    sum.innerText = sum_temp;
 }
 
-async function set_all_listeners(ch) {
+async function set_all_listeners(ch, reset) {
   if(ch) {
     console.log("Character in main: " + ch["name"]);
-    await window.builder.character_set(ch);
+    await window.builder.character_set(ch, reset);
     await window.builder.set_create_hide_listeners();
     set_create_note_listener(ch);
     set_update_notes_listeners(ch.name, ch.uuid, ch.notes);
@@ -164,7 +164,7 @@ function set_create_note_listener(ch) {
     }
     ch.notes = notes;
     character = ch;
-    await set_all_listeners(ch);
+    await set_all_listeners(ch, false);
   })
 }
 
@@ -464,7 +464,7 @@ function set_update_main_attributes_body_listeners(ch) {
       'click',
       async () => {
       table.hidden = true;
-    })
+    });
     document.getElementById('addInventoryItemYes').addEventListener(
       'click',
       async () => {
@@ -485,7 +485,7 @@ function set_update_main_attributes_body_listeners(ch) {
       await new Promise(r => setTimeout(r, 100));
       ch = await window.connection.get_sheet('click', '');
       character = ch;
-      await set_all_listeners(character);
+      await set_all_listeners(character, false);
     })
   })
 }
@@ -501,9 +501,9 @@ async function pseudo_update_inventory_item(part, ch, inner) {
     // When closing the box, reload the character and have it updated.
     // TODO: Currently fails.
     ch = await get_char_by_name_uuid(ch.name, ch.uuid, 50);
-    await set_all_listeners(ch);
-    character = ch;
+    await set_all_listeners(ch, false);
     box.hidden = true;
+    character = ch;
   });
 
   // Text values.
@@ -556,7 +556,7 @@ function set_inventory_item_listeners(part, ch) {
 
     ch = await window.connection.get_sheet('click', '');
     character = ch;
-    await set_all_listeners(character);
+    await set_all_listeners(character, false);
   })
 }
 
