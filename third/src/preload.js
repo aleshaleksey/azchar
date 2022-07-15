@@ -72,12 +72,12 @@ contextBridge.exposeInMainWorld('builder', {
     //
     set_d20_skills(character);
     set_d100_skills(character);
-    for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes',
+    for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes-wrap',
     'hide-inventory-wrap','character-main','main-attributes-stats','level-table']) {
       document.getElementById(x).hidden = false;
     }
     for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
-    'character-notes',"main-attributes-resources",'character-inventory']) {
+    'main-attributes-resources','character-inventory','character-notes']) {
       document.getElementById(x).hidden = true;
     }
   },
@@ -487,11 +487,6 @@ function set_notes(char) {
     row = table.insertRow();
     create_cell(row, note_c);
   };
-
-  let thead = table.createTHead();
-  thead.id = "hide-notes";
-  row = thead.insertRow();
-  set_th(row, "Character Notes.");
 }
 
 // All of the Node.js APIs are available in the preload process.

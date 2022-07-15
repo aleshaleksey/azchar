@@ -30,12 +30,15 @@ function set_create_hide_listeners() {
       table.rows[i].hidden = table.hidden;
     }
   });
+  console.log(document.getElementById('hide-notes'));
   document.getElementById('hide-notes').addEventListener('click', async () => {
     console.log("hide notes header clicked");
     let table = document.getElementById('character-notes');
+    console.log(table);
+    table.hidden = !table.hidden;
     let len = table.rows.length;
     for(let i=len-1;i>=1;--i) {
-      table.rows[i].hidden = !table.rows[i].hidden;
+      table.rows[i].hidden = table.hidden;
     }
   });
 }
