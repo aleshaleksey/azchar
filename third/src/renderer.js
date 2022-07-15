@@ -485,7 +485,7 @@ function set_update_main_attributes_body_listeners(ch) {
       await new Promise(r => setTimeout(r, 100));
       ch = await window.connection.get_sheet('click', '');
       character = ch;
-      await set_all_listeners(ch);
+      await set_all_listeners(character);
     })
   })
 }

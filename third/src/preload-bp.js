@@ -17,8 +17,9 @@ function create_cell(row, element) {
 }
 
 // Set the stuff inside a th.
-function set_th(row, text) {
+function set_th(row, text, id) {
   let th = document.createElement("th");
+  th.id = id;
   th.appendChild(document.createTextNode(text));
   row.appendChild(th);
 }

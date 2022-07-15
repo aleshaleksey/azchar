@@ -81,7 +81,10 @@ contextBridge.exposeInMainWorld('builder', {
       document.getElementById(x).hidden = true;
     }
   },
-  set_inventory_details: (part) => set_inventory_details(part),
+  set_inventory_details: (part) => {
+    set_inventory_details(part);
+    set_weapon_details(part);
+  },
   // This function creates the sort of not-quite popup display with the roll.
   roll_window_100: (rolled_item, description, roll) => {
     let box = document.getElementById('rr-box');
@@ -461,6 +464,45 @@ function set_inventory_details(part) {
     row = thead.insertRow();
     set_th(row, "Characteristic");
     set_th(row, "Value");
+  }
+}
+
+// Sets inventory details when an item is clicked.
+function set_weapon_details(part) {
+  let table = document.getElementById("weapon-detail-table");
+  {
+    // This is only necessary if we're dealing with a weapon.
+    table.hidden = part.character_type!='weapon';
+    if(table.hidden) { return; }
+    clear_table(table);
+    let key = '';
+    // Main rows
+    for(let x of ['Range','Handedness','Categories','AP cost','Penetration','Damage type 1',
+      'Damage type 2','Damage type 3','Damage 1','Damage 2','Damage 3','Attack bonus',
+      'Description','Kind','Material','Value','Ammo type','Ammo count'
+    ]) {
+      let row = table.insertRow();
+      key = 'weapon_'+x;
+      let attr = part.attributes.find(att => att[0].key == key)
+      if(attr) {
+        let value = attr[1];
+        console.log(value);
+        set_th(row, x, key);
+        set_input(row, 'weapon_'+x+'-value-num', value.value_num);
+        set_input(row, 'weapon_'+x+'-value-text', value.value_text);
+      }
+    }
+    let row = table.insertRow();
+    set_button(row,'roll-weapon-melee','Roll Melee');
+    set_button(row,'roll-weapon-ranged','Roll Ranged');
+
+
+    // Header
+    let thead = table.createTHead();
+    row = thead.insertRow();
+    set_th(row, "Weapon Stat");
+    set_th(row, "Value");
+    set_th(row, "Description");
   }
 }
 
