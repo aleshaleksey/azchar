@@ -533,6 +533,39 @@ async function pseudo_update_inventory_item(part, ch, inner) {
       await update_character_part(connection, ch, part);
     });
   }
+  // Add weapon listeners.
+  if(part.character_type == 'weapon') {
+    for(let x of ['Range','Handedness','Categories','AP cost','Penetration','Damage type 1',
+      'Damage type 2','Damage type 3','Damage 1','Damage 2','Damage 3','Attack bonus',
+      'Description','Kind','Material','Value','Ammo type','Ammo count'
+    ]) {
+      let key = 'weapon_' + x;
+      let attr = part.attributes.find(att => att[0].key == key)
+      if(attr) {
+        let el = document.getElementById(key+'-value-num');
+        el.addEventListener('keyup', async () => {
+          console.log(el);
+          if(el.value) {
+            let n = Number.parseFloat(el.value);
+            if(isNaN(n)) { n = 0; }
+            attr[1].value_num = n;
+          } else {
+            attr[1].value_num = null;
+          }
+          await update_attribute(connection, attr[0], attr[1], ch);
+        });
+        let el2 = document.getElementById(key+'-value-text');
+        el2.addEventListener('keyup', async () => {
+          if(el2.value) {
+            attr[1].value_text = el2.value;
+          } else {
+            attr[1].value_text = null;
+          };
+          await update_attribute(connection, attr[0], attr[1], ch);
+        });
+      }
+    }
+  }
 }
 
 function set_inventory_item_listeners(part, ch) {
