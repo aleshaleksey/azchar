@@ -556,6 +556,7 @@ async function pseudo_update_inventory_item(part, ch, inner) {
         });
         let el2 = document.getElementById(key+'-value-text');
         el2.addEventListener('keyup', async () => {
+          console.log(el2);
           if(el2.value) {
             attr[1].value_text = el2.value;
           } else {
