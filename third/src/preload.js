@@ -84,8 +84,10 @@ contextBridge.exposeInMainWorld('builder', {
     }
   },
   set_inventory_details: (part) => {
+    // This deals with pthe part itself.
     set_inventory_details(part);
-    set_weapon_details(part);
+    // This deals with the part attributes.
+    set_part_details(part);
   },
   // This function creates the sort of not-quite popup display with the roll.
   roll_window_100: (rolled_item, description, roll) => {
@@ -470,34 +472,31 @@ function set_inventory_details(part) {
 }
 
 // Sets inventory details when an item is clicked.
-function set_weapon_details(part) {
+// `part`: Is a character part.
+// `tool`,
+function set_part_details(part) {
   let table = document.getElementById("weapon-detail-table");
   {
     // This is only necessary if we're dealing with a weapon.
-    table.hidden = part.character_type!='weapon';
-    if(table.hidden) { return; }
+    // NB: attribute keys are in the format of PARTTYPE_ATTRIBUTENAME.
+    // Therefore by subtracting PARTTYPE_, you get the name.
+    table.hidden = false;
+    let pl = part.character_type.length + 1;
+    console.log(pl);
     clear_table(table);
     let key = '';
     // Main rows
-    for(let x of ['Range','Handedness','Categories','AP cost','Penetration','Damage type 1',
-      'Damage type 2','Damage type 3','Damage 1','Damage 2','Damage 3','Attack bonus',
-      'Description','Kind','Material','Value','Ammo type','Ammo count'
-    ]) {
+    for(let x of part.attributes) {
+      let kl = x[0].key.length;
       let row = table.insertRow();
-      key = 'weapon_'+x;
-      let attr = part.attributes.find(att => att[0].key == key)
-      if(attr) {
-        let value = attr[1];
-        console.log(value);
-        set_th(row, x, key);
-        set_input(row, 'weapon_'+x+'-value-num', value.value_num);
-        set_input(row, 'weapon_'+x+'-value-text', value.value_text);
-      }
+      console.log(x);
+      set_th(row, x[0].key.substring(pl,kl), x[0].key);
+      set_input(row, x[0].key+'-value-num', x[1].value_num);
+      set_input(row, x[0].key+'-value-text', x[1].value_text);
     }
     let row = table.insertRow();
-    set_button(row,'roll-weapon-melee','Roll Melee');
-    set_button(row,'roll-weapon-ranged','Roll Ranged');
-
+    set_button(row,'roll'+part.character_type+'-melee','Roll Melee');
+    set_button(row,'roll'+part.character_type+'-ranged','Roll Ranged');
 
     // Header
     let thead = table.createTHead();
