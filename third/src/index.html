@@ -18,44 +18,48 @@
       <table id="part-attribute-table" hidden="true"></table>
       <textarea id="blurb-box" class="blurb" name="bb" ></textarea>
     </span>
-    <p></p>
+    <!-- The below section is no longer in use. But can be activated for debug. -->
+    <!-- <p></p>
     <input id="input-address" class="addressbox" value="ws://127.0.0.1:55555"></input>
     <button id="submit-address" class="clickme" type="submit">click-me</button>
-    <p></p>
+    <p></p> -->
     <input id="input-system" width=160px class="addressbox" value="fusion.db"></input>
     <button id="submit-system" class="clickme" class="submit">click-me</button>
     <p></p>
     System Loaded: <span id="display-system">None</span>
     <p></p>
     <!-- Character list is below (all characters in repo). -->
-    <table id="character-table"></table>
+    <table id='hide-sheets-wrap' hidden="true">
+      <th><row><cell>Character List</cell id="hide-sheets"></row></th>
+    </table>
+    <table id="character-table" hidden="true"></table>
     <p></p>
     <!-- Main attributes of the character are below. -->
     <table id='hide-main-wrap' hidden="true">
       <th><row><cell>Basics</cell id="hide-main"></row></th>
     </table>
-    <table id="character-main"></table>
+    <table id="character-main" hidden="true"></table>
     <p></p>
-    <table id="level-table"></table>
+    <table id="level-table" hidden="true"></table>
     <p></p>
-    <table id="main-attributes-stats"></table>
+    <table id="main-attributes-stats" hidden="true"></table>
     <p></p>
     <!-- Character resources (eg HP, MP) are below. -->
     <table id='hide-resources-wrap' hidden="true">
       <th><row><cell>Resources Tables</cell id="hide-resources"></row></th>
     </table>
     <div>
-      <table class="stuff" id="character-cosmetic"></table>
-      <table class="stuff" id="main-attributes-resources"></table>
-      <table class="medium_stuff" id="main-body-parts"></table>
+      <table class="stuff" id="character-cosmetic" hidden="true"></table>
+      <table class="stuff" id="main-attributes-resources" hidden="true"></table>
+      <table class="medium_stuff" id="main-body-parts" hidden="true"></table>
     </div>
     <!-- Basal character skills are below. -->
     <table id='hide-skills-wrap' hidden="true">
       <th><row><cell>Skills Tables</cell id="hide-skills"></row></th>
     </table>
     <div>
-      <table class="skill" id="d20-skills"></table>
-      <table class="skill" id="d100-skills"></table>
+      <table class="skill" id="d20-skills" hidden="true"></table>
+      <table class="skill" id="d100-skills" hidden="true"></table>
     </div>
     <!-- Inventory and special skills are below.
     There are several categories here:
@@ -68,28 +72,28 @@
     <table id='hide-attacks-wrap' hidden="true">
       <th><row><cell>Attacks</cell id="hide-attacks"></row></th>
     </table>
-    <table class="big_stuff" id="character-attacks"></table>
+    <table class="big_stuff" id="character-attacks" hidden="true"></table>
     <table id='hide-specials-wrap' hidden="true">
       <th><row><cell>Specials</cell id="hide-specials"></row></th>
     </table>
-    <table class="big_stuff" id="character-specials"></table>
+    <table class="big_stuff" id="character-specials" hidden="true"></table>
     <table id='hide-spells-wrap' hidden="true">
       <th><row><cell>Spells</cell id="hide-spells"></row></th>
     </table>
-    <table class="big_stuff" id="character-spells"></table>
+    <table class="big_stuff" id="character-spells" hidden="true"></table>
     <table id='hide-perks-wrap' hidden="true">
       <th><row><cell>Perks</cell id="hide-perks"></row></th>
     </table>
-    <table class="big_stuff" id="character-perks"></table>
+    <table class="big_stuff" id="character-perks" hidden="true"></table>
     <table id='hide-inventory-wrap' hidden="true">
       <th><row><cell>Inventory</cell id="hide-inventory"></row></th>
     </table>
-    <table class="big_stuff" id="character-inventory"></table>
+    <table class="big_stuff" id="character-inventory" hidden="true"></table>
     <!-- Notes are below. -->
     <table id='hide-notes-wrap' hidden="true">
       <th id="hide-notes"><row><cell>Notes</cell></row></th>
     </table>
-    <table id="character-notes"></table>
+    <table id="character-notes" hidden="true"></table>
     <p></p>
     <!-- Console for commands is below. -->
     <table id='hide-console-wrap'>

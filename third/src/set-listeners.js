@@ -34,9 +34,10 @@ function set_create_hide_listeners() {
     ['hide-perks-wrap','character-perks'],
     ['hide-inventory-wrap','character-inventory'],
     ['hide-notes-wrap','character-notes'],
+    ['hide-sheets-wrap','character-table'],
   ]) {
     document.getElementById(x[0]).addEventListener('click', async () => {
-      console.log("hide inventory header clicked");
+      console.log('hide '+x[0]+'inventory header clicked');
       let table = document.getElementById(x[1]);
       table.hidden = !table.hidden;
       let len = table.rows.length;

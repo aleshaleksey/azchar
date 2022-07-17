@@ -1,14 +1,22 @@
 // Connection listener.
 var character;
 var sheets = [];
-document.getElementById('submit-address').addEventListener('click', async () => {
-  await window.connection.make('click', document.getElementById('input-address').value);
-  document.getElementById('output-request').value = 'Connection established. Hopefully.';
-})
+// document.getElementById('submit-address').addEventListener('click', async () => {
+//   await window.connection.make('click', document.getElementById('input-address').value);
+//   document.getElementById('output-request').value = 'Connection established. Hopefully.';
+// })
+try {
+  window.connection.make('click', 'ws://127.0.0.1:55555');
+  document.getElementById('output-request').value = 'Connection established.';
+} catch (e) {
+  document.getElementById('output-request').value = e;
+}
 
 // Choose db.
 document.getElementById('submit-system').addEventListener('click', async () => {
   await list_sheets();
+  document.getElementById('hide-sheets-wrap').hidden = false;
+  document.getElementById('character-table').hidden = false;
 });
 
 async function list_sheets() {

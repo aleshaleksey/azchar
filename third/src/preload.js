@@ -49,7 +49,7 @@ contextBridge.exposeInMainWorld('builder', {
       create_cell(row, text);
       // Insert 'name'
       set_button(row, element["name"]+"load", "Load "+element["name"]);
-      set_button(row, element["name"]+"delete", "Delete "+element["name"]);
+      set_button(row, element["name"]+"delete", "Delete ");
     }
     ////////////////////////////////
     // Create header
@@ -78,16 +78,17 @@ contextBridge.exposeInMainWorld('builder', {
     set_d20_skills(character);
     set_d100_skills(character);
     if(reset) {
-      for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap',
-      'hide-notes-wrap','hide-attacks-wrap','hide-specials-wrap','hide-spells-wrap',
-      'hide-perks-wrap','hide-inventory-wrap','character-main','main-attributes-stats',
-      'level-table','hide-console-wrap']) {
+      for(let x of ['hide-sheets-wrap','hide-main-wrap','hide-resources-wrap',
+      'hide-skills-wrap','hide-notes-wrap','hide-attacks-wrap','hide-specials-wrap',
+      'hide-spells-wrap','hide-perks-wrap','hide-inventory-wrap','character-main',
+      'main-attributes-stats','level-table','hide-console-wrap']) {
         document.getElementById(x).hidden = false;
       }
-      for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
-      'main-attributes-resources','character-inventory','character-notes','character-attacks',
-      'character-specials','character-specials','character-spells','character-perks',
-      'input-request','submit-request','output-request']) {
+      for(let x of ['character-table','d20-skills','d100-skills','main-body-parts',
+      'character-cosmetic','main-attributes-resources','character-inventory',
+      'character-notes','character-attacks','character-specials','character-specials',
+      'character-spells','character-perks','input-request','submit-request',
+      'output-request']) {
         document.getElementById(x).hidden = true;
       }
     }
@@ -144,7 +145,9 @@ function set_main(char) {
     }
     ////////////////////////////////////
     row = thead.insertRow();
-    for(let x of ["name","speed","weight","size","hp_current","hp_total"]) {
+    set_input(row, "name", char.name);
+    document.getElementById("name").disabled = true;
+    for(let x of ["speed","weight","size","hp_current","hp_total"]) {
       set_input(row, x, char[x]);
     }
 }
