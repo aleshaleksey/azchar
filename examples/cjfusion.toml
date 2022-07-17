@@ -207,18 +207,18 @@ permitted_attributes = [
   # Spell does damage.???
   #  Spell ressurrects?
   #  Spell instakill???
-  { key = "spell_damage", obligatory = false, attribute_type = 0, attribute_description = "You roll HOW MANY d6s!?", part_name = "spell", part_type = "Ability" },
-  { key = "spell_damage_duration", obligatory = false, attribute_type = 0, attribute_description = "How long it keeps hurting", part_name = "spell", part_type = "Ability" },
-  { key = "spell_healing", obligatory = false, attribute_type = 0, attribute_description = "Un-screw", part_name = "spell", part_type = "Ability" },
-  { key = "spell_healing_duration", obligatory = false, attribute_type = 0, attribute_description = "How long it feels good for", part_name = "spell", part_type = "Ability" },
-  { key = "spell_effect1", obligatory = false, attribute_type = 0, attribute_description = "First side effect.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_effect2", obligatory = false, attribute_type = 0, attribute_description = "Second side effect.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_effect3", obligatory = false, attribute_type = 0, attribute_description = "Third side effect.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_duration", obligatory = true, attribute_type = 0, attribute_description = "Overall duration.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_components", obligatory = true, attribute_type = 0, attribute_description = "Babies, always dead babies.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_concentration", obligatory = false, attribute_type = 0, attribute_description = "Babies, always dead babies.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_text", obligatory = true, attribute_type = 0, attribute_description = "Detailed description.", part_name = "spell", part_type = "Ability" },
-  { key = "spell_ritual", obligatory = false, attribute_type = 0, attribute_description = "Is it a ritual?", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Damage", obligatory = false, attribute_type = 0, attribute_description = "You roll HOW MANY d6s!?", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Damage Duration", obligatory = false, attribute_type = 0, attribute_description = "How long it keeps hurting", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Healing", obligatory = false, attribute_type = 0, attribute_description = "Un-screw", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Healing Duration", obligatory = false, attribute_type = 0, attribute_description = "How long it feels good for", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Effect I", obligatory = false, attribute_type = 0, attribute_description = "First side effect.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Effect II", obligatory = false, attribute_type = 0, attribute_description = "Second side effect.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Effect III", obligatory = false, attribute_type = 0, attribute_description = "Third side effect.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Duration", obligatory = true, attribute_type = 0, attribute_description = "Overall duration.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Components", obligatory = true, attribute_type = 0, attribute_description = "Babies, always dead babies.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Concentration", obligatory = true, attribute_type = 0, attribute_description = "Babies, always dead babies.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Blurb", obligatory = true, attribute_type = 0, attribute_description = "Detailed description.", part_name = "spell", part_type = "Ability" },
+  { key = "spell_Ritual", obligatory = true, attribute_type = 0, attribute_description = "Is it a ritual?", part_name = "spell", part_type = "Ability" },
   # { part_name = "weapon", part_type = "InventoryItem" }
   # NB: We do not need name, speed, weight, size, hp_total/current.
   { key = "weapon_Range", obligatory = true, attribute_type = 0, attribute_description = "I throw my sword (ft).", part_name = "weapon", part_type = "InventoryItem" },

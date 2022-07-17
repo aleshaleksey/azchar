@@ -8,6 +8,10 @@ document.getElementById('submit-address').addEventListener('click', async () => 
 
 // Choose db.
 document.getElementById('submit-system').addEventListener('click', async () => {
+  await list_sheets();
+});
+
+async function list_sheets() {
   await window.connection.send(
     'click',
     "{\"InitialiseFromPath\":\""+document.getElementById('input-system').value+"\"}"
@@ -28,7 +32,7 @@ document.getElementById('submit-system').addEventListener('click', async () => {
     await window.builder.character_list(sheets);
     set_create_character_listener();
   }
-})
+}
 
 document.getElementById('submit-request').addEventListener('click', async () => {
   // const res = await window.connection.send('click', document.getElementById('input-request').value);
@@ -48,6 +52,14 @@ async function get_char_by_name_uuid(name, uuid, delay) {
   return character;
 }
 
+async function delete_character(name, uuid, delay) {
+  await window.connection.send(
+    'click',
+    "{\"DeleteCharacter\":[\""+name+"\",\""+uuid+"\"]}"
+  );
+  await new Promise(r => setTimeout(r, delay));
+}
+
 function set_sheet_list_listeners(sheets) {
   if(!sheets) { return; }
   if(sheets.length > 0) {
@@ -57,6 +69,12 @@ function set_sheet_list_listeners(sheets) {
         // Then we set the character sheet.
         let character = await get_char_by_name_uuid(char.name, char.uuid, 20);
         await set_all_listeners(character, true);
+      })
+      document.getElementById(char["name"]+"delete").addEventListener('click', async () => {
+        console.log("We have: " + char["name"] + "delete");
+        // Then we set the character sheet.
+        await delete_character(char.name, char.uuid, 20);
+        await list_sheets();
       })
     }
   }

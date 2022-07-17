@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('builder', {
       create_cell(row, text);
       // Insert 'name'
       set_button(row, element["name"]+"load", "Load "+element["name"]);
+      set_button(row, element["name"]+"delete", "Delete "+element["name"]);
     }
     ////////////////////////////////
     // Create header
