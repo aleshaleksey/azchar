@@ -14,8 +14,8 @@
       <table id="item-creation-table"></table>
     </span>
     <span class="inventory" id="item-box-details" hidden="true">
-      <table id="item-detail-table"></table>
-      <table id="weapon-detail-table" hidden="true"></table>
+      <table id="part-detail-table"></table>
+      <table id="part-attribute-table" hidden="true"></table>
     </span>
     <p></p>
     <input id="input-address" class="addressbox" value="ws://127.0.0.1:55555"></input>
@@ -26,8 +26,10 @@
     <p></p>
     System Loaded: <span id="display-system">None</span>
     <p></p>
+    <!-- Character list is below (all characters in repo). -->
     <table id="character-table"></table>
     <p></p>
+    <!-- Main attributes of the character are below. -->
     <table id='hide-main-wrap' hidden="true">
       <th><row><cell>Basics</cell id="hide-main"></row></th>
     </table>
@@ -37,6 +39,7 @@
     <p></p>
     <table id="main-attributes-stats"></table>
     <p></p>
+    <!-- Character resources (eg HP, MP) are below. -->
     <table id='hide-resources-wrap' hidden="true">
       <th><row><cell>Resources Tables</cell id="hide-resources"></row></th>
     </table>
@@ -45,6 +48,7 @@
       <table class="stuff" id="main-attributes-resources"></table>
       <table class="medium_stuff" id="main-body-parts"></table>
     </div>
+    <!-- Basal character skills are below. -->
     <table id='hide-skills-wrap' hidden="true">
       <th><row><cell>Skills Tables</cell id="hide-skills"></row></th>
     </table>
@@ -52,19 +56,48 @@
       <table class="skill" id="d20-skills"></table>
       <table class="skill" id="d100-skills"></table>
     </div>
+    <!-- Inventory and special skills are below.
+    There are several categories here:
+    1.) Attacks.
+    2.) Spells.
+    3.) Special abilities.
+    4.) Perks.
+    5.) Inventory.
+    -->
+    <table id='hide-attacks-wrap' hidden="true">
+      <th><row><cell>Attacks</cell id="hide-attacks"></row></th>
+    </table>
+    <table class="big_stuff" id="character-attacks"></table>
+    <table id='hide-specials-wrap' hidden="true">
+      <th><row><cell>Specials</cell id="hide-specials"></row></th>
+    </table>
+    <table class="big_stuff" id="character-specials"></table>
+    <table id='hide-spells-wrap' hidden="true">
+      <th><row><cell>Spells</cell id="hide-spells"></row></th>
+    </table>
+    <table class="big_stuff" id="character-spells"></table>
+    <table id='hide-perks-wrap' hidden="true">
+      <th><row><cell>Perks</cell id="hide-perks"></row></th>
+    </table>
+    <table class="big_stuff" id="character-perks"></table>
     <table id='hide-inventory-wrap' hidden="true">
       <th><row><cell>Inventory</cell id="hide-inventory"></row></th>
     </table>
     <table class="big_stuff" id="character-inventory"></table>
+    <!-- Notes are below. -->
     <table id='hide-notes-wrap' hidden="true">
       <th id="hide-notes"><row><cell>Notes</cell></row></th>
     </table>
     <table id="character-notes"></table>
     <p></p>
-    <textarea id="input-request" class="textarea_a">{"Roll":"1d20"}</textarea>
-    <button id="submit-request" type="submit">click-me-next</button>
+    <!-- Console for commands is below. -->
+    <table id='hide-console-wrap'>
+      <th><row><cell>Command Console</cell id="hide-console"></row></th>
+    </table>
+    <textarea id="input-request" class="textarea_a" hidden="true">{"Roll":"1d20"}</textarea>
+    <button id="submit-request" type="submit" hidden="true">click-me-next</button>
     <p></p>
-    <textarea id="output-request" class="textarea_a" name="out_a"></textarea>
+    <textarea id="output-request" class="textarea_a" name="out_a" hidden="true"></textarea>
     <script src="./renderer.js"></script>
   </body>
 </html>

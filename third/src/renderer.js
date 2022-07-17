@@ -102,48 +102,6 @@ async function set_all_listeners(ch, reset) {
   }
 }
 
-function set_create_hide_listeners() {
-  document.getElementById('hide-main-wrap').addEventListener('click', async () => {
-    console.log("hide main wrap clicked.");
-    for(let x of ["character-main","level-table","main-attributes-stats"]) {
-      let el = document.getElementById(x);
-      el.hidden = !el.hidden;
-    }
-  });
-  document.getElementById('hide-resources-wrap').addEventListener('click', async () => {
-    console.log("hide resources clicked.");
-    for(let x of ["character-cosmetic","main-attributes-resources", "main-body-parts"]) {
-      let el = document.getElementById(x);
-      el.hidden = !el.hidden;
-    }
-  });
-  document.getElementById('hide-skills-wrap').addEventListener('click', async () => {
-    console.log("hide skills clicked.");
-    for(let x of ["d20-skills","d100-skills"]) {
-      let el = document.getElementById(x);
-      el.hidden = !el.hidden;
-    }
-  });
-  document.getElementById('hide-inventory-wrap').addEventListener('click', async () => {
-    console.log("hide inventory header clicked");
-    let table = document.getElementById('character-inventory');
-    table.hidden = !table.hidden;
-    let len = table.rows.length;
-    table.tHead.hidden = table.hidden;
-    for(let i=len-1;i>=1;--i) {
-      table.rows[i].hidden = table.hidden;
-    }
-  });
-  document.getElementById('hide-notes').addEventListener('click', async () => {
-    console.log("hide notes header clicked");
-    let table = document.getElementById('character-notes');
-    let len = table.rows.length;
-    for(let i=len-1;i>=1;--i) {
-      table.rows[i].hidden = !table.rows[i].hidden;
-    }
-  });
-}
-
 // Creates a note, retrieves it, and resets the character.
 function set_create_note_listener(ch) {
   document.getElementById('create-note').addEventListener('click', async () => {
@@ -451,43 +409,59 @@ function set_update_main_attributes_body_listeners(ch) {
             await update_attribute(connection, a[0], a[1], ch);
         })
       }
-    } else if(s.part_type === "InventoryItem") {
+    } else if(s.part_type === "InventoryItem" || s.part_type === "Ability") {
+      // We want to set this for attacks, spells, special abilities, inventory items,
+      // but for now lets do it for everything.
       set_inventory_item_listeners(s, ch)
     }
   }
   // Creation of items.
-  let eli = document.getElementById("addInventoryItem");
-  eli.addEventListener('click', async () => {
-    let table = document.getElementById('item-box');
-    table.hidden = false;
-    document.getElementById('addInventoryItemNo').addEventListener(
-      'click',
-      async () => {
-      table.hidden = true;
+  for(let x of [['character-attacks', "Ability", 'attack'],
+  ['character-specials', "Ability", 'special_ability'],
+  ['character-spells', "Ability", 'spell'],
+  ['character-perks', "Ability", 'perk'],
+  ['character-inventory', "InventoryItem", 'tool']]) {
+    let table_id = x[0];
+    let part_type = x[1];
+    let subtype = x[2];
+    let eli = document.getElementById('add-to-'+table_id);
+    console.log("table_id:"+table_id);
+    console.log(eli);
+    eli.addEventListener('click', async () => {
+      // Create the creation table.
+      await window.builder.set_create_subpart_table(part_type, subtype);
+      let table = document.getElementById('item-box');
+      table.hidden = false;
+
+      document.getElementById('addInventoryItemNo').addEventListener(
+        'click',
+        async () => {
+        table.hidden = true;
+      });
+      document.getElementById('addInventoryItemYes').addEventListener(
+        'click',
+        async () => {
+        table.hidden = true;
+        // Set parameters.
+        let weight = document.getElementById('weight-new').value;
+        let size = document.getElementById('size-new').value;
+        let name = document.getElementById('name-new').value;
+        // To do: Convert `itype` to lowercase.
+        let sel = document.getElementById('character_type-detail');
+        let itype = sel.options[sel.selectedIndex].innerText;
+        if(!weight) { weight = 0; }
+        if(!size) { size = 'medium'; }
+        if(!name) { name = 'Spanky'; }
+        if(!itype) { itype = subtype; }
+        // Create.
+        await create_character_part(connection, ch, itype, part_type, name, size, weight);
+        await new Promise(r => setTimeout(r, 100));
+        ch = await window.connection.get_sheet('click', '');
+        character = ch;
+        await set_all_listeners(character, false);
+      })
     });
-    document.getElementById('addInventoryItemYes').addEventListener(
-      'click',
-      async () => {
-      table.hidden = true;
-      // Set parameters.
-      let weight = document.getElementById('weight-new').value;
-      let size = document.getElementById('size-new').value;
-      let name = document.getElementById('name-new').value;
-      // To do: Convert `itype` to lowercase.
-      let sel = document.getElementById('character_type-detail');
-      let itype = sel.options[sel.selectedIndex].innerText;
-      if(!weight) { weight = 0; }
-      if(!size) { size = 'medium'; }
-      if(!name) { name = 'Spanky'; }
-      if(!itype) { itype = 'tool'; }
-      // Create.
-      await create_character_part(connection, ch, itype, "InventoryItem", name, size, weight);
-      await new Promise(r => setTimeout(r, 100));
-      ch = await window.connection.get_sheet('click', '');
-      character = ch;
-      await set_all_listeners(character, false);
-    })
-  })
+  }
 }
 
 async function pseudo_update_inventory_item(part, ch, inner) {
@@ -516,6 +490,7 @@ async function pseudo_update_inventory_item(part, ch, inner) {
   }
   // Character type is a selection which is a pain.
   let sel = document.getElementById('character_type-detail');
+  console.log("retrieved select: "+sel);
   sel.addEventListener('change', async () => {
       part.character_type = sel.options[sel.selectedIndex].innerText;
       await update_character_part(connection, ch, part);

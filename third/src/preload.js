@@ -67,21 +67,32 @@ contextBridge.exposeInMainWorld('builder', {
     set_main_attributes_cosmetic(character);
     set_main_attributes_resources(character);
     set_body_attributes(character);
-    set_inventory(character);
+    set_subpart_table(character, 'character-attacks', "Ability", 'attack');
+    set_subpart_table(character, 'character-specials', "Ability", 'special_ability');
+    set_subpart_table(character, 'character-spells', "Ability", 'spell');
+    set_subpart_table(character, 'character-perks', "Ability", 'perk');
+    set_subpart_table(character, 'character-inventory', "InventoryItem");
     set_notes(character);
     //
     set_d20_skills(character);
     set_d100_skills(character);
     if(reset) {
-      for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap','hide-notes-wrap',
-      'hide-inventory-wrap','character-main','main-attributes-stats','level-table']) {
+      for(let x of ['hide-main-wrap','hide-resources-wrap','hide-skills-wrap',
+      'hide-notes-wrap','hide-attacks-wrap','hide-specials-wrap','hide-spells-wrap',
+      'hide-perks-wrap','hide-inventory-wrap','character-main','main-attributes-stats',
+      'level-table','hide-console-wrap']) {
         document.getElementById(x).hidden = false;
       }
       for(let x of ['d20-skills','d100-skills','main-body-parts','character-cosmetic',
-      'main-attributes-resources','character-inventory','character-notes']) {
+      'main-attributes-resources','character-inventory','character-notes','character-attacks',
+      'character-specials','character-specials','character-spells','character-perks',
+      'input-request','submit-request','output-request']) {
         document.getElementById(x).hidden = true;
       }
     }
+  },
+  set_create_subpart_table: (part_type, part_subtype) => {
+    create_new_part_table(part_type, part_subtype)
   },
   set_inventory_details: (part) => {
     // This deals with pthe part itself.
@@ -358,32 +369,40 @@ function set_d100_skills(ch) {
   };
 }
 
-function set_inventory(char) {
+/// This function sets a table for owned parts, such as inventory, spells, attacks etc.
+/// `char`: Character object.
+/// `table_id`: String giving the table id (eg 'character-inventory').
+/// `part_type`: String (eg 'InventoryItem').
+/// `part_subtype`: String giving the part subtype (eg 'weapon'). Optional Arg.
+function set_subpart_table(char, table_id, part_type, part_subtype) {
   // The aim of this is to create a table is to show basic information on
   // all inventory types items.
-  let table = document.getElementById('character-inventory');
+  let table = document.getElementById(table_id);
   clear_table(table);
   // Create main body.
   for (let item of char.parts) {
-    if(item.part_type === "InventoryItem") {
-      let row = table.insertRow();
-      let id = item.uuid;
+    if(item.part_type === part_type) {
+      if(!part_subtype || item.character_type==part_subtype) {
+        let row = table.insertRow();
+        let id = item.uuid;
 
-      set_span(row, 'name' + id, item.name);
-      console.log(item);
-      set_span(row, 'character_type' + id, item.character_type);
-      set_span(row, 'size' + id, item.size);
-      let w = 0;
-      if(item.weight) {
-        w +=item.weight;
+        set_span(row, 'name' + id, item.name);
+        console.log(item);
+        set_span(row, 'character_type' + id, item.character_type);
+        set_span(row, 'size' + id, item.size);
+        let w = 0;
+        if(item.weight) {
+          w +=item.weight;
+        }
+        set_span(row, 'weight' + id, w);
+        // Item weight.
+        set_button(row, 'delete' + id, 'Delete');
       }
-      set_span(row, 'weight' + id, w);
-      // Item weight.
-      set_button(row, 'delete' + id, 'Delete item');
     }
   }
   let row = table.insertRow();
-  set_button(row, 'addInventoryItem', 'Add item');
+  set_button(row, 'add-to-'+table_id, 'Add new..');
+  console.log(document.getElementById('add-to-'+table_id));
 
   // Create header.
   let thead = table.createTHead();
@@ -391,17 +410,28 @@ function set_inventory(char) {
   for(let t of ["Item", "Item type", "Item size", "Item weight", ""]) {
     set_th(row, t);
   };
+}
 
-  // The item creation is set here.
+/// This function sets a table for owned parts, such as inventory, spells, attacks etc.
+/// `part_type`: String (eg 'InventoryItem').
+/// `part_subtype`: String giving the part subtype (eg 'weapon'). Optional Arg.
+function create_new_part_table(part_type, part_subtype) {
+// The item creation is set here.
   let item_creation_table = document.getElementById("item-creation-table");
-  {
-    clear_table(item_creation_table);
-    // Main rows
-    let row = item_creation_table.insertRow();
-    set_input(row, 'name-new', 'Spanky');
-    // Create the type options.
-    let select = document.createElement("SELECT");
-    select.id = 'character_type-detail';
+  clear_table(item_creation_table);
+  // Main rows
+  let row = item_creation_table.insertRow();
+  set_input(row, 'name-new', 'Spanky');
+  // Create the type options.
+  let select = document.createElement("SELECT");
+  select.id = 'type-new';
+  if(part_subtype!='tool') {
+    console.log("Creating for :"+part_subtype);
+    let option = new Option(part_subtype, part_subtype);
+    option.selected = true;
+    select.options.add(option);
+  } else {
+    console.log("Creating for inventory: "+part_subtype);
     for(let t of ['weapon', 'armour', 'tool', 'consumable', 'wealth']) {
       let option = new Option(t, t);
       if(t == 'tool') {
@@ -409,25 +439,25 @@ function set_inventory(char) {
       }
       select.options.add(option);
     }
-    create_cell(row, select);
-    set_input(row, 'size-new', 'small');
-    set_input(row, 'weight-new', 1);
-    // Create/cancel buttons.
-    row = item_creation_table.insertRow();
-    set_button(row,'addInventoryItemYes', 'Create');
-    set_button(row,'addInventoryItemNo', 'Cancel');
-    // Header
-    let thead = item_creation_table.createTHead();
-    row = thead.insertRow();
-    for(let t of ["Item", "Item type", "Item size", "Item weight"]) {
-      set_th(row, t);
-    };
   }
+  create_cell(row, select);
+  set_input(row, 'size-new', 'small');
+  set_input(row, 'weight-new', 1);
+  // Create/cancel buttons.
+  row = item_creation_table.insertRow();
+  set_button(row,'addInventoryItemYes', 'Create');
+  set_button(row,'addInventoryItemNo', 'Cancel');
+  // Header
+  let thead = item_creation_table.createTHead();
+  row = thead.insertRow();
+  for(let t of ["Item", "Item type", "Item size", "Item weight"]) {
+    set_th(row, t);
+  };
 }
 
 // Sets inventory details when an item is clicked.
 function set_inventory_details(part) {
-  let table = document.getElementById("item-detail-table");
+  let table = document.getElementById("part-detail-table");
   {
     clear_table(table);
     // Main rows
@@ -438,14 +468,21 @@ function set_inventory_details(part) {
     set_th(row, 'Type');
     // Create the type options.
     let select = document.createElement("SELECT");
-    select.id = 'type-new';
-    for(let t of ['weapon', 'armour', 'tool', 'consumable', 'wealth']) {
-      let option = new Option(t, t);
-      if(t == part.character_type) {
-        option.selected = true;
-      }
+    select.id = 'character_type-detail';
+    if(part.type!="InventoryItem") {
+      let option = new Option(part.character_type, part.character_type);
+      option.selected = true;
       select.options.add(option);
+    } else {
+      for(let t of ['weapon', 'armour', 'tool', 'consumable', 'wealth']) {
+        let option = new Option(t, t);
+        if(t == part.character_type) {
+          option.selected = true;
+        }
+        select.options.add(option);
+      }
     }
+    console.log("new select: "+select);
     create_cell(row, select);
     row = table.insertRow();
     set_th(row, 'Size');
@@ -475,7 +512,7 @@ function set_inventory_details(part) {
 // `part`: Is a character part.
 // `tool`,
 function set_part_details(part) {
-  let table = document.getElementById("weapon-detail-table");
+  let table = document.getElementById("part-attribute-table");
   {
     // This is only necessary if we're dealing with a weapon.
     // NB: attribute keys are in the format of PARTTYPE_ATTRIBUTENAME.
@@ -489,7 +526,6 @@ function set_part_details(part) {
     for(let x of part.attributes) {
       let kl = x[0].key.length;
       let row = table.insertRow();
-      console.log(x);
       set_th(row, x[0].key.substring(pl,kl), x[0].key);
       set_input(row, x[0].key+'-value-num', x[1].value_num);
       set_input(row, x[0].key+'-value-text', x[1].value_text);
@@ -501,7 +537,7 @@ function set_part_details(part) {
     // Header
     let thead = table.createTHead();
     row = thead.insertRow();
-    set_th(row, "Weapon Stat");
+    set_th(row, "Stat");
     set_th(row, "Value");
     set_th(row, "Description");
   }
