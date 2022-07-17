@@ -4,6 +4,7 @@
 // A function that exists for DRY.
 function clear_table(table) {
   table.deleteTHead();
+  table.deleteTFoot();
   let len = table.rows.length;
   for(let i=len-1;i>=0;--i) {
     table.deleteRow(i);

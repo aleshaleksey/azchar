@@ -500,6 +500,10 @@ function set_inventory_details(part) {
     row = table.insertRow();
     set_th(row, 'HP current');
     set_input(row, 'hp_current-detail', part.hp_current);
+    // Set the roll buttons.
+    row = table.insertRow();
+    set_button(row,'roll'+part.character_type+'-melee','Roll Melee');
+    set_button(row,'roll'+part.character_type+'-ranged','Roll Ranged');
 
     // Header
     let thead = table.createTHead();
@@ -524,16 +528,13 @@ function set_part_details(part) {
     clear_table(table);
     let key = '';
     // Main rows
-    for(let x of part.attributes) {
+    for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
       let kl = x[0].key.length;
       let row = table.insertRow();
       set_th(row, x[0].key.substring(pl,kl), x[0].key);
       set_input(row, x[0].key+'-value-num', x[1].value_num);
       set_input(row, x[0].key+'-value-text', x[1].value_text);
     }
-    let row = table.insertRow();
-    set_button(row,'roll'+part.character_type+'-melee','Roll Melee');
-    set_button(row,'roll'+part.character_type+'-ranged','Roll Ranged');
 
     // Header
     let thead = table.createTHead();
@@ -541,6 +542,12 @@ function set_part_details(part) {
     set_th(row, "Stat");
     set_th(row, "Value");
     set_th(row, "Description");
+
+    let blurb = part.attributes.find(x => x[0].key==="Blurb");
+    if(blurb) { // We know blurb is some, but just incase.
+      let box = document.getElementById('blurb-box');
+      box.innerText = blurb[1].value_text;
+    }
   }
 }
 

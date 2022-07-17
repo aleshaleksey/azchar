@@ -465,7 +465,7 @@ function set_update_main_attributes_body_listeners(ch) {
         let size = document.getElementById('size-new').value;
         let name = document.getElementById('name-new').value;
         // To do: Convert `itype` to lowercase.
-        let sel = document.getElementById('character_type-detail');
+        let sel = document.getElementById('type-new');
         let itype = sel.options[sel.selectedIndex].innerText;
         if(!weight) { weight = 0; }
         if(!size) { size = 'medium'; }
@@ -528,9 +528,9 @@ async function pseudo_update_inventory_item(part, ch, inner) {
   }
   // Add item listeners.
   console.log("about to cycle attributes.");
-  for(let x of part.attributes) {
+  // Most attributes are used in general.
+  for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
     let el = document.getElementById(x[0].key+'-value-num');
-
     el.addEventListener('keyup', async () => {
       console.log(el);
       if(el.value) {
@@ -552,7 +552,21 @@ async function pseudo_update_inventory_item(part, ch, inner) {
       };
       await update_attribute(connection, x[0], x[1], ch);
     });
+    // Blurb is special!
+    let blurb = part.attributes.find(x => x[0].key==="Blurb");
+    if(blurb) {
+      let bbox = document.getElementById("blurb-box");
+      bbox.addEventListener('keyup', async () => {
+        if(el2.value) {
+          x[1].value_text = bbox.value;
+        } else {
+          x[1].value_text = null;
+        };
+        await update_attribute(connection, blurb[0], blurb[1], ch);
+      })
+    }
   }
+
 }
 
 function set_inventory_item_listeners(part, ch) {

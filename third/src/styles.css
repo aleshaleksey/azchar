@@ -23,6 +23,12 @@ textarea.notebox {
   background-color: #331111;
   color: #BBFFBB;
 }
+textarea.notebox {
+  width: 95%;
+  height: 150px;
+  background-color: #331111;
+  color: #BBFFBB;
+}
 input {
   width: 80%;
   background-color: #331111;

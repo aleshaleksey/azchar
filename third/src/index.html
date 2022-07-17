@@ -16,6 +16,7 @@
     <span class="inventory" id="item-box-details" hidden="true">
       <table id="part-detail-table"></table>
       <table id="part-attribute-table" hidden="true"></table>
+      <textarea id="blurb-box" class="blurb" name="bb" ></textarea>
     </span>
     <p></p>
     <input id="input-address" class="addressbox" value="ws://127.0.0.1:55555"></input>
@@ -94,10 +95,10 @@
     <table id='hide-console-wrap'>
       <th><row><cell>Command Console</cell id="hide-console"></row></th>
     </table>
-    <textarea id="input-request" class="textarea_a" hidden="true">{"Roll":"1d20"}</textarea>
-    <button id="submit-request" type="submit" hidden="true">click-me-next</button>
+    <textarea id="input-request" class="textarea_a">{"Roll":"1d20"}</textarea>
+    <button id="submit-request" type="submit" >click-me-next</button>
     <p></p>
-    <textarea id="output-request" class="textarea_a" name="out_a" hidden="true"></textarea>
+    <textarea id="output-request" class="textarea_a" name="out_a" ></textarea>
     <script src="./renderer.js"></script>
   </body>
 </html>
