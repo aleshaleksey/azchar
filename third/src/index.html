@@ -16,7 +16,7 @@
     <span class="inventory" id="item-box-details" hidden="true">
       <table id="part-detail-table"></table>
       <table id="part-attribute-table" hidden="true"></table>
-      <textarea id="blurb-box" class="blurb" name="bb" ></textarea>
+      <textarea id="blurb-box" class="blurb"></textarea>
     </span>
     <!-- The below section is no longer in use. But can be activated for debug. -->
     <!-- <p></p>
@@ -99,7 +99,9 @@
     <table id='hide-console-wrap'>
       <th><row><cell>Command Console</cell id="hide-console"></row></th>
     </table>
-    <textarea id="input-request" class="textarea_a">{"Roll":"1d20"}</textarea>
+    <textarea id="input-request" class="textarea_a">
+      {"CreateSystem":["fusion","","examples/cjfusion.toml"]}
+    </textarea>
     <button id="submit-request" type="submit" >click-me-next</button>
     <p></p>
     <textarea id="output-request" class="textarea_a" name="out_a" ></textarea>

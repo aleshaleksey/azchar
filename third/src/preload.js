@@ -115,6 +115,8 @@ contextBridge.exposeInMainWorld('builder', {
     set_inventory_details(part);
     // This deals with the part attributes.
     set_part_details(part);
+    // This should let us set just the box.
+    set_part_blurb_box(part);
   },
   // This function creates the sort of not-quite popup display with the roll.
   roll_window_100: (rolled_item, description, roll) => {
@@ -404,7 +406,7 @@ function set_subpart_table(char, table_id, part_type, part_subtype) {
         let id = item.uuid;
 
         set_span(row, 'name' + id, item.name);
-        console.log(item);
+        // console.log(item);
         set_span(row, 'character_type' + id, item.character_type);
         set_span(row, 'size' + id, item.size);
         let w = 0;
@@ -558,13 +560,30 @@ function set_part_details(part) {
     set_th(row, "Stat");
     set_th(row, "Value");
     set_th(row, "Description");
-
-    let blurb = part.attributes.find(x => x[0].key==="Blurb");
-    if(blurb) { // We know blurb is some, but just incase.
-      let box = document.getElementById('blurb-box');
-      box.innerText = blurb[1].value_text;
-    }
   }
+}
+
+function set_part_blurb_box(part) {
+  {
+    let box = document.getElementById('blurb-box');
+    box.remove();
+  }
+  let box = document.createElement("TEXTAREA");
+  box.class = "blurb";
+  box.value = "";
+  box.id = 'blurb-box';
+  box.hidden = false;
+
+  let blurb = part.attributes.find(x => x[0].key==='Blurb');
+  console.log("part_name: "+part.name);
+  console.log("Blurb text in part: "+blurb[1].value_text);
+  console.log("Blurb of = "+blurb[0].of);
+  if(blurb) { // We know blurb is some, but just incase.
+    box.value = blurb[1].value_text;
+  } else {
+    box.value = "";
+  }
+  document.getElementById("item-box-details").appendChild(box);
 }
 
 function set_notes(char) {

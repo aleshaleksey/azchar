@@ -45,7 +45,7 @@ async function list_sheets() {
 document.getElementById('submit-request').addEventListener('click', async () => {
   // const res = await window.connection.send('click', document.getElementById('input-request').value);
   await window.connection.send('click', document.getElementById('input-request').value);
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise(r => setTimeout(r, 30));
   document.getElementById('output-request').value = await window.connection.receive('click', '');
 })
 
@@ -75,13 +75,13 @@ function set_sheet_list_listeners(sheets) {
       document.getElementById(char["name"]+"load").addEventListener('click', async () => {
         console.log("We have: " + char["name"] + "load");
         // Then we set the character sheet.
-        let character = await get_char_by_name_uuid(char.name, char.uuid, 20);
+        let character = await get_char_by_name_uuid(char.name, char.uuid, 30);
         await set_all_listeners(character, true);
       })
       document.getElementById(char["name"]+"delete").addEventListener('click', async () => {
         console.log("We have: " + char["name"] + "delete");
         // Then we set the character sheet.
-        await delete_character(char.name, char.uuid, 20);
+        await delete_character(char.name, char.uuid, 30);
         await list_sheets();
       })
     }
@@ -135,10 +135,10 @@ function set_create_note_listener(ch) {
       'click',
       "{\"InsertNote\":[\""+ch["name"]+"\",\""+ch["uuid"]+"\",{\"title\":\"\",\"content\":\"\"}]}"
     );
-    await new Promise(r => setTimeout(r, 5));
+    await new Promise(r => setTimeout(r, 10));
     let n = await window.connection.get_new_note('click', '');
     while(!n) {
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise(r => setTimeout(r, 10));
       n = await window.connection.get_new_note('click', '');
     }
     let notes = [n];
@@ -340,7 +340,7 @@ function set_skill_rollers(ch) {
       }
 
       await window.connection.send('click', roll);
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise(r => setTimeout(r, 10));
 
       let res = await window.connection.get_roll_res();
       window.builder.roll_window_20(s, s + " roll result", res);
@@ -361,7 +361,7 @@ function set_skill_rollers(ch) {
       }
 
       await window.connection.send('click', roll);
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise(r => setTimeout(r, 10));
 
       let res = await window.connection.get_roll_res('click');
       window.builder.roll_window_100(s, s + " roll result", res);
@@ -400,7 +400,7 @@ function set_update_main_attributes_cosmetic_listeners(ch) {
   for(let x of ["Race", "Alignment", "Height", "Hair", "Eyes", "Age", "Skin",
                 "Player"]) {
     let el = document.getElementById(x+'input');
-    console.log(el);
+    // console.log(el);
     el.addEventListener('keyup', async () => {
       let a = ch.attributes.find(att => att[0].key == x);
       a[1].value_text = el.value;
@@ -473,7 +473,7 @@ function set_update_main_attributes_body_listeners(ch) {
     let subtype = x[2];
     let eli = document.getElementById('add-to-'+table_id);
     console.log("table_id:"+table_id);
-    console.log(eli);
+    // console.log(eli);
     eli.addEventListener('click', async () => {
       // Create the creation table.
       await window.builder.set_create_subpart_table(part_type, subtype);
@@ -511,8 +511,7 @@ function set_update_main_attributes_body_listeners(ch) {
   }
 }
 
-async function pseudo_update_inventory_item(part, ch, inner) {
-  console.log("Pretending to update "+inner);
+async function pseudo_update_inventory_item(part, ch) {
   window.builder.set_inventory_details(part);
   console.log("done");
   // Deal with the box.
@@ -521,6 +520,7 @@ async function pseudo_update_inventory_item(part, ch, inner) {
   box.addEventListener('dblclick', async () => {
     // When closing the box, reload the character and have it updated.
     // TODO: Currently fails.
+    document.getElementById("blurb-box").value = "";
     ch = await get_char_by_name_uuid(ch.name, ch.uuid, 50);
     await set_all_listeners(ch, false);
     box.hidden = true;
@@ -561,7 +561,7 @@ async function pseudo_update_inventory_item(part, ch, inner) {
   for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
     let el = document.getElementById(x[0].key+'-value-num');
     el.addEventListener('keyup', async () => {
-      console.log(el);
+      // console.log(el);
       if(el.value) {
         let n = Number.parseFloat(el.value);
         if(isNaN(n)) { n = 0; }
@@ -573,7 +573,7 @@ async function pseudo_update_inventory_item(part, ch, inner) {
     });
     let el2 = document.getElementById(x[0].key+'-value-text');
     el2.addEventListener('keyup', async () => {
-      console.log(el2);
+      // console.log(el2);
       if(el2.value) {
         x[1].value_text = el2.value;
       } else {
@@ -581,21 +581,22 @@ async function pseudo_update_inventory_item(part, ch, inner) {
       };
       await update_attribute(connection, x[0], x[1], ch);
     });
-    // Blurb is special!
-    let blurb = part.attributes.find(x => x[0].key==="Blurb");
-    if(blurb) {
-      let bbox = document.getElementById("blurb-box");
-      bbox.addEventListener('keyup', async () => {
-        if(el2.value) {
-          x[1].value_text = bbox.value;
-        } else {
-          x[1].value_text = null;
-        };
-        await update_attribute(connection, blurb[0], blurb[1], ch);
-      })
-    }
   }
-
+    // Blurb is special!
+  let blurb = part.attributes.find(x => x[0].key==='Blurb');
+  console.log("part_name: "+part.name);
+  console.log("Blurb text in update: "+blurb[1].value_text);
+  if(blurb) {
+    let bbox = document.getElementById("blurb-box");
+    bbox.addEventListener('keyup', async () => {
+      if(bbox.value) {
+        blurb[1].value_text = bbox.value;
+      } else {
+        blurb[1].value_text = "Gimme blurb.";
+      };
+      await update_attribute(connection, blurb[0], blurb[1], ch);
+    })
+  }
 }
 
 function set_inventory_item_listeners(part, ch) {
@@ -603,7 +604,7 @@ function set_inventory_item_listeners(part, ch) {
   for(let inner of ["name", "character_type", "size", "weight"]) {
     document.getElementById(inner + part.uuid).addEventListener(
       'click',
-      async () => await pseudo_update_inventory_item(part, ch, inner)
+      async () => await pseudo_update_inventory_item(part, ch)
     );
   }
 
