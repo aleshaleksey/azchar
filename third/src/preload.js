@@ -12,6 +12,14 @@ const {
   set_roll_dialog_listener
 } = require('./set-listeners.js');
 
+const D20_SKILL_LIST = ["Awareness","Acting","Agility","Beast Mastery","Convince",
+"Cunning","Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
+"Survival","Trickery"];
+
+const D100_SKILL_LIST = ["Armourer","Biomedicine","Combat Medicine","Demolition",
+"Engineering","Firearms","Hacking","Melee","Piloting","Research","Surgery",
+"Unarmed", "Underworld"]
+
 contextBridge.exposeInMainWorld('connection', {
   make: (event, arg) => ipcRenderer.invoke('connection:make', arg),
   send: (event, arg) => ipcRenderer.invoke('connection:send', arg),
@@ -24,6 +32,12 @@ contextBridge.exposeInMainWorld('connection', {
 });
 
 contextBridge.exposeInMainWorld('builder', {
+  d20_skill_list: () => {
+    return D20_SKILL_LIST;
+  },
+  d100_skill_list: () => {
+    return D100_SKILL_LIST;
+  },
   character_list: (data) => {
     let table = document.getElementById('character-table');
     // Clear the old elements od the table if set. //;
@@ -174,7 +188,7 @@ function set_main_attributes(char) {
     row = table.insertRow();
     for(let x of ["Strength","Reflex","Toughness","Endurance",
                   "Intelligence","Judgement","Charm","Will"]) {
-      let val = (document.getElementById(x + 'input').value - 10) / 2;
+      let val = Number.parseInt((document.getElementById(x + 'input').value - 10) / 2);
       set_span(row, x + 'bonus', val);
     }
 }
@@ -316,7 +330,7 @@ function set_d20_skills(ch) {
 
     // Governed by.
     let total = (document.getElementById(s[1] + 'input').value - 10) / 2;
-    create_cell(row, document.createTextNode(s[1]));
+    create_cell(row, document.createTextNode(s[1]), s[0]+'gov');
 
     // Proficient.
     let attr_key = "d20_skill_"+s[0]+"_proficiency";
@@ -348,8 +362,7 @@ function set_d100_skills(ch) {
   let table = document.getElementById('d100-skills');
   let attributes = ch.attributes;
   clear_table(table);
-  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering", "Firearms",
-                "Hacking", "Melee", "Piloting", "Research", "Surgery", "Unarmed", "Underworld"]) {
+  for(let s of D100_SKILL_LIST) {
     let row = table.insertRow();
     set_button(row, s+"-roll", s);
 

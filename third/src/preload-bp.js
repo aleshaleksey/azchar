@@ -12,8 +12,9 @@ function clear_table(table) {
 }
 
 // Create a cell.
-function create_cell(row, element) {
+function create_cell(row, element,optional_id) {
   let cell = row.insertCell();
+  if(optional_id) { cell.id = optional_id; }
   cell.appendChild(element);
 }
 

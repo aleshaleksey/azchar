@@ -272,31 +272,38 @@ async function prepare_attr_update(conn, el, ch, s, skill) {
    sum.innerText = sum_temp;
 }
 
+/// A function to set the value of the skill total. It is used both for updates
+/// of the character part, and the actual sheet info.
+///
+/// `skill`: A string with the skill name.
+/// `prof_check_box`: Check box input, (asking if skill has proficiency)
+/// `ch`: Character object.
+function set_d20_skill_total(skill, chkbx, ch) {
+  let sum = document.getElementById(skill+'total');
+  let gv = document.getElementById(skill+'gov').innerText;
+  let s_val =  Number.parseInt((document.getElementById(gv+'input').value - 10) / 2);
+  s_val += ch.attributes.find(att => att[0].key == "d20_skill_"+skill+"_bonus")[1].value_num;
+
+  let val = 0
+  if(chkbx.checked) {
+    val = ch.attributes.find(attr => attr[0].key == "Proficiency")[1].value_num;
+  }
+
+  let a = ch.attributes.find(attr => attr[0].key == 'd20_skill_'+skill+'_proficiency');
+  if(!a[1].value_num || isNaN(a[1].value_num)) { a[1].value_num = 0; }
+  a[1].value_num = val;
+  sum.innerText = a[1].value_num + s_val;
+  return a;
+}
+
 // Set listeners for skills (d20 and d100 in one function)
 function set_update_skills_listeners(ch) {
-  for(let s of ["Awareness","Acting","Agility","Beast Mastery","Convince","Cunning",
-                "Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
-                "Survival","Trickery"]) {
-    let el = document.getElementById('d20_skill_'+s+'_proficiency');
+  for(let s of window.builder.d20_skill_list()) {
+    let check = document.getElementById('d20_skill_'+s+'_proficiency');
     // Checkbox detects click.
-    el.addEventListener('click', async () => {
-      let sum = document.getElementById(s+'total');
-      let sum_temp = 0;
-      if(sum.innerText && !isNaN(sum.innerText)) {
-        sum_temp = Number.parseInt(sum.innerText);
-      }
-      let val = 0
-      if(el.checked) {
-        val = ch.attributes.find(attr => attr[0].key == "Proficiency")[1].value_num;
-      }
-
-      let a = ch.attributes.find(attr => attr[0].key == 'd20_skill_'+s+'_proficiency');
-      if(!a[1].value_num || isNaN(a[1].value_num)) { a[1].value_num = 0; }
-      sum_temp -= a[1].value_num;
-      a[1].value_num = val;
+    check.addEventListener('click', async () => {
+      let a = set_d20_skill_total(s, check, ch);
       await update_attribute(connection, a[0], a[1], ch);
-      sum_temp += a[1].value_num;
-      sum.innerText = sum_temp;
     });
 
     let el2 = document.getElementById('d20_skill_'+s+'_bonus');
@@ -305,9 +312,7 @@ function set_update_skills_listeners(ch) {
     });
   }
   /////////////////////////////////////////////////////////////////////////////////
-  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering",
-                "Firearms", "Hacking", "Melee", "Piloting", "Research", "Surgery",
-                "Unarmed", "Underworld"]) {
+  for(let s of window.builder.d100_skill_list()) {
     let el = document.getElementById('d100_skill_'+s+'_proficiency')
      el.addEventListener('keyup', async () => {
       prepare_attr_update(connection, el, ch, s, 'd100_skill_'+s+'_proficiency');
@@ -321,9 +326,7 @@ function set_update_skills_listeners(ch) {
 }
 
 function set_skill_rollers(ch) {
-  for(let s of ["Awareness","Acting","Agility","Beast Mastery","Convince","Cunning",
-                "Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
-                "Survival","Trickery"]) {
+  for(let s of window.builder.d20_skill_list()) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
@@ -343,9 +346,7 @@ function set_skill_rollers(ch) {
       window.builder.roll_window_20(s, s + " roll result", res);
     });
   }
-  for(let s of ["Armourer", "Biomedicine", "Combat Medicine", "Demolition", "Engineering",
-                "Firearms", "Hacking", "Melee", "Piloting", "Research", "Surgery",
-                "Unarmed", "Underworld"]) {
+  for(let s of window.builder.d100_skill_list()) {
     document.getElementById(s+'-roll').addEventListener('click', async () => {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
@@ -375,11 +376,21 @@ function set_update_main_attributes_listeners(ch) {
                 "Intelligence","Judgement","Charm","Will"]) {
     let n = document.getElementById(x+'input');
     n.addEventListener('keyup', async () => {
+      // Update the attributes.
       let a = ch.attributes.find(attr => attr[0].key == x);
+      if(isNaN(n.value)) { n.value = 0; }
       a[1].value_num = n.value;
       document.getElementById(x+'bonus').innerText =
         (document.getElementById(x + 'input').value - 10) / 2;
       await update_attribute(connection, a[0], a[1], ch);
+      // Update the skills table. NB: May slow things.
+      for(let s of window.builder.d20_skill_list()) {
+        let gv = document.getElementById(s+'gov').innerText;
+        if(gv===x) {
+          let check = document.getElementById('d20_skill_'+s+'_proficiency');
+          set_d20_skill_total(s, check, ch);
+        }
+      }
     });
   }
 }
@@ -408,11 +419,21 @@ function set_update_main_attributes_resource_listeners(ch) {
 
     el.addEventListener('keyup', async () => {
       let a = ch.attributes.find(att => att[0].key == x);
-      if(el.value) {
-        a[1].value_num = el.value;
+      if(isNaN(el.value)) {
+        el.value = 0;
+      }
+      if(!el.value) {
+        a[1].value_num = 0;
       } else {
-        a[1].value_num = null;
-      };
+        a[1].value_num = Number.parseInt(el.value);
+      }
+
+      if(x==="Proficiency") {
+        for(let s of window.builder.d20_skill_list()) {
+          let check = document.getElementById('d20_skill_'+s+'_proficiency');
+          set_d20_skill_total(s, check, ch);
+        }
+      }
       await update_attribute(connection, a[0], a[1], ch);
     })
   }
