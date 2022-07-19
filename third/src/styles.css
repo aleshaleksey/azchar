@@ -89,8 +89,16 @@ td:hover {
   background-color: #AA9999;
 }
 table {
-  border: 2px solid #444433;
+  border: 2px solid #363628;
   width: 100%;
+}
+
+table.standard {
+  background-color: #9A9272;
+  color: #000000;
+}
+th.standard {
+  background-color: #AA9674;
 }
 table.skill {
   width: 25%;
@@ -106,7 +114,7 @@ table.big_stuff {
 }
 button {
   width: 98%;
-  background-color: #AA9999;
+  background-color: #887766;
 }
 button.clickme {
   width: 40%;
