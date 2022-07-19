@@ -531,9 +531,9 @@ function set_inventory_details(part) {
   }
 }
 
-// Sets inventory details when an item is clicked.
-// `part`: Is a character part.
-// `tool`,
+/// Sets inventory details when an item is clicked.
+///
+/// `part`: Is a character part.
 function set_part_details(part) {
   let table = document.getElementById("part-attribute-table");
   {
@@ -548,8 +548,10 @@ function set_part_details(part) {
     // Main rows
     for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
       let kl = x[0].key.length;
+      let idx = x[0].key.lastIndexOf('_') + 1;
       let row = table.insertRow();
-      set_th(row, x[0].key.substring(pl,kl), x[0].key);
+      console.log(x[0].key);
+      set_th(row, x[0].key.slice(idx, kl), x[0].key);
       set_input(row, x[0].key+'-value-num', x[1].value_num);
       set_input(row, x[0].key+'-value-text', x[1].value_text);
     }
