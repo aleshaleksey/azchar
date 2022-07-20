@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta name="referrer" content="unsafe-url">
+    <meta http-equiv="Content-Security-Policy" content=";default-src 'self' 'unsafe-inline' 'unsafe-eval'">
+    <meta http-equiv="X-Content-Security-Policy" content="; default-src 'self' 'unsafe-inline' 'unsafe-eval'">
     <link rel="stylesheet" type="text/css" href="./styles.css">
     <title>AzChar Fusion</title>
   </head>
@@ -38,12 +39,11 @@
     <table id='hide-main-wrap' hidden="true" class="standard">
       <th class="standard"><row><cell>Basics</cell id="hide-main"></row></th>
     </table>
+    <!-- Main table. -->
+    <row><cell><img id="portrait"></img></cell>
     <table id="character-main" hidden="true"></table>
-    <p></p>
     <table id="level-table" hidden="true"></table>
-    <p></p>
     <table id="main-attributes-stats" hidden="true"></table>
-    <p></p>
     <!-- Character resources (eg HP, MP) are below. -->
     <table id='hide-resources-wrap' hidden="true" class="standard">
       <th class="standard"><row><cell>Resources Tables</cell id="hide-resources"></row></th>

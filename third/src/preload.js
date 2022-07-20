@@ -1,4 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const fs = require('fs');
+const path = require('path');
 const {
   clear_table,
   create_cell,
@@ -76,6 +78,7 @@ contextBridge.exposeInMainWorld('builder', {
     ////////////////////////////////////
   },
   character_set: (character, reset) => {
+    set_portrait(character, 'portrait');
     set_main(character);
     set_level_table(character);
     set_main_attributes(character);
@@ -145,8 +148,39 @@ contextBridge.exposeInMainWorld('builder', {
   },
   set_roll_dialog_listener: () => {
     set_roll_dialog_listener();
-  }
+  },
+  read_file: (filename) => get_file_path(filename)
 });
+
+/// The function get
+function get_file_path(filename) {
+  //
+}
+
+/// This function can be used for the character portrait or for subparts.
+async function set_portrait(part, id) {
+  let portrait = document.getElementById(id);
+  if(!part.image) {
+    portrait.height = 128;
+    portrait.width = 128;
+    return;
+  } else {
+    console.log("About to set image...");
+      portrait.height = 256;
+      portrait.width = 256;
+    await fs.writeFile(
+      part.name+part.id+"."+part.image.format,
+      Buffer.from(part.image.content),
+      (err) => {
+        if(err) {
+          console.log(err);
+        } else {
+          portrait.src = path.resolve(part.name+part.id+"."+part.image.format);
+          console.log("Image prewritten..");
+        }
+    });
+  }
+}
 
 function set_main(char) {
     let table = document.getElementById('character-main');

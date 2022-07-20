@@ -111,6 +111,7 @@ async function set_all_listeners(ch, reset) {
     console.log("Character in main: " + ch["name"]);
     await window.builder.character_set(ch, reset);
     await window.builder.set_create_hide_listeners();
+    set_update_image_listener(ch);
     set_create_note_listener(ch);
     set_update_notes_listeners(ch.name, ch.uuid, ch.notes);
     set_update_skills_listeners(ch);
@@ -126,6 +127,29 @@ async function set_all_listeners(ch, reset) {
   } else {
     console.log("Could not set listeners as character is null.");
   }
+}
+
+// Update the image of the sheet.
+function set_update_image_listener(ch) {
+  document.getElementById('portrait').addEventListener('dragover', async evt => {
+    evt.preventDefault();
+  });
+  document.getElementById('portrait').addEventListener('drop', async evt => {
+    let path = "";
+    if(evt.dataTransfer.files[0]) {
+      console.log("updating: "+evt.dataTransfer.files[0].path);
+      path = evt.dataTransfer.files[0].path;
+
+      create_update_image(connection, ch, path);
+      await new Promise(r => setTimeout(r, 40));
+      ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
+      let character = ch;
+      await set_all_listeners(character, true);
+    } else {
+      console.log("No path");
+      return;
+    }
+  });
 }
 
 // Creates a note, retrieves it, and resets the character.
@@ -233,6 +257,19 @@ function create_character_part(
       +",\"hp_current\":"+0
       +",\"belongs_to\":"+ch.id
       +",\"part_type\":\""+part_type
+      +"\"}]}"
+  );
+}
+
+/// Create an update image request.
+function create_update_image(conn, ch, path) {
+  conn.send(
+    'keyup',
+    "{\"InsertUpdateImage\":[\""
+      +ch["name"]+"\",\""
+      +ch["uuid"]+"\","
+      +"{\"of\":"+ch.id
+      +",\"link\":\""+path
       +"\"}]}"
   );
 }

@@ -11,6 +11,7 @@ select {
   color: #BBFFBB;
   border: 3px solid  #444433;
 }
+
 textarea {
   width: 95%;
   height: 200px;
@@ -29,6 +30,7 @@ textarea.notebox {
   background-color: #331111;
   color: #BBFFBB;
 }
+
 input {
   width: 80%;
   background-color: #331111;
@@ -42,6 +44,7 @@ input.resource {
   background-color: #331111;
   color: #BBFFBB;
 }
+
 span.roll {
  position: fixed;
  top: calc(40% - 10px);
@@ -76,6 +79,7 @@ span.inventory {
  background-color: #665544;
  color: #AAEEAA;
 }
+
 th, td {
   border: 2px solid #444433;
   text-align: center;
@@ -88,11 +92,15 @@ th:hover {
 td:hover {
   background-color: #AA9999;
 }
+
+table.image-cell {
+  width: 256px;
+  height: 256px;
+}
 table {
   border: 2px solid #363628;
   width: 100%;
 }
-
 table.standard {
   background-color: #9A9272;
   color: #000000;
@@ -112,6 +120,7 @@ table.medium_stuff {
 table.big_stuff {
   width: 100%;
 }
+
 button {
   width: 98%;
   background-color: #887766;
