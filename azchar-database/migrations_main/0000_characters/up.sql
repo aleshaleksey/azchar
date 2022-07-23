@@ -45,7 +45,8 @@ create table images(
   id INTEGER primary key AUTOINCREMENT,
   of BIGINT references characters(id),
   format TEXT,
-  content BLOB
+  content BLOB,
+  UNIQUE(of)
 );
 
 create index if not exists attributes_idx on attributes(id);
