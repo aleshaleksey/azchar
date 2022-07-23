@@ -98,11 +98,10 @@ contextBridge.exposeInMainWorld('builder', {
       for(let x of ['hide-sheets-wrap','hide-main-wrap','hide-resources-wrap',
       'hide-skills-wrap','hide-notes-wrap','hide-attacks-wrap','hide-specials-wrap',
       'hide-spells-wrap','hide-perks-wrap','hide-inventory-wrap','character-main',
-      'main-attributes-stats','level-table','hide-console-wrap']) {
+      'portrait-box','main-attributes-stats','level-table','hide-console-wrap']) {
         document.getElementById(x).hidden = false;
       }
-      for(let x of ['character-table','d20-skills','d100-skills','main-body-parts',
-      'character-cosmetic','main-attributes-resources','character-inventory',
+      for(let x of ['character-table','d20-skills','d100-skills','main-body-parts','character-cosmetic','main-attributes-resources','character-inventory',
       'character-notes','character-attacks','character-specials','character-specials',
       'character-spells','character-perks','input-request','submit-request',
       'output-request']) {
@@ -152,33 +151,44 @@ contextBridge.exposeInMainWorld('builder', {
   read_file: (filename) => get_file_path(filename)
 });
 
-/// The function get
-function get_file_path(filename) {
-  //
-}
-
 /// This function can be used for the character portrait or for subparts.
-async function set_portrait(part, id) {
-  let portrait = document.getElementById(id);
+function set_portrait(part, id) {
+  { // Destroy and recreate.
+    let portrait = document.getElementById(id)
+    portrait.remove();
+  }
+
+  let box = document.getElementById(id+"-box");
+  portrait = document.createElement("IMG");
+  portrait.id = "portrait";
+  box.appendChild(portrait);
+
+  console.log(portrait);
+
   if(!part.image) {
-    portrait.height = 128;
-    portrait.width = 128;
+    // Delete any current tempfiles.
+    portrait.src = path.resolve("src/imgs/default.jpg");
+    console.log("No character image.");
+    
+    portrait.height = 64;
+    portrait.width = 64;
+    box.hidden = true;
     return;
   } else {
     console.log("About to set image...");
-      portrait.height = 256;
-      portrait.width = 256;
-    await fs.writeFile(
-      part.name+part.id+"."+part.image.format,
-      Buffer.from(part.image.content),
-      (err) => {
-        if(err) {
-          console.log(err);
-        } else {
-          portrait.src = path.resolve(part.name+part.id+"."+part.image.format);
-          console.log("Image prewritten..");
-        }
-    });
+    portrait.width = 196;
+    portrait.height = 196;
+    try {
+      fs.writeFileSync(
+        part.name+part.id+"."+part.image.format,
+        Buffer.from(part.image.content)
+      );
+      portrait.src = null;
+      portrait.src = path.resolve(part.name+part.id+"."+part.image.format);
+      console.log("Image prewritten to: " + portrait.src);
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
 

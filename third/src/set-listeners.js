@@ -1,7 +1,7 @@
 function set_create_hide_listeners() {
   document.getElementById('hide-main-wrap').addEventListener('click', async () => {
     console.log("hide main wrap clicked.");
-    for(let x of ["character-main","level-table","main-attributes-stats"]) {
+    for(let x of ["portrait-box","character-main","level-table","main-attributes-stats"]) {
       let el = document.getElementById(x);
       el.hidden = !el.hidden;
     }

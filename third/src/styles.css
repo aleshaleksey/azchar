@@ -120,6 +120,13 @@ table.medium_stuff {
 table.big_stuff {
   width: 100%;
 }
+a.imgbox {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 2px;
+  padding-right: 2px;
+  border: 2px solid #363628;
+}
 
 button {
   width: 98%;
