@@ -13,11 +13,11 @@ try {
 }
 
 // Choose db.
-document.getElementById('submit-system').addEventListener('click', async () => {
+document.getElementById('submit-system').onclick = async function(e) {
   await list_sheets();
   document.getElementById('hide-sheets-wrap').hidden = false;
   document.getElementById('character-table').hidden = false;
-});
+};
 
 async function list_sheets() {
   await window.connection.send(
@@ -42,12 +42,12 @@ async function list_sheets() {
   }
 }
 
-document.getElementById('submit-request').addEventListener('click', async () => {
+document.getElementById('submit-request').onclick = async function(e) {
   // const res = await window.connection.send('click', document.getElementById('input-request').value);
   await window.connection.send('click', document.getElementById('input-request').value);
   await new Promise(r => setTimeout(r, 30));
   document.getElementById('output-request').value = await window.connection.receive('click', '');
-})
+};
 
 async function get_char_by_name_uuid(name, uuid, delay) {
   await window.connection.send(
@@ -72,18 +72,18 @@ function set_sheet_list_listeners(sheets) {
   if(!sheets) { return; }
   if(sheets.length > 0) {
     for (let char of sheets) {
-      document.getElementById(char["name"]+"load").addEventListener('click', async () => {
+      document.getElementById(char["name"]+"load").onclick = async function(e) {
         console.log("We have: " + char["name"] + "load");
         // Then we set the character sheet.
         let character = await get_char_by_name_uuid(char.name, char.uuid, 30);
         await set_all_listeners(character, true);
-      })
-      document.getElementById(char["name"]+"delete").addEventListener('click', async () => {
+      };
+      document.getElementById(char["name"]+"delete").onclick = async function(e) {
         console.log("We have: " + char["name"] + "delete");
         // Then we set the character sheet.
         await delete_character(char.name, char.uuid, 30);
         await list_sheets();
-      })
+      };
     }
   }
 }
@@ -154,7 +154,7 @@ function set_update_image_listener(ch) {
 
 // Creates a note, retrieves it, and resets the character.
 function set_create_note_listener(ch) {
-  document.getElementById('create-note').addEventListener('click', async () => {
+  document.getElementById('create-note').onclick = async function(e) {
     await window.connection.send(
       'click',
       "{\"InsertNote\":[\""+ch["name"]+"\",\""+ch["uuid"]+"\",{\"title\":\"\",\"content\":\"\"}]}"
@@ -173,7 +173,7 @@ function set_create_note_listener(ch) {
     ch.notes = notes;
     character = ch;
     await set_all_listeners(ch, false);
-  })
+  };
 }
 
 function set_update_notes_listeners(name, uuid, notes) {
@@ -338,10 +338,10 @@ function set_update_skills_listeners(ch) {
   for(let s of window.builder.d20_skill_list()) {
     let check = document.getElementById('d20_skill_'+s+'_proficiency');
     // Checkbox detects click.
-    check.addEventListener('click', async () => {
+    check.onclick = async function(e) {
       let a = set_d20_skill_total(s, check, ch);
       await update_attribute(connection, a[0], a[1], ch);
-    });
+    };
 
     let el2 = document.getElementById('d20_skill_'+s+'_bonus');
     el2.addEventListener('keyup', async () => {
@@ -364,7 +364,7 @@ function set_update_skills_listeners(ch) {
 
 function set_skill_rollers(ch) {
   for(let s of window.builder.d20_skill_list()) {
-    document.getElementById(s+'-roll').addEventListener('click', async () => {
+    document.getElementById(s+'-roll').onclick = async function(e) {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
       let roll;
@@ -381,10 +381,10 @@ function set_skill_rollers(ch) {
 
       let res = await window.connection.get_roll_res();
       window.builder.roll_window_20(s, s + " roll result", res);
-    });
+    };
   }
   for(let s of window.builder.d100_skill_list()) {
-    document.getElementById(s+'-roll').addEventListener('click', async () => {
+    document.getElementById(s+'-roll').onclick = async function(e) {
       console.log("pressed: "+s+"-roll");
       let v = Number.parseInt(document.getElementById(s+'total').innerText);
       console.log("bonus for d100:" + v);
@@ -402,7 +402,7 @@ function set_skill_rollers(ch) {
 
       let res = await window.connection.get_roll_res('click');
       window.builder.roll_window_100(s, s + " roll result", res);
-    });
+    };
   }
 }
 
@@ -511,7 +511,7 @@ function set_update_main_attributes_body_listeners(ch) {
     let eli = document.getElementById('add-to-'+table_id);
     console.log("table_id:"+table_id);
     // console.log(eli);
-    eli.addEventListener('click', async () => {
+    eli.onclick = async function(e) {
       // Create the creation table.
       await window.builder.set_create_subpart_table(part_type, subtype);
       let table = document.getElementById('item-box');
@@ -544,7 +544,7 @@ function set_update_main_attributes_body_listeners(ch) {
         character = ch;
         await set_all_listeners(character, false);
       })
-    });
+    };
   }
 }
 
@@ -554,7 +554,7 @@ async function pseudo_update_inventory_item(part, ch) {
   // Deal with the box.
   let box = document.getElementById('item-box-details');
   box.hidden = false;
-  box.addEventListener('dblclick', async () => {
+  box.ondblclick = async function(e) {
     // When closing the box, reload the character and have it updated.
     // TODO: Currently fails.
     document.getElementById("blurb-box").value = "";
@@ -562,7 +562,7 @@ async function pseudo_update_inventory_item(part, ch) {
     await set_all_listeners(ch, false);
     box.hidden = true;
     character = ch;
-  });
+  };
 
   // Text values.
   for(let inner of ['name', 'size']) {
@@ -647,7 +647,7 @@ function set_inventory_item_listeners(part, ch) {
 
   // Deletion of items.
   let eld = document.getElementById('delete' + part.uuid);
-  eld.addEventListener('click', async () => {
+  eld.onclick = async function(e) {
     console.log("ch.parts:" + ch.parts.length);
     await connection.send(
       'click',
@@ -658,11 +658,11 @@ function set_inventory_item_listeners(part, ch) {
     ch = await window.connection.get_sheet('click', '');
     character = ch;
     await set_all_listeners(character, false);
-  })
+  };
 }
 
 function set_create_character_listener() {
-  document.getElementById('create-character-button').addEventListener('click', async () => {
+  document.getElementById('create-character-button').onclick = async function(e) {
     await connection.send(
       'click',
       "{\"CreateCharacterSheet\":\""+document.getElementById('create-character-input').value+"\"}",
@@ -672,7 +672,7 @@ function set_create_character_listener() {
     await window.builder.character_list(sheets);
     set_sheet_list_listeners(sheets, character);
     set_create_character_listener();
-  })
+  };
 }
 
 /// Listeners for main parts
@@ -694,8 +694,8 @@ function set_update_main_listeners_for(ch, text_array) {
 // This function hides and clears the roll window:
 function set_roll_dialog_listener() {
   let box = document.getElementById('rr-box');
-  box.addEventListener('dblclick', async () => {
+  box.ondblclick = async function(e) {
     box.hidden = true;
     box.innerText = null;
-  });
+  };
 }
