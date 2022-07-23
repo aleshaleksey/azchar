@@ -154,22 +154,21 @@ contextBridge.exposeInMainWorld('builder', {
 /// This function can be used for the character portrait or for subparts.
 function set_portrait(part, id) {
   { // Destroy and recreate.
-    let portrait = document.getElementById(id)
-    portrait.remove();
+    document.getElementById(id).remove();
+    console.log("portrait is :"+document.getElementById(id));
   }
 
   let box = document.getElementById(id+"-box");
   portrait = document.createElement("IMG");
   portrait.id = "portrait";
   box.appendChild(portrait);
-
   console.log(portrait);
 
   if(!part.image) {
     // Delete any current tempfiles.
     portrait.src = path.resolve("src/imgs/default.jpg");
     console.log("No character image.");
-    
+
     portrait.height = 64;
     portrait.width = 64;
     box.hidden = true;
@@ -183,12 +182,12 @@ function set_portrait(part, id) {
         part.name+part.id+"."+part.image.format,
         Buffer.from(part.image.content)
       );
-      portrait.src = null;
-      portrait.src = path.resolve(part.name+part.id+"."+part.image.format);
       console.log("Image prewritten to: " + portrait.src);
     } catch (err) {
       console.log(err);
     }
+    let x = new Date().getTime();
+    portrait.src = path.resolve(part.name+part.id+"."+part.image.format)+'?'+x;
   }
 }
 

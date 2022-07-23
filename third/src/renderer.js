@@ -131,11 +131,13 @@ async function set_all_listeners(ch, reset) {
 
 // Update the image of the sheet.
 function set_update_image_listener(ch) {
-  document.getElementById('portrait').addEventListener('dragover', async evt => {
+  let portrait = document.getElementById('portrait');
+  portrait.ondragover = async function(evt) {
     evt.preventDefault();
-  });
-  document.getElementById('portrait').addEventListener('drop', async evt => {
+  };
+  portrait.ondrop = async function(evt) {
     let path = "";
+
     if(evt.dataTransfer.files[0]) {
       console.log("updating: "+evt.dataTransfer.files[0].path);
       path = evt.dataTransfer.files[0].path;
@@ -149,7 +151,7 @@ function set_update_image_listener(ch) {
       console.log("No path");
       return;
     }
-  });
+  };
 }
 
 // Creates a note, retrieves it, and resets the character.
