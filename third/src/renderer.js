@@ -558,6 +558,61 @@ function set_update_main_attributes_body_listeners(ch) {
   }
 }
 
+/// This function is an inner function to `pseudo_update_inventory_item`.
+async function set_part_roller(part) {
+    document.getElementById('roll'+part.character_type).onclick = async function(evt) {
+      // Get the threshold.
+      let s = document.getElementById(part.character_type+'-skill-select');
+      let skill_name = s.options[s.selectedIndex].innerText;
+       /// This is the final output.
+      let output = "Rolling "+part.name+' with '+skill_name+'\n';
+      /// Get the value rolled for the test.
+      let sum = document.getElementById(skill_name+'total');
+      let n = 0;
+      if(sum.innerText && !isNaN(sum.innerText)) {
+        n = Number.parseInt(sum.innerText);
+      }
+      if(isNaN(n) || n < 5) { n = 5; }
+      await window.connection.send('click', "{\"Roll\":\"1d100\"}");
+      await new Promise(r => setTimeout(r, 2));
+      let attack = await window.connection.get_roll_res('click');
+      output += "Test :"+'Roll ['+attack[0]+'] vs Threshold ['+n+']\n';
+
+      /// Get the affected part.
+      await window.connection.send('click', "{\"Roll\":\"1d100\"}");
+      await new Promise(r => setTimeout(r, 2));
+      let part_no = await window.connection.get_roll_res('click');
+      output += "Part affected :"+part_no[0]+'\n';
+      /// Now the tricky part is damage.
+      for(let roll_kind of ['Effect','Damage','Healing']) {
+        for(let p of part.attributes.filter(x => x[0].key.includes(roll_kind))) {
+          if(p[1].value_text) {
+            await window.connection.send('click', "{\"Roll\":\""+p[1].value_text+"\"}");
+            await new Promise(r => setTimeout(r, 2));
+            let val_res = await window.connection.get_roll_res('click');
+            let temp = 0;
+            let ioutput = ' (';
+            for(let ival of val_res) {
+              let ivaln = Number.parseInt(ival);
+              if(!isNaN(ivaln)) {
+                temp += ivaln;
+                ioutput += ival+', ';
+                console.log('ioutput='+ioutput);
+              }
+            }
+            ioutput = ioutput.substring(ioutput, ioutput.length - 2);
+            console.log('ioutput='+ioutput);
+            ioutput = ioutput+')';
+            console.log('ioutput='+ioutput);
+            output += roll_kind+": "+temp+ioutput+'\n';
+          }
+        }
+      }
+      /// Final result.
+      await window.builder.roll_window_complex(output);
+    }
+}
+
 /// This rather large function is responsible for setting listeners for the
 /// item detail box. It has several parts.
 /// 1) Listeners for the part value input boxes.
@@ -611,36 +666,7 @@ async function pseudo_update_inventory_item(part, ch) {
   }
   // Add roller listeners.
   console.log("about to set roller data.");
-  {
-    document.getElementById('roll'+part.character_type).onclick = async function(evt) {
-      // Get the threshold.
-      let s = document.getElementById(part.character_type+'-skill-select');
-      let skill_name = s.options[sel.selectedIndex].innerText;
-       /// This is the final output.
-      let output = "Rolling "+part.name+' with '+skill_name+'\n';
-      /// Get the value rolled for the test.
-      let sum = document.getElementById(skill_name+'total');
-      let n = 0;
-      if(sum.innerText && !isNaN(sum.innerText)) {
-        n = Number.parseInt(sum.innerText);
-      }
-      if(isNaN(n) || n < 5) { n = 5; }
-      await window.connection.send('click', "{\"Roll\":\"1d100+"+n+"\"}");
-      await new Promise(r => setTimeout(r, 5));
-      let attack = await window.connection.get_roll_res('click');
-      output += "Test :"+'Roll ['+attack[0]+'] vs Threshold ['+n+']\n';
-
-      /// Get the affected part.
-      await window.connection.send('click', "{\"Roll\":\"1d100\"}");
-      await new Promise(r => setTimeout(r, 5));
-      let part_no = await window.connection.get_roll_res('click');
-      output += "Part affected :"+part_no+'\n';
-      /// Now the tricky part is damage.
-
-      /// Final result.
-      await window.builder.roll_window_complex(output);
-    };
-  }
+  set_part_roller(part);
 
   // Most attributes are used in general.
   console.log("about to cycle attributes.");
