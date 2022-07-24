@@ -1,0 +1,49 @@
+{
+  "appId": "az.char.client",
+  "productName": "AZCharClient",
+  "copyright": "aleshaleksey",
+  "directories": {
+    "app": ".",
+    "output": "../target/third",
+    "buildResources": "build-res"
+  },
+  "files": [
+    "src/main.js",
+    "src/*",
+    "src/**/*",
+    "package.json",
+    "app/**/*",
+    "node_modules"
+  ],
+  "dmg": {
+    "background": null,
+    "backgroundColor": "#ffffff",
+    "window": {
+      "width": "1200",
+      "height": "600"
+    },
+    "contents": [
+      {
+        "x": 100,
+        "y": 100
+      },
+      {
+        "x": 300,
+        "y": 100,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "mac": {
+    "target": "dmg",
+    "category": "public.app-category.utilities"
+  },
+  "win": {
+    "target": "nsis"
+  },
+  "linux": {
+    "target": "deb",
+    "category": "Utility"
+  }
+}

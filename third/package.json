@@ -2,6 +2,11 @@
   "name": "third",
   "version": "1.0.0",
   "description": "fusion-azchar-electron",
+  "author": {
+    "name": "aleshaleksey (Aleksey Zholobenko)",
+    "email": "aleshaleksey@googlemail.com"
+  },
+  "homepage": "github.com/aleshaleksey/azchar",
   "main": "src/main.js",
   "dependencies": {
     "web-vitals": "^2.1.4",
@@ -9,11 +14,13 @@
   },
   "scripts": {
     "start": "electron . --no-sandbox",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "create-pack": "electron-builder -wl",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "author": "aleshaleksey (Aleksey Zholobenko)",
   "license": "ISC",
   "devDependencies": {
-      "electron": "^19.0.4"
+    "electron": "^19.0.4",
+    "electron-builder": "^22"
   }
 }

@@ -64,18 +64,8 @@ contextBridge.exposeInMainWorld('builder', {
   image_set: (part, portrait_id, size) => {
     SetE.set_portrait(part, portrait_id, size);
   },
-  set_create_subpart_table: (part_type, part_subtype) => {
-    SetE.create_new_part_table(part_type, part_subtype)
-  },
-  set_inventory_details: (part) => {
-    // This deals with pthe part itself.
-    SetE.set_inventory_details(part);
-    // This deals with the part attributes.
-    SetE.set_part_details(part);
-    // This should set the part portrait.
-    SetE.set_portrait(part, 'ip', 128);
-    // This should let us set just the box.
-    SetE.set_part_blurb_box(part);
+  prepare_attr_update: () => {
+    prepare_attr_update();
   },
   // This function creates the sort of not-quite popup display with the roll.
   roll_window_100: (rolled_item, description, roll) => {
@@ -104,8 +94,18 @@ contextBridge.exposeInMainWorld('builder', {
   set_create_hide_listeners: () => {
     set_create_hide_listeners();
   },
-  prepare_attr_update: () => {
-    prepare_attr_update();
+  set_create_subpart_table: (part_type, part_subtype) => {
+    SetE.create_new_part_table(part_type, part_subtype)
+  },
+  set_inventory_details: (part) => {
+    // This deals with pthe part itself.
+    SetE.set_inventory_details(part);
+    // This deals with the part attributes.
+    SetE.set_part_details(part);
+    // This should set the part portrait.
+    SetE.set_portrait(part, 'ip', 128);
+    // This should let us set just the box.
+    SetE.set_part_blurb_box(part);
   },
   set_roll_dialog_listener: () => {
     set_roll_dialog_listener();

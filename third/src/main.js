@@ -52,6 +52,7 @@ const createWindow = () => {
     return flow_controller.last_roll;
   });
 }
+// "email": "aleshaleksey@googlemail.com",
 
 
 // This method will be called when Electron has finished
