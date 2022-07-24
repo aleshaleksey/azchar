@@ -486,6 +486,7 @@ function set_inventory_details(part) {
 /// `part`: Is a character part.
 function set_part_details(part) {
   let table = document.getElementById("part-attribute-table");
+  let table_carrier = document.getElementById("part-attribute-table-div");
   clear_table(table);
   {
     // This is only necessary if we're dealing with a weapon.
@@ -493,10 +494,12 @@ function set_part_details(part) {
     // Therefore by subtracting PARTTYPE_, you get the name.
     table.hidden = part.attributes.length <= 1;
     if(table.hidden) {
-      document.getElementById("part-attribute-table-div").height = 0;
+      table_carrier.height = 0;
+      table_carrier.hidden = true;
       console.log("We should have set height to 0");
     } else {
-      document.getElementById("part-attribute-table-div").height = 300;
+      table_carrier.height = 300;
+      table_carrier.hidden = false;
       console.log("We should have set height to 300");
     }
     let key = '';
