@@ -78,8 +78,9 @@ contextBridge.exposeInMainWorld('builder', {
     ////////////////////////////////////
   },
   character_set: (character, reset) => {
-    set_portrait(character, 'portrait');
+    console.log('in character_set');
     set_main(character);
+    console.log('we have set_main');
     set_level_table(character);
     set_main_attributes(character);
     set_main_attributes_cosmetic(character);
@@ -117,6 +118,8 @@ contextBridge.exposeInMainWorld('builder', {
     set_inventory_details(part);
     // This deals with the part attributes.
     set_part_details(part);
+    // This should set the part portrait.
+    set_portrait(part, 'ip', 128);
     // This should let us set just the box.
     set_part_blurb_box(part);
   },
@@ -152,31 +155,25 @@ contextBridge.exposeInMainWorld('builder', {
 });
 
 /// This function can be used for the character portrait or for subparts.
-function set_portrait(part, id) {
-  { // Destroy and recreate.
-    document.getElementById(id).remove();
-    console.log("portrait is :"+document.getElementById(id));
-  }
-
-  let box = document.getElementById(id+"-box");
-  portrait = document.createElement("IMG");
-  portrait.id = "portrait";
-  box.appendChild(portrait);
-  console.log(portrait);
+///
+/// `part`: Is a character part (reference?)
+/// `input_element_id`: Is a string giving the Id of the `img` element holding
+/// the image.
+function set_portrait(part, image_element_id, size) {
+  let portrait = document.getElementById(image_element_id);
 
   if(!part.image) {
     // Delete any current tempfiles.
     portrait.src = path.resolve("src/imgs/default.jpg");
-    console.log("No character image.");
+    console.log("Default set :"+portrait.src);
 
     portrait.height = 64;
     portrait.width = 64;
-    box.hidden = true;
     return;
   } else {
     console.log("About to set image...");
-    portrait.width = 196;
-    portrait.height = 196;
+    portrait.width = size;
+    portrait.height = size;
     try {
       fs.writeFileSync(
         part.name+part.id+"."+part.image.format,
@@ -194,6 +191,8 @@ function set_portrait(part, id) {
 function set_main(char) {
     let table = document.getElementById('character-main');
     clear_table(table);
+
+    set_portrait(char, 'portrait', 196);
 
     let thead = table.createTHead();
     let row = thead.insertRow();
@@ -579,14 +578,12 @@ function set_inventory_details(part) {
 /// `part`: Is a character part.
 function set_part_details(part) {
   let table = document.getElementById("part-attribute-table");
+  clear_table(table);
   {
     // This is only necessary if we're dealing with a weapon.
     // NB: attribute keys are in the format of PARTTYPE_ATTRIBUTENAME.
     // Therefore by subtracting PARTTYPE_, you get the name.
-    table.hidden = false;
-    let pl = part.character_type.length + 1;
-    console.log(pl);
-    clear_table(table);
+    table.hidden = part.attributes.length <= 1;
     let key = '';
     // Main rows
     for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
@@ -609,14 +606,8 @@ function set_part_details(part) {
 }
 
 function set_part_blurb_box(part) {
-  {
-    let box = document.getElementById('blurb-box');
-    box.remove();
-  }
-  let box = document.createElement("TEXTAREA");
-  box.class = "blurb";
+  let box = document.getElementById('blurb-box');
   box.value = "";
-  box.id = 'blurb-box';
   box.hidden = false;
 
   let blurb = part.attributes.find(x => x[0].key==='Blurb');

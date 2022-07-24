@@ -24,8 +24,8 @@ textarea.notebox {
   background-color: #331111;
   color: #BBFFBB;
 }
-textarea.notebox {
-  width: 95%;
+textarea.blurb {
+  width: calc(50%);
   height: 150px;
   background-color: #331111;
   color: #BBFFBB;
@@ -105,6 +105,9 @@ table.standard {
   background-color: #9A9272;
   color: #000000;
 }
+th.standard:hover {
+  background-color: #BBA986;
+}
 th.standard {
   background-color: #AA9674;
 }
@@ -120,7 +123,19 @@ table.medium_stuff {
 table.big_stuff {
   width: 100%;
 }
+div.scroll {
+  height: 300px;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+::-webkit-scrollbar {
+  display: none;
+  background-color: #665544;
+}
+
 a.imgbox {
+  vertical-align: center;
   padding-top: 2px;
   padding-bottom: 2px;
   padding-left: 2px;

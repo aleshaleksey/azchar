@@ -10,14 +10,21 @@
     <title>AzChar Fusion</title>
   </head>
   <body>
+    <!-- This is a floating canvas that displays roll results. -->
     <span class="roll" id="rr-box" hidden="true"></span>
+    <!-- This is a floating canvas where items/spells/etc are created. -->
     <span class="inventory" id="item-box" hidden="true">
       <table id="item-creation-table"></table>
     </span>
+    <!-- This is the floating canvas where items/spells/etc <details
+    are viewed and edited.-->
     <span class="inventory" id="item-box-details" hidden="true">
       <table id="part-detail-table"></table>
-      <table id="part-attribute-table" hidden="true"></table>
-      <textarea id="blurb-box" class="blurb"></textarea>
+      <div class="scroll">
+        <table id="part-attribute-table" hidden="true" class:"scroll"></table>
+      </div>
+      <a><textarea id="blurb-box" class="blurb"></textarea></a>
+      <a class="imgbox" id="ip-box"><img id="ip"></img></a>
     </span>
     <!-- The below section is no longer in use. But can be activated for debug. -->
     <!-- <p></p>

@@ -111,7 +111,7 @@ async function set_all_listeners(ch, reset) {
     console.log("Character in main: " + ch["name"]);
     await window.builder.character_set(ch, reset);
     await window.builder.set_create_hide_listeners();
-    set_update_image_listener(ch);
+    set_update_image_listener(ch, ch.id, 'portrait');
     set_create_note_listener(ch);
     set_update_notes_listeners(ch.name, ch.uuid, ch.notes);
     set_update_skills_listeners(ch);
@@ -129,9 +129,13 @@ async function set_all_listeners(ch, reset) {
   }
 }
 
-// Update the image of the sheet.
-function set_update_image_listener(ch) {
-  let portrait = document.getElementById('portrait');
+/// Update the image of the sheet.
+/// `ch`: Main character part.
+/// `part_id`: The integer id of the part to which the image will belong.
+/// `id`: This is the string giving the id of the `img` element holding the
+/// the particular image.
+function set_update_image_listener(ch, part_id, img_container_id) {
+  let portrait = document.getElementById(img_container_id);
   portrait.ondragover = async function(evt) {
     evt.preventDefault();
   };
@@ -142,7 +146,7 @@ function set_update_image_listener(ch) {
       console.log("updating: "+evt.dataTransfer.files[0].path);
       path = evt.dataTransfer.files[0].path;
 
-      create_update_image(connection, ch, path);
+      create_update_image(connection, ch, part_id, path);
       await new Promise(r => setTimeout(r, 40));
       ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
       let character = ch;
@@ -264,13 +268,17 @@ function create_character_part(
 }
 
 /// Create an update image request.
-function create_update_image(conn, ch, path) {
+// `conn`: The connection bridge to server.
+// `ch`: The main character element.
+// `part_id`; The integer id of the part to which this image belongs.
+// `path`: The path for downloading the image.
+function create_update_image(conn, ch, part_id, path) {
   conn.send(
     'keyup',
     "{\"InsertUpdateImage\":[\""
       +ch["name"]+"\",\""
       +ch["uuid"]+"\","
-      +"{\"of\":"+ch.id
+      +"{\"of\":"+part_id
       +",\"link\":\""+path
       +"\"}]}"
   );
@@ -621,30 +629,30 @@ async function pseudo_update_inventory_item(part, ch) {
       await update_attribute(connection, x[0], x[1], ch);
     });
   }
-    // Blurb is special!
+  // Set the item/skill portrait.
+  set_update_image_listener(ch, part.id, 'ip');
+  // Blurb is special!
   let blurb = part.attributes.find(x => x[0].key==='Blurb');
   console.log("part_name: "+part.name);
   console.log("Blurb text in update: "+blurb[1].value_text);
   if(blurb) {
     let bbox = document.getElementById("blurb-box");
-    bbox.addEventListener('keyup', async () => {
+    bbox.onkeyup = async function (evt) {
       if(bbox.value) {
         blurb[1].value_text = bbox.value;
       } else {
         blurb[1].value_text = "Gimme blurb.";
       };
       await update_attribute(connection, blurb[0], blurb[1], ch);
-    })
+    };
   }
 }
 
 function set_inventory_item_listeners(part, ch) {
   // For any of the normal buttons, open the detail dialog.
   for(let inner of ["name", "character_type", "size", "weight"]) {
-    document.getElementById(inner + part.uuid).addEventListener(
-      'click',
-      async () => await pseudo_update_inventory_item(part, ch)
-    );
+    document.getElementById(inner + part.uuid).onclick =
+      async function(evt) { await pseudo_update_inventory_item(part, ch) };
   }
 
   // Deletion of items.
