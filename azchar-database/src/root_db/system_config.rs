@@ -68,7 +68,7 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     // Create an instance of `SystemConfig` from a config toml.
-    pub fn from_config(system_config_path: &str) -> Result<Self, String> {
+    pub fn from_config(system_config_path: &std::path::Path) -> Result<Self, String> {
         let mut config_file = std::fs::File::open(system_config_path).map_err(ma)?;
         let mut config_string = String::new();
         config_file.read_to_string(&mut config_string).map_err(ma)?;
@@ -78,7 +78,11 @@ impl SystemConfig {
     /// This function exists to:
     // a) Create the root database with all three tables.
     // b) Insert permitted attributes and parts into it.
-    pub fn into_system(self, path: &str, system_name: &str) -> Result<LoadedDbs, String> {
+    pub fn into_system(
+        self,
+        path: &std::path::Path,
+        system_name: &str,
+    ) -> Result<LoadedDbs, String> {
         // The required tables.
         use crate::root_db::system::permitted_attributes::dsl as pa_dsl;
         use crate::root_db::system::permitted_parts::dsl as pp_dsl;
@@ -93,6 +97,7 @@ impl SystemConfig {
         }
 
         let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
+        let file_path = file_path.canonicalize().map_err(ma)?;
         let file_path_string = file_path.to_string_lossy();
 
         let mut loaded_dbs = LoadedDbs::new_system(&file_path_string)?;

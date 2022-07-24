@@ -6,9 +6,10 @@ use azchar_database::character::image::{Image, InputImage};
 use azchar_database::character::note::{InputNote, Note};
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::CharacterDbRef;
+use azchar_database::LoadedDbs;
 use azchar_error::ma;
 
-use azchar_database::LoadedDbs;
+use std::path::PathBuf;
 
 /// A request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -129,12 +130,14 @@ impl Request {
         let a = std::time::Instant::now();
         let res = match self {
             Self::CreateSystem(name, path, system) => {
-                let sys = if std::path::PathBuf::from(&system).exists() {
-                    SystemConfig::from_config(&system)?
+                let cfg_path = PathBuf::from(&system);
+                let sys = if cfg_path.exists() {
+                    SystemConfig::from_config(&cfg_path)?
                 } else {
-                    toml::from_str(&system).map_err(ma)?
+                    let path = format!("{:?}", path);
+                    toml::from_str(&path).map_err(ma)?
                 };
-                let dbs = sys.into_system(&path, &name);
+                let dbs = sys.into_system(&PathBuf::from(&path), &name);
                 if let Err(ref e) = dbs {
                     println!("Error in creation: {:?}", e);
                 }

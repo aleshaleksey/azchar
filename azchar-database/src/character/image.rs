@@ -62,10 +62,7 @@ impl NewImage {
     /// A convenience function.
     pub(crate) fn insert_new(self, conn: &SqliteConnection) -> Result<usize, String> {
         use self::images::dsl::*;
-        replace_into(images)
-            .values(&self)
-            .execute(conn)
-            .map_err(ma)
+        replace_into(images).values(&self).execute(conn).map_err(ma)
     }
 }
 
