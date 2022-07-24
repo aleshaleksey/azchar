@@ -461,8 +461,16 @@ function set_inventory_details(part) {
     set_input(row, 'hp_current-detail', part.hp_current);
     // Set the roll buttons.
     row = table.insertRow();
-    set_button(row,'roll'+part.character_type+'-melee','Roll Melee');
-    set_button(row,'roll'+part.character_type+'-ranged','Roll Ranged');
+    set_button(row,'roll'+part.character_type, 'Roll with...');
+    {
+      let select = document.createElement("SELECT");
+      select.id = part.character_type+'-skill-select';
+      for(let t of D100_SKILL_LIST) {
+        let option = new Option(t, t);
+        select.options.add(option);
+      }
+      create_cell(row, select);
+    }
 
     // Header
     let thead = table.createTHead();

@@ -558,6 +558,13 @@ function set_update_main_attributes_body_listeners(ch) {
   }
 }
 
+/// This rather large function is responsible for setting listeners for the
+/// item detail box. It has several parts.
+/// 1) Listeners for the part value input boxes.
+/// 2) Listeners for the melee/ranged buttons.
+/// 3) Listeners for the attribute value input boxes.
+/// 4) Listeners for the image insert/update listener.
+/// 5) Listeners for the general note box.
 async function pseudo_update_inventory_item(part, ch) {
   window.builder.set_inventory_details(part);
   console.log("done");
@@ -602,9 +609,41 @@ async function pseudo_update_inventory_item(part, ch) {
       await update_character_part(connection, ch, part);
     });
   }
-  // Add item listeners.
-  console.log("about to cycle attributes.");
+  // Add roller listeners.
+  console.log("about to set roller data.");
+  {
+    document.getElementById('roll'+part.character_type).onclick = async function(evt) {
+      // Get the threshold.
+      let s = document.getElementById(part.character_type+'-skill-select');
+      let skill_name = s.options[sel.selectedIndex].innerText;
+       /// This is the final output.
+      let output = "Rolling "+part.name+' with '+skill_name+'\n';
+      /// Get the value rolled for the test.
+      let sum = document.getElementById(skill_name+'total');
+      let n = 0;
+      if(sum.innerText && !isNaN(sum.innerText)) {
+        n = Number.parseInt(sum.innerText);
+      }
+      if(isNaN(n) || n < 5) { n = 5; }
+      await window.connection.send('click', "{\"Roll\":\"1d100+"+n+"\"}");
+      await new Promise(r => setTimeout(r, 5));
+      let attack = await window.connection.get_roll_res('click');
+      output += "Test :"+'Roll ['+attack[0]+'] vs Threshold ['+n+']\n';
+
+      /// Get the affected part.
+      await window.connection.send('click', "{\"Roll\":\"1d100\"}");
+      await new Promise(r => setTimeout(r, 5));
+      let part_no = await window.connection.get_roll_res('click');
+      output += "Part affected :"+part_no+'\n';
+      /// Now the tricky part is damage.
+
+      /// Final result.
+      await window.builder.roll_window_complex(output);
+    };
+  }
+
   // Most attributes are used in general.
+  console.log("about to cycle attributes.");
   for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
     let el = document.getElementById(x[0].key+'-value-num');
     el.addEventListener('keyup', async () => {

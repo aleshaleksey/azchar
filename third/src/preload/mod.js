@@ -31,9 +31,7 @@ contextBridge.exposeInMainWorld('builder', {
     SetE.set_character_list(data)
   },
   character_set: (character, reset) => {
-    console.log('in character_set');
     SetE.set_main(character);
-    console.log('we have set_main');
     SetE.set_level_table(character);
     SetE.set_main_attributes(character);
     SetE.set_main_attributes_cosmetic(character);
@@ -94,6 +92,11 @@ contextBridge.exposeInMainWorld('builder', {
     box.innerText = 'We rolled: ' + rolled_item + '\n'
       + description + ':\n'
       + 'Roll = ' + res + ' ([' + roll[0] + '] + ' + roll[1] + ')';
+  },
+  roll_window_complex: (text) => {
+    let box = document.getElementById('rr-box');
+    box.hidden = false;
+    box.innerText = text;
   },
   set_create_hide_listeners: () => {
     set_create_hide_listeners();
