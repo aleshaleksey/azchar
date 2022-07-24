@@ -1,4 +1,3 @@
-const { contextBridge, ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const {
@@ -8,151 +7,51 @@ const {
   set_input,
   set_button,
   set_span
-} = require('./preload-bp.js');
+} = require('./set-elements-bp.js');
 const {
-  set_create_hide_listeners,
-  set_roll_dialog_listener
-} = require('./set-listeners.js');
+  D100_SKILL_LIST
+} = require('./constants');
 
-const D20_SKILL_LIST = ["Awareness","Acting","Agility","Beast Mastery","Convince",
-"Cunning","Faith","Intuition","Knowledge","Scrutiny","Strong Arm","Stealth",
-"Survival","Trickery"];
+/// This function sets the character list.
+///
+/// `data`: A list of character-db references.
+function set_character_list(data) {
+  let table = document.getElementById('character-table');
+  // Clear the old elements od the table if set. //;
+  clear_table(table);
+  let thead = table.createTHead();
+  // Create elements.
+  let row = table.insertRow();
+  create_cell(row, document.createTextNode("^-^"));
 
-const D100_SKILL_LIST = ["Armourer","Biomedicine","Combat Medicine","Demolition",
-"Engineering","Firearms","Hacking","Melee","Piloting","Research","Surgery",
-"Unarmed", "Underworld"]
+  set_input(row, "create-character-input", "")
+  set_button(row, "create-character-button", "Create New Character");
 
-contextBridge.exposeInMainWorld('connection', {
-  make: (event, arg) => ipcRenderer.invoke('connection:make', arg),
-  send: (event, arg) => ipcRenderer.invoke('connection:send', arg),
-  receive: (event, arg) => ipcRenderer.invoke('connection:receive', arg),
-  get_system: (event, arg) => ipcRenderer.invoke('connection:get-system', arg),
-  get_list: (event, arg) => ipcRenderer.invoke('connection:get-list', arg),
-  get_sheet: (event, arg) => ipcRenderer.invoke('connection:get-sheet', arg),
-  get_new_note: (event, arg) => ipcRenderer.invoke('connection:get-new-note', arg),
-  get_roll_res: (event, arg) => ipcRenderer.invoke('connection:get-roll-res', arg),
-});
-
-contextBridge.exposeInMainWorld('builder', {
-  d20_skill_list: () => {
-    return D20_SKILL_LIST;
-  },
-  d100_skill_list: () => {
-    return D100_SKILL_LIST;
-  },
-  character_list: (data) => {
-    let table = document.getElementById('character-table');
-    // Clear the old elements od the table if set. //;
-    clear_table(table);
-    let thead = table.createTHead();
-    // Create elements.
-    let row = table.insertRow();
-    create_cell(row, document.createTextNode("^-^"));
-
-    set_input(row, "create-character-input", "")
-    set_button(row, "create-character-button", "Create New Character");
-
-    if(!data) { return; }
-    if(data.length === 0) { return; }
-    // For created characters
-    for (let element of data) {
-      row = table.insertRow();
-      // Insert 'id'.
-      let text = document.createTextNode(element["id"]);
-      create_cell(row, text);
-      // Insert 'name'
-      text = document.createTextNode(element["name"]);
-      create_cell(row, text);
-      // Insert 'name'
-      set_button(row, element["name"]+"load", "Load "+element["name"]);
-      set_button(row, element["name"]+"delete", "Delete ");
-    }
-    ////////////////////////////////
-    // Create header
-    row = thead.insertRow();
-    let headings = Object.keys(data[0]);
-    for(let i=0;i<2;i++) {
-      set_th(row, headings[i]);
-    }
-    set_th(row, "Character Loader");
-    ////////////////////////////////////
-  },
-  character_set: (character, reset) => {
-    console.log('in character_set');
-    set_main(character);
-    console.log('we have set_main');
-    set_level_table(character);
-    set_main_attributes(character);
-    set_main_attributes_cosmetic(character);
-    set_main_attributes_resources(character);
-    set_body_attributes(character);
-    set_subpart_table(character, 'character-attacks', "Ability", 'attack');
-    set_subpart_table(character, 'character-specials', "Ability", 'special_ability');
-    set_subpart_table(character, 'character-spells', "Ability", 'spell');
-    set_subpart_table(character, 'character-perks', "Ability", 'perk');
-    set_subpart_table(character, 'character-inventory', "InventoryItem");
-    set_notes(character);
-    //
-    set_d20_skills(character);
-    set_d100_skills(character);
-    if(reset) {
-      for(let x of ['hide-sheets-wrap','hide-main-wrap','hide-resources-wrap',
-      'hide-skills-wrap','hide-notes-wrap','hide-attacks-wrap','hide-specials-wrap',
-      'hide-spells-wrap','hide-perks-wrap','hide-inventory-wrap','character-main',
-      'portrait-box','main-attributes-stats','level-table','hide-console-wrap']) {
-        document.getElementById(x).hidden = false;
-      }
-      for(let x of ['character-table','d20-skills','d100-skills','main-body-parts','character-cosmetic','main-attributes-resources','character-inventory',
-      'character-notes','character-attacks','character-specials','character-specials',
-      'character-spells','character-perks','input-request','submit-request',
-      'output-request']) {
-        document.getElementById(x).hidden = true;
-      }
-    }
-  },
-  set_create_subpart_table: (part_type, part_subtype) => {
-    create_new_part_table(part_type, part_subtype)
-  },
-  set_inventory_details: (part) => {
-    // This deals with pthe part itself.
-    set_inventory_details(part);
-    // This deals with the part attributes.
-    set_part_details(part);
-    // This should set the part portrait.
-    set_portrait(part, 'ip', 128);
-    // This should let us set just the box.
-    set_part_blurb_box(part);
-  },
-  // This function creates the sort of not-quite popup display with the roll.
-  roll_window_100: (rolled_item, description, roll) => {
-    let box = document.getElementById('rr-box');
-    box.hidden = false;
-    let thr = Number.parseInt(roll[1]);
-    if(thr < 5) { thr = 5; }
-    box.innerText = 'We rolled: ' + rolled_item + '\n'
-      + description + ':\n'
-      + 'Roll [' + roll[0] + '] vs Threshold [' + thr + ']';
-  },
-  // This function creates the sort of not-quite popup display with the roll.
-  roll_window_20: (rolled_item, description, roll) => {
-    let box = document.getElementById('rr-box');
-    box.hidden = false;
-    let res = Number.parseInt(roll[0]) + Number.parseInt(roll[1]);
-    box.innerText = 'We rolled: ' + rolled_item + '\n'
-      + description + ':\n'
-      + 'Roll = ' + res + ' ([' + roll[0] + '] + ' + roll[1] + ')';
-  },
-  set_create_hide_listeners: () => {
-    set_create_hide_listeners();
-  },
-  prepare_attr_update: () => {
-    prepare_attr_update();
-  },
-  set_roll_dialog_listener: () => {
-    set_roll_dialog_listener();
-  },
-  read_file: (filename) => get_file_path(filename)
-});
+  if(!data) { return; }
+  if(data.length === 0) { return; }
+  // For created characters
+  for (let element of data) {
+    row = table.insertRow();
+    // Insert 'id'.
+    let text = document.createTextNode(element["id"]);
+    create_cell(row, text);
+    // Insert 'name'
+    text = document.createTextNode(element["name"]);
+    create_cell(row, text);
+    // Insert 'name'
+    set_button(row, element["name"]+"load", "Load "+element["name"]);
+    set_button(row, element["name"]+"delete", "Delete ");
+  }
+  ////////////////////////////////
+  // Create header
+  row = thead.insertRow();
+  let headings = Object.keys(data[0]);
+  for(let i=0;i<2;i++) {
+    set_th(row, headings[i]);
+  }
+  set_th(row, "Character Loader");
+  ////////////////////////////////////
+}
 
 /// This function can be used for the character portrait or for subparts.
 ///
@@ -647,8 +546,23 @@ function set_notes(char) {
   };
 }
 
-// All of the Node.js APIs are available in the preload process.
-// It has the same sandbox as a Chrome extension.
-window.addEventListener('DOMContentLoaded', () => {
-  //
-})
+module.exports = {
+  set_character_list,
+  set_main,
+  set_level_table,
+  set_main_attributes,
+  set_main_attributes_core,
+  set_main_attributes_cosmetic,
+  set_main_attributes_resources,
+  set_body_attributes,
+  set_subpart_table,
+  set_notes,
+  set_d20_skills,
+  set_d100_skills,
+  create_new_part_table,
+  set_inventory_details,
+  set_portrait,
+  set_inventory_details,
+  set_part_details,
+  set_part_blurb_box,
+}

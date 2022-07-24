@@ -144,7 +144,7 @@ function set_update_image_listener(ch, part_id, img_container_id) {
 
     if(evt.dataTransfer.files[0]) {
       console.log("updating: "+evt.dataTransfer.files[0].path);
-      path = evt.dataTransfer.files[0].path;
+      let path = evt.dataTransfer.files[0].path;
 
       create_update_image(connection, ch, part_id, path);
       await new Promise(r => setTimeout(r, 40));

@@ -60,7 +60,6 @@ function set_roll_dialog_listener() {
 }
 
 
-
 module.exports = {
   set_create_hide_listeners,
   set_roll_dialog_listener

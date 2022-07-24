@@ -9,13 +9,15 @@ const {ReplyKey, process_reply} = require('./azchar-backend/request-reply.js');
 
 const createWindow = () => {
   // Create the browser window.
+  let reload_path = path.join(__dirname, 'preload');
+  reload_path = path.join(reload_path, 'mod.js');
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 900,
     backgroundColor: "#998876",
     color: "#220505",
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: reload_path
     }
   });
 

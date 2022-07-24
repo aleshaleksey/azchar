@@ -1,5 +1,5 @@
 // This module exists for the niggly little functions that we want to hide
-// from the main `preload.js` file, and yet do want to use a lot.
+// from the main `preload/set-elements.js` file, and yet do want to use a lot.
 
 // A function that exists for DRY.
 function clear_table(table) {
