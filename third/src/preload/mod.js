@@ -61,6 +61,9 @@ contextBridge.exposeInMainWorld('builder', {
       }
     }
   },
+  image_set: (part, portrait_id, size) => {
+    SetE.set_portrait(part, portrait_id, size);
+  },
   set_create_subpart_table: (part_type, part_subtype) => {
     SetE.create_new_part_table(part_type, part_subtype)
   },

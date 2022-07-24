@@ -136,6 +136,11 @@ async function set_all_listeners(ch, reset) {
 /// the particular image.
 function set_update_image_listener(ch, part_id, img_container_id) {
   let portrait = document.getElementById(img_container_id);
+
+  let should_be_hidden = document.getElementById('character-main').hidden;
+  portrait.hidden = should_be_hidden;
+  document.getElementById(img_container_id+'-box').hidden = should_be_hidden;
+
   portrait.ondragover = async function(evt) {
     evt.preventDefault();
   };
@@ -150,7 +155,13 @@ function set_update_image_listener(ch, part_id, img_container_id) {
       await new Promise(r => setTimeout(r, 40));
       ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
       let character = ch;
-      await set_all_listeners(character, true);
+      let part = ch;
+      if (ch.id != part_id) {
+        let part = ch.parts.find(p => p.id==part_id);
+        window.builder.image_set(part, img_container_id, 128);
+      } else {
+        window.builder.image_set(ch, img_container_id, 196);
+      }
     } else {
       console.log("No path");
       return;

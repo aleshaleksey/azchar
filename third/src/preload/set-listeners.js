@@ -1,3 +1,5 @@
+const {clear_table } = require('./set-elements-bp.js');
+
 function set_create_hide_listeners() {
   document.getElementById('hide-main-wrap').onclick = async function(e) {
     console.log("hide main wrap clicked.");

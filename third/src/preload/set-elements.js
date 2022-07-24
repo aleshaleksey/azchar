@@ -60,6 +60,7 @@ function set_character_list(data) {
 /// the image.
 function set_portrait(part, image_element_id, size) {
   let portrait = document.getElementById(image_element_id);
+  document.getElementById(image_element_id+"-box").hidden = false;
 
   if(!part.image) {
     // Delete any current tempfiles.
@@ -491,6 +492,13 @@ function set_part_details(part) {
     // NB: attribute keys are in the format of PARTTYPE_ATTRIBUTENAME.
     // Therefore by subtracting PARTTYPE_, you get the name.
     table.hidden = part.attributes.length <= 1;
+    if(table.hidden) {
+      document.getElementById("part-attribute-table-div").height = 0;
+      console.log("We should have set height to 0");
+    } else {
+      document.getElementById("part-attribute-table-div").height = 300;
+      console.log("We should have set height to 300");
+    }
     let key = '';
     // Main rows
     for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {
