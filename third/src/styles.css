@@ -66,11 +66,12 @@ span.inventory {
  position: fixed;
  /* top: calc(20% - 10px);
  right:calc(20% - 10px); */
+ overflow-y: scroll;
  padding-top: 8px;
  padding-bottom: 8px;
  padding-left: 8px;
  padding-right: 8px;
- height:auto;
+ max-height: 95%;
  width:auto;
  font-size: 18px;
  text-align: center;
@@ -123,7 +124,11 @@ table.medium_stuff {
 table.big_stuff {
   width: 100%;
 }
+table.scroll {
+  height: 300px;
+}
 div.scroll {
+  max-height: 300px;
   width: 100%;
   overflow-x: hidden;
   overflow-y: scroll;
