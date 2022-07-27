@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const {
   set_create_hide_listeners,
-  set_roll_dialog_listener
+  set_roll_dialog_listener,
 } = require('./set-listeners.js');
 const SetE = require('./set-elements.js');
 const {
@@ -110,6 +110,9 @@ contextBridge.exposeInMainWorld('builder', {
   set_roll_dialog_listener: () => {
     set_roll_dialog_listener();
   },
+  path_from_file_dialog: () => {
+    return ipcRenderer.invoke('builder:path-from-dialog');
+  }
 });
 
 // All of the Node.js APIs are available in the preload process.

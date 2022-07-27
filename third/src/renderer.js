@@ -19,6 +19,11 @@ document.getElementById('submit-system').onclick = async function(e) {
   document.getElementById('character-table').hidden = false;
 };
 
+document.getElementById('input-system').ondblclick = async function(e) {
+  document.getElementById('input-system').value =
+    await window.builder.path_from_file_dialog();
+};
+
 async function list_sheets() {
   await window.connection.send(
     'click',
@@ -129,6 +134,29 @@ async function set_all_listeners(ch, reset) {
   }
 }
 
+/// Inner function for `set_update_image_listener`.
+/// `path` is the image path.
+/// `ch` is the Main character prt.
+/// `part_id` is the id of the part to which the image will belong.
+/// `id`: This is the string giving the id of the GUI element holding the image.
+async function update_image_listener_inner(path, ch, part_id, img_container_id) {
+  if(path) {
+    create_update_image(connection, ch, part_id, path);
+    await new Promise(r => setTimeout(r, 40));
+    ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
+    let character = ch;
+    let part = ch;
+    if (ch.id != part_id) {
+      let part = ch.parts.find(p => p.id==part_id);
+      window.builder.image_set(part, img_container_id, 128);
+    } else {
+      window.builder.image_set(ch, img_container_id, 196);
+    }
+  } else {
+    console.log("No path");
+  }
+}
+
 /// Update the image of the sheet.
 /// `ch`: Main character part.
 /// `part_id`: The integer id of the part to which the image will belong.
@@ -145,27 +173,13 @@ function set_update_image_listener(ch, part_id, img_container_id) {
     evt.preventDefault();
   };
   portrait.ondrop = async function(evt) {
-    let path = "";
+    let path = evt.dataTransfer.files[0];
+    await update_image_listener_inner(path, ch, part_id, img_container_id);
+  };
+  portrait.ondblclick =  async function(evt) {
+    let path = await window.builder.path_from_file_dialog();
+    await update_image_listener_inner(path, ch, part_id, img_container_id);
 
-    if(evt.dataTransfer.files[0]) {
-      console.log("updating: "+evt.dataTransfer.files[0].path);
-      let path = evt.dataTransfer.files[0].path;
-
-      create_update_image(connection, ch, part_id, path);
-      await new Promise(r => setTimeout(r, 40));
-      ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
-      let character = ch;
-      let part = ch;
-      if (ch.id != part_id) {
-        let part = ch.parts.find(p => p.id==part_id);
-        window.builder.image_set(part, img_container_id, 128);
-      } else {
-        window.builder.image_set(ch, img_container_id, 196);
-      }
-    } else {
-      console.log("No path");
-      return;
-    }
   };
 }
 

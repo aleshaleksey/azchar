@@ -1,5 +1,6 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { dialog } = require('electron');
 const path = require('path');
 const { socket, create_socket, response, flow_controller } = require('./azchar-backend/socket-mod.js');
 const { FlowController } = require('./azchar-backend/flow-control.js');
@@ -50,6 +51,24 @@ const createWindow = () => {
   });
   ipcMain.handle('connection:get-roll-res', (event, arg) => {
     return flow_controller.last_roll;
+  });
+  ipcMain.handle('builder:path-from-dialog', () => {
+      /// `recepticle: SHould be a mutable reference to a string value, if JS allows...
+      console.log("Doublelclicked system.");
+      let selection = dialog.showOpenDialogSync({
+        title: "Choose Character Repository",
+        filters: [{
+          extensions: ['db'],
+        }]
+      });
+      console.log(selection);
+      if(!selection.cancelled) {
+        console.log(selection);
+        console.log(selection[0]);
+        return selection[0].toString();
+      } else {
+        return null;
+      };
   });
 }
 // "email": "aleshaleksey@googlemail.com",
