@@ -1,5 +1,5 @@
 [package]
-name = "azchar-server"
+name = "azchar-fourth"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,24 +7,14 @@ edition = "2018"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
+tauri = "1.0.5"
+tempfile = "*"
 toml = "0.5"
 azchar-config = { path = "../azchar-config" }
 azchar-database = { path = "../azchar-database" }
 azchar-error = { path = "../azchar-error" }
+azchar-server = { path = "../azchar-server", features = ["fourth"] }
 
 [dependencies.libazdice]
 git = "https://github.com/aleshaleksey/libazdice.git"
 version = "0.2.5"
-
-[dependencies.websocket]
-version = "0.26.0"
-features = ["sync"]
-default-features = false
-optional = true
-
-[dev-dependencies]
-tempfile = "*"
-
-[features]
-default = ["websocket"]
-fourth = []

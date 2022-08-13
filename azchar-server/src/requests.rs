@@ -13,9 +13,9 @@ use std::path::PathBuf;
 
 /// A request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum Request {
+pub enum Request {
     /// String is a config file as a TOML.
-    // The strings are name && uuid
+    /// The strings are name && uuid
     CreateSystem(String, String, String),
     /// This is the path of the system to load.
     InitialiseFromPath(String),
@@ -24,16 +24,16 @@ pub(crate) enum Request {
     /// The string is a CompleteCharacter JSON/TOML.
     CreateUpdateCharacter(CompleteCharacter),
     /// This needs no arguments and uses the current root. [Need identifier]
-    // The strings are name && uuid
+    /// The strings are name && uuid
     UpdateAttribute(String, String, AttributeKey, AttributeValue),
     /// Purely for creating an attribute.
-    // The strings are name && uuid
+    /// The strings are name && uuid
     CreateAttribute(String, String, InputAttribute),
     /// Update a single character part. [Need identifier]
-    // The strings are name && uuid
+    /// The strings are name && uuid
     UpdatePart(String, String, CharacterPart),
     /// A function particularly for adding new parts.
-    // The strings are name && uuid
+    /// The strings are name && uuid
     CreatePart(String, String, InputCharacter),
     /// A function particularly for removing a part.
     /// The strings are name && uuid of the character, the id is the part id.
@@ -62,7 +62,7 @@ pub(crate) enum Request {
 
 /// A request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum Response {
+pub enum Response {
     /// Returns a useless message.
     CreateSystem(String),
     /// Returns a list of characters, because what else?
@@ -111,7 +111,7 @@ impl Response {
 
 impl Request {
     /// Converts an incoming JSON string into a bona-fide request.
-    pub(crate) fn convert(input: &str) -> Self {
+    pub fn convert(input: &str) -> Self {
         match toml::from_str(input) {
             Ok(r) => r,
             Err(_) => match serde_json::from_str(input) {
@@ -126,7 +126,7 @@ impl Request {
 
     /// Run the request and give a response.
     /// NB: An error case should be unwrapped
-    pub(crate) fn execute(self, main_loop: &mut Option<LoadedDbs>) -> Result<Response, String> {
+    pub fn execute(self, main_loop: &mut Option<LoadedDbs>) -> Result<Response, String> {
         let a = std::time::Instant::now();
         let res = match self {
             Self::CreateSystem(name, path, system) => {

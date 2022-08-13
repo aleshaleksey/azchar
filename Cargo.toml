@@ -7,6 +7,10 @@ edition = "2018"
 name = "azchar"
 path = "azchar-server/src/main.rs"
 
+[[bin]]
+name = "azchar-fourth"
+path = "fourth/src/main.rs"
+
 [workspace]
 members = [
   "azchar-config",
@@ -14,6 +18,7 @@ members = [
   "azchar-error",
   "azchar-server",
   "azchar-expclient",
+  "fourth"
 ]
 
 [dependencies]
@@ -25,6 +30,7 @@ toml = "0.5"
 azchar-config = { path = "azchar-config" }
 azchar-database = { path = "azchar-database" }
 azchar-error = { path = "azchar-error" }
+azchar-server = { path = "azchar-server" }
 
 [dependencies.libazdice]
 git = "https://github.com/aleshaleksey/libazdice.git"
