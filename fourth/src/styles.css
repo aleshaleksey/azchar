@@ -1,0 +1,164 @@
+option {
+  background-color: #331111;
+  color: #BBFFBB;
+}
+html body form fieldset#custom select datalist div.option:focus {
+  background-color: #99BB99;
+  color: #331111;
+}
+select {
+  background-color: #331111;
+  color: #BBFFBB;
+  border: 3px solid  #444433;
+}
+
+textarea {
+  width: 95%;
+  height: 200px;
+  background-color: #331111;
+  color: #BBFFBB;
+}
+textarea.notebox {
+  width: 95%;
+  height: 300px;
+  background-color: #331111;
+  color: #BBFFBB;
+}
+textarea.blurb {
+  width: 200px;
+  height: 150px;
+  background-color: #331111;
+  color: #BBFFBB;
+}
+
+input {
+  width: 80%;
+  background-color: #331111;
+  color: #BBFFBB;
+}
+input.addressbox {
+  width: 40%;
+}
+input.resource {
+  width: 40%;
+  background-color: #331111;
+  color: #BBFFBB;
+}
+
+span.roll {
+ position: fixed;
+ top: calc(40% - 10px);
+ right:calc(30% - 10px);
+ padding-top: 8px;
+ padding-bottom: 8px;
+ padding-left: 8px;
+ padding-right: 8px;
+ height:auto;
+ width:auto;
+ font-size: 18px;
+ text-align: center;
+ vertical-align: center;
+ border: 3px solid #CCCC88;
+ background-color: #331111;
+ color: #BBFFBB;
+}
+span.inventory {
+ position: fixed;
+ /* top: calc(20% - 10px);
+ right:calc(20% - 10px); */
+ overflow-y: scroll;
+ padding-top: 8px;
+ padding-bottom: 8px;
+ padding-left: 8px;
+ padding-right: 8px;
+ max-height: 95%;
+ width:auto;
+ font-size: 18px;
+ text-align: center;
+ vertical-align: center;
+ border: 3px solid #DDDD99;
+ background-color: #665544;
+ color: #AAEEAA;
+}
+
+th, td {
+  border: 2px solid #444433;
+  text-align: center;
+  vertical-align: center;
+  width: auto;
+}
+th:hover {
+  background-color: #BBAAAA;
+}
+td:hover {
+  background-color: #AA9999;
+}
+
+table.image-cell {
+  width: 256px;
+  height: 256px;
+}
+table {
+  border: 2px solid #363628;
+  width: 100%;
+}
+table.standard {
+  background-color: #9A9272;
+  color: #000000;
+}
+th.standard:hover {
+  background-color: #BBA986;
+}
+th.standard {
+  background-color: #AA9674;
+}
+table.skill {
+  width: 25%;
+}
+table.stuff {
+  width: 25%;
+}
+table.medium_stuff {
+  width: 50%;
+}
+table.big_stuff {
+  width: 100%;
+}
+table.scroll {
+  height: 300px;
+}
+div.scroll {
+  max-height: 300px;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+::-webkit-scrollbar {
+  display: none;
+  background-color: #665544;
+}
+
+a.imgbox {
+  vertical-align: center;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 2px;
+  padding-right: 2px;
+  border: 2px solid #363628;
+}
+
+button {
+  width: 98%;
+  background-color: #887766;
+}
+button.clickme {
+  width: 40%;
+}
+div {
+  /* width: 95%; */
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  /* justify-content: center; */
+}
