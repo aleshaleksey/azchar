@@ -493,15 +493,7 @@ function set_part_details(part) {
     // NB: attribute keys are in the format of PARTTYPE_ATTRIBUTENAME.
     // Therefore by subtracting PARTTYPE_, you get the name.
     table.hidden = part.attributes.length <= 1;
-    if(table.hidden) {
-      table_carrier.height = 0;
-      table_carrier.hidden = true;
-      console.log("We should have set height to 0");
-    } else {
-      table_carrier.height = 300;
-      table_carrier.hidden = false;
-      console.log("We should have set height to 300");
-    }
+    table_carrier.hidden = table.hidden;
     let key = '';
     // Main rows
     for(let x of part.attributes.filter(x => x[0].key!="Blurb")) {

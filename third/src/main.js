@@ -71,7 +71,6 @@ const createWindow = () => {
       };
   });
 }
-// "email": "aleshaleksey@googlemail.com",
 
 
 // This method will be called when Electron has finished

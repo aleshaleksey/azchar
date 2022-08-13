@@ -142,8 +142,8 @@ async function set_all_listeners(ch, reset) {
 async function update_image_listener_inner(path, ch, part_id, img_container_id) {
   if(path) {
     create_update_image(connection, ch, part_id, path);
-    await new Promise(r => setTimeout(r, 40));
-    ch = await get_char_by_name_uuid(ch.name, ch.uuid, 30);
+    await new Promise(r => setTimeout(r, 100));
+    ch = await get_char_by_name_uuid(ch.name, ch.uuid, 60);
     let character = ch;
     let part = ch;
     if (ch.id != part_id) {
@@ -174,12 +174,12 @@ function set_update_image_listener(ch, part_id, img_container_id) {
   };
   portrait.ondrop = async function(evt) {
     let path = evt.dataTransfer.files[0];
+    console.log(path);
     await update_image_listener_inner(path, ch, part_id, img_container_id);
   };
   portrait.ondblclick =  async function(evt) {
     let path = await window.builder.path_from_file_dialog();
     await update_image_listener_inner(path, ch, part_id, img_container_id);
-
   };
 }
 
