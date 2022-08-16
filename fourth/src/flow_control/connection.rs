@@ -38,19 +38,37 @@ impl AZCharFourth {
                     imagemap.insert(loaded.id(), processed);
                 }
             }
+            self.images = imagemap;
             self.current = Some(loaded);
+        }
+        Ok(())
+    }
+
+    // Reset an image.
+    pub(super) fn set_image(
+        dbs: &mut Option<LoadedDbs>,
+        image: &mut Option<dbimg::Image>,
+        imagemap: &mut FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
+        name: String,
+        uuid: String,
+        id: i64,
+        path: std::path::PathBuf
+    ) -> Result<(), String> {
+        if let Some(ref mut dbs) = dbs {
+            let input = dbimg::InputImage {
+                of: id,
+                link: path.into_os_string().into_string().map_err(ma)?,
+            };
+            let output = dbs.create_update_image(name, uuid, input)?;
+            let processed = process_image(&output)?;
+            *image = Some(output);
+            imagemap.insert(Some(id), processed);
         }
         Ok(())
     }
 }
 
 fn process_image(image: &dbimg::Image) -> Result<egui_extras::RetainedImage, String> {
-    // let decoded = image::io::Reader::new(Cursor::new(image.content))
-    //     .with_guessed_format()
-    //     .map_err(ma)?
-    //     .decode()
-    //     .map_err(ma)?
-    //     .to_rgba8();
     let ret = egui_extras::RetainedImage::from_image_bytes(image.of.to_string(), &image.content)
         .map_err(ma)?;
     Ok(ret)

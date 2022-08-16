@@ -14,17 +14,15 @@ pub(crate) struct AZCharFourth {
     char_list: Vec<CharacterDbRef>,
     hidden_list: bool,
     current: Option<CompleteCharacter>,
-    images: FnvHashMap<i64, egui_extras::RetainedImage>,
+    images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
     default_img: egui_extras::RetainedImage,
 }
 
 impl Default for AZCharFourth {
     fn default() -> Self {
-        let default_img = egui_extras::RetainedImage::from_image_bytes(
-            "-9999",
-            include_bytes!("default.jpg"),
-        )
-        .unwrap();
+        let default_img =
+            egui_extras::RetainedImage::from_image_bytes("-9999", include_bytes!("default.jpg"))
+                .unwrap();
         Self {
             db_path: String::from("fusion.db"),
             cfg_path: String::new(),
@@ -68,6 +66,17 @@ impl eframe::App for AZCharFourth {
             // Set a list of characters.
             // We cannot iter because of burrow.)
             // NB: We can hide the list.
+            // A button to hide the list of characters.
+            if !self.char_list.is_empty() {
+                let label = if !self.hidden_list {
+                    "Hide List"
+                } else {
+                    "Show List"
+                };
+                if ui.button(label).clicked() {
+                    self.hidden_list = !self.hidden_list;
+                }
+            }
             if !self.hidden_list {
                 ui.heading("Character List:");
                 for i in 0..self.char_list.len() {
@@ -93,29 +102,46 @@ impl eframe::App for AZCharFourth {
                     println!("Pretending to make a new character.");
                 }
             }
-            // A button to hide the list of characters.
-            if !self.char_list.is_empty() {
-                let label = if !self.hidden_list {
-                    "Hide List"
-                } else {
-                    "Show List"
-                };
-                if ui.button(label).clicked() {
-                    self.hidden_list = !self.hidden_list;
-                }
-            }
 
             // Display the character.
-            if let Some(ref char) = self.current {
+            if let Some(ref mut char) = self.current {
                 ui.heading(char.name());
-                // Portrait or default for box.
-                let portrait =  self.images.get(&char.id().unwrap()).unwrap_or(&self.default_img);
-                {
-                    let mut ib = egui::ImageButton::new(portrait.texture_id(ctx), [200., 200.]);
-                    if ib.ui(ui).clicked() {
-                        println!("We pretend to update the portrait.");
+                ui.horizontal(|ui| {
+                    // Portrait or default for box.
+                    let portrait = self.images.get(&char.id()).unwrap_or(&self.default_img);
+                    {
+                        let ib = egui::ImageButton::new(portrait.texture_id(ctx), [128., 128.]);
+                        if ib.ui(ui).clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .add_filter("image", &["png", "jpg", "jpeg", "bmp"])
+                                .pick_file() {
+                                    println!("Picked: {:?}", path);
+                                    let name = char.name().to_owned();
+                                    let uuid = char.uuid().to_owned();
+                                    let id = char.id().unwrap();
+                                    let res = AZCharFourth::set_image(
+                                        &mut self.dbs,
+                                        &mut char.image,
+                                        &mut self.images,
+                                        name,
+                                        uuid,
+                                        id,
+                                        path
+                                    );
+                                    if let Err(e) = res {
+                                        println!("Couldn't set image: {:?}", e);
+                                    }
+                                } else {
+                                    println!("Failed to pick a file.");
+                                }
+                        }
                     }
-                }
+                    ui.vertical(|ui| {
+                        ui.label("name.speed.weight.size.hp.hptotal");
+                        ui.label("level.proficiency");
+                        ui.label("str.ref.tou.end.int.jud.cha.wil");
+                    });
+                });
             }
         });
     }

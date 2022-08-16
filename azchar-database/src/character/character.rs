@@ -422,18 +422,18 @@ impl CharacterPart {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompleteCharacter {
     id: Option<i64>,
-    pub(crate) name: String,
+    pub name: String,
     uuid: String,
-    pub(crate) character_type: String,
-    pub(crate) speed: i32,
-    pub(crate) weight: Option<i32>,
-    pub(crate) size: Option<String>,
-    pub(crate) hp_total: Option<i32>,
-    pub(crate) hp_current: Option<i32>,
+    pub character_type: String,
+    pub speed: i32,
+    pub weight: Option<i32>,
+    pub size: Option<String>,
+    pub hp_total: Option<i32>,
+    pub hp_current: Option<i32>,
     pub(crate) parts: Vec<CharacterPart>,
     pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
-    pub(crate) image: Option<Image>,
-    pub(crate) notes: Vec<Note>,
+    pub image: Option<Image>,
+    pub notes: Vec<Note>,
 }
 
 impl CompleteCharacter {

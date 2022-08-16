@@ -7,7 +7,7 @@ use eframe::{self, egui};
 use self::flow_control::AZCharFourth;
 
 fn main() {
-    let options = eframe::NativeOptions::default();
+    let mut options = eframe::NativeOptions::default();
     eframe::run_native(
         "AZChar-Fusion",
         options,
