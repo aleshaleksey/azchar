@@ -22,12 +22,17 @@ members = [
 ]
 
 [dependencies]
+eframe = "0.18.0"
+egui = "0.18.1"
+egui_extras = { version = "0.18", features = ["image"] }
+fnv = "*"
+image = "0.24"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
-tauri = "1.0.5"
 tempfile = "*"
 toml = "0.5"
+
 azchar-config = { path = "azchar-config" }
 azchar-database = { path = "azchar-database" }
 azchar-error = { path = "azchar-error" }
