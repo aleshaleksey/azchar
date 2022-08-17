@@ -2,12 +2,12 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-use eframe::{self, egui};
+use eframe;
 
 use self::flow_control::AZCharFourth;
 
 fn main() {
-    let mut options = eframe::NativeOptions::default();
+    let options = eframe::NativeOptions::default();
     eframe::run_native(
         "AZChar-Fusion",
         options,

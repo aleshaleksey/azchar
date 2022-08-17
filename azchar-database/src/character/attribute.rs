@@ -154,6 +154,10 @@ impl AttributeValue {
         self
     }
 
+    pub fn update_value_num_by_ref(&mut self, value_num: Option<i64>) {
+        self.value_num = value_num;
+    }
+
     pub fn value_num(&self) -> Option<i64> {
         self.value_num
     }

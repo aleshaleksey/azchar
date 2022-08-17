@@ -1,11 +1,25 @@
+use self::table::Row;
+
 use azchar_database::character::character::CompleteCharacter;
 use azchar_database::{CharacterDbRef, LoadedDbs};
-use azchar_server::{Request, Response};
 
 use eframe::egui::Widget;
-use eframe::{self, egui};
+use eframe;
 
 use fnv::FnvHashMap;
+
+const LEVEL: &str = "Level";
+const PROFICIENCY: &str = "Proficiency";
+const STRENGTH: &str = "Strength";
+const REFLEX: &str = "Reflex";
+const TOUGHNESS: &str = "Toughness";
+const ENDURANCE: &str = "Endurance";
+const INTELLIGENCE: &str = "Intelligence";
+const JUDGEMENT: &str = "Judgement";
+const CHARM: &str = "Charm";
+const WILL: &str = "Will";
+
+const MAIN_W: f32 = 320.;
 
 pub(crate) struct AZCharFourth {
     db_path: String,
@@ -16,6 +30,9 @@ pub(crate) struct AZCharFourth {
     current: Option<CompleteCharacter>,
     images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
     default_img: egui_extras::RetainedImage,
+    main_attr_table: [Row; 6],
+    main_level_pro_table: [Row; 2],
+    main_stat_table: [Row; 8],
 }
 
 impl Default for AZCharFourth {
@@ -32,6 +49,25 @@ impl Default for AZCharFourth {
             current: None,
             images: FnvHashMap::default(),
             default_img,
+            main_attr_table: [
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+            ],
+            main_stat_table: [
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+                Row::default(),
+            ],
+            main_level_pro_table: [Row::default(), Row::default()],
         }
     }
 }
@@ -114,32 +150,86 @@ impl eframe::App for AZCharFourth {
                         if ib.ui(ui).clicked() {
                             if let Some(path) = rfd::FileDialog::new()
                                 .add_filter("image", &["png", "jpg", "jpeg", "bmp"])
-                                .pick_file() {
-                                    println!("Picked: {:?}", path);
-                                    let name = char.name().to_owned();
-                                    let uuid = char.uuid().to_owned();
-                                    let id = char.id().unwrap();
-                                    let res = AZCharFourth::set_image(
-                                        &mut self.dbs,
-                                        &mut char.image,
-                                        &mut self.images,
-                                        name,
-                                        uuid,
-                                        id,
-                                        path
-                                    );
+                                .pick_file()
+                            {
+                                println!("Picked: {:?}", path);
+                                let name = char.name().to_owned();
+                                let uuid = char.uuid().to_owned();
+                                let id = char.id().unwrap();
+                                let res = AZCharFourth::set_image(
+                                    &mut self.dbs,
+                                    &mut char.image,
+                                    &mut self.images,
+                                    name,
+                                    uuid,
+                                    id,
+                                    path,
+                                );
+                                if let Err(e) = res {
+                                    println!("Couldn't set image: {:?}", e);
+                                }
+                            } else {
+                                println!("Failed to pick a file.");
+                            }
+                        }
+                    }
+                    // Set the three attribute tables.
+                    ui.vertical(|ui| {
+                        {
+                            let rows = &mut self.main_attr_table;
+                            match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
+                                Err(e) => println!("Error: {}", e),
+                                Ok(true) => {
+                                    char.name = rows[0].value.to_owned();
+                                    if let Ok(n) = rows[1].value.parse() {
+                                        char.speed = n;
+                                    }
+                                    if let Ok(n) = rows[2].value.parse() {
+                                        char.weight = Some(n);
+                                    }
+                                    char.size = Some(rows[3].value.to_owned());
+                                    if let Ok(n) = rows[4].value.parse() {
+                                        char.hp_current = Some(n);
+                                    }
+                                    if let Ok(n) = rows[5].value.parse() {
+                                        char.hp_total = Some(n);
+                                    }
+                                    let part = char.to_bare_part();
+
+                                    let res = AZCharFourth::update_main(&mut self.dbs, part);
                                     if let Err(e) = res {
                                         println!("Couldn't set image: {:?}", e);
                                     }
-                                } else {
-                                    println!("Failed to pick a file.");
                                 }
+                                _ => {}
+                            };
                         }
-                    }
-                    ui.vertical(|ui| {
-                        ui.label("name.speed.weight.size.hp.hptotal");
-                        ui.label("level.proficiency");
-                        ui.label("str.ref.tou.end.int.jud.cha.wil");
+                        {
+                            let rows = &mut self.main_level_pro_table;
+                            match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
+                                Err(e) => println!("Error: {}", e),
+                                Ok(true) => {
+                                    let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
+                                    if let Err(e) = res {
+                                        println!("Couldn't set image: {:?}", e);
+                                    }
+                                }
+                                _ => {}
+                            };
+                        }
+                        {
+                            let rows = &mut self.main_stat_table;
+                            match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
+                                Err(e) => println!("Error: {}", e),
+                                Ok(true) => {
+                                    let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
+                                    if let Err(e) = res {
+                                        println!("Couldn't set image: {:?}", e);
+                                    }
+                                }
+                                _ => {}
+                            };
+                        }
                     });
                 });
             }
@@ -148,3 +238,4 @@ impl eframe::App for AZCharFourth {
 }
 
 mod connection;
+mod table;

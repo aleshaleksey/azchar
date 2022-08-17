@@ -461,6 +461,10 @@ impl CompleteCharacter {
         &self.attributes
     }
 
+    pub fn attributes_mut(&mut self) -> &mut [(AttributeKey, AttributeValue)] {
+        &mut self.attributes
+    }
+
     pub fn image(&self) -> &Option<Image> {
         &self.image
     }
