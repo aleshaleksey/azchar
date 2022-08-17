@@ -1,4 +1,4 @@
-use super::table::Row;
+use super::table::{DynamicTable, Label, Row};
 use super::*;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
@@ -7,14 +7,46 @@ use azchar_database::character::image as dbimg;
 use azchar_database::LoadedDbs;
 use azchar_error::ma;
 
+const D20_SKILLS: [&str; 14] = [
+    "Awareness",
+    "Acting",
+    "Agility",
+    "Beast Mastery",
+    "Convince",
+    "Cunning",
+    "Faith",
+    "Intuition",
+    "Knowledge",
+    "Scrutiny",
+    "Strong Arm",
+    "Stealth",
+    "Survival",
+    "Trickery",
+];
+const D100_SKILLS: [&str; 13] = [
+    "Armourer",
+    "Biomedicine",
+    "Combat Medicine",
+    "Demolition",
+    "Engineering",
+    "Firearms",
+    "Hacking",
+    "Melee",
+    "Piloting",
+    "Research",
+    "Surgery",
+    "Unarmed",
+    "Underworld",
+];
+const PROFICIENCY: &str = "proficiency";
+const PROFICIENCY_CAMEL: &str = "Proficiency";
+const BONUS: &str = "bonus";
+const BONUS_CAMEL: &str = "Bonus";
+const TOTAL_CAMEL: &str = "Total";
+const GOV: &str = "governed_by";
+const GOV_CAMEL: &str = "Governed By";
+
 use fnv::FnvHashMap;
-// pub(crate) struct AZCharFourth {
-//     db_path: String,
-//     cfg_path: String,
-//     dbs: Option<LoadedDbs>,
-//     char_list: Vec<CharacterDbRef>,
-//     current: Option<CompleteCharacter>,
-// }
 
 impl AZCharFourth {
     pub(super) fn load_system(&mut self) -> Result<(), String> {
@@ -33,11 +65,20 @@ impl AZCharFourth {
                 let processed = process_image(data)?;
                 imagemap.insert(loaded.id(), processed);
             }
+            self.current_attributes = loaded
+                .attributes()
+                .iter()
+                .cloned()
+                .collect::<FnvHashMap<_, _>>();
+
             // Insert part images.
             for c in loaded.parts().iter() {
                 if let Some(ref data) = c.image.as_ref() {
                     let processed = process_image(data)?;
                     imagemap.insert(loaded.id(), processed);
+                }
+                for (k, v) in c.attributes.iter() {
+                    self.current_attributes.insert(k.clone(), v.clone());
                 }
             }
             self.main_attr_table = [
@@ -57,45 +98,90 @@ impl AZCharFourth {
                     &loaded.hp_total.map(|x| x.to_string()).unwrap_or_default(),
                 ),
             ];
-            let level = Self::get_attr_val_num(&loaded.attributes(), LEVEL);
-            let proficiency = Self::get_attr_val_num(&loaded.attributes(), PROFICIENCY);
-            self.main_level_pro_table = [
-                Row::with_label("Level", &level.to_string(), LEVEL),
-                Row::with_label("Proficiency", &proficiency.to_string(), PROFICIENCY),
-            ];
-            let str = Self::get_attr_val_num(&loaded.attributes(), STRENGTH);
-            let re = Self::get_attr_val_num(&loaded.attributes(), REFLEX);
-            let tou = Self::get_attr_val_num(&loaded.attributes(), TOUGHNESS);
-            let end = Self::get_attr_val_num(&loaded.attributes(), ENDURANCE);
-            let int = Self::get_attr_val_num(&loaded.attributes(), INTELLIGENCE);
-            let jud = Self::get_attr_val_num(&loaded.attributes(), JUDGEMENT);
-            let cha = Self::get_attr_val_num(&loaded.attributes(), CHARM);
-            let wil = Self::get_attr_val_num(&loaded.attributes(), WILL);
-            self.main_stat_table = [
-                Row::with_label("STR", &str.to_string(), STRENGTH),
-                Row::with_label("REF", &re.to_string(), REFLEX),
-                Row::with_label("TOU", &tou.to_string(), TOUGHNESS),
-                Row::with_label("END", &end.to_string(), ENDURANCE),
-                Row::with_label("INT", &int.to_string(), INTELLIGENCE),
-                Row::with_label("JUD", &jud.to_string(), JUDGEMENT),
-                Row::with_label("CHA", &cha.to_string(), CHARM),
-                Row::with_label("WIL", &wil.to_string(), WILL),
-            ];
+
+            let main_id = loaded.id().expect("A databse character has an id");
+            {
+                let level = get_attr_val_num(&self.current_attributes, LEVEL, main_id);
+                let proficiency =
+                    get_attr_val_num(&self.current_attributes, PROFICIENCY_CAMEL, main_id);
+                self.main_level_pro_table = [
+                    Row::with_label("Level", &level.to_string(), LEVEL),
+                    Row::with_label("Proficiency", &proficiency.to_string(), PROFICIENCY_CAMEL),
+                ];
+            }
+            {
+                let str = get_attr_val_num(&self.current_attributes, STRENGTH, main_id);
+                let re = get_attr_val_num(&self.current_attributes, REFLEX, main_id);
+                let tou = get_attr_val_num(&self.current_attributes, TOUGHNESS, main_id);
+                let end = get_attr_val_num(&self.current_attributes, ENDURANCE, main_id);
+                let int = get_attr_val_num(&self.current_attributes, INTELLIGENCE, main_id);
+                let jud = get_attr_val_num(&self.current_attributes, JUDGEMENT, main_id);
+                let cha = get_attr_val_num(&self.current_attributes, CHARM, main_id);
+                let wil = get_attr_val_num(&self.current_attributes, WILL, main_id);
+                self.main_stat_table = [
+                    Row::with_label("STR", &str.to_string(), STRENGTH),
+                    Row::with_label("REF", &re.to_string(), REFLEX),
+                    Row::with_label("TOU", &tou.to_string(), TOUGHNESS),
+                    Row::with_label("END", &end.to_string(), ENDURANCE),
+                    Row::with_label("INT", &int.to_string(), INTELLIGENCE),
+                    Row::with_label("JUD", &jud.to_string(), JUDGEMENT),
+                    Row::with_label("CHA", &cha.to_string(), CHARM),
+                    Row::with_label("WIL", &wil.to_string(), WILL),
+                ];
+            }
+            {
+                let mut d100_table = DynamicTable::default();
+                let column_labels = vec![
+                    Label::new(PROFICIENCY_CAMEL, PROFICIENCY),
+                    Label::new(BONUS_CAMEL, BONUS),
+                    Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
+                ];
+                d100_table.add_column_labels(column_labels);
+                for skill in D100_SKILLS.iter() {
+                    let label = Label::new(skill, skill);
+
+                    let key = format!("d100_skill_{}_proficiency", skill);
+                    let proficiency = get_attr_val_num_o(&self.current_attributes, key, main_id);
+                    let key = format!("d100_skill_{}_bonus", skill);
+                    let bonus = get_attr_val_num_o(&self.current_attributes, key, main_id);
+                    let total = (bonus + proficiency).to_string();
+
+                    let rows = vec![proficiency.to_string(), bonus.to_string(), total];
+                    d100_table.add_row_with_label(label, rows);
+                }
+                self.d100_skill_table = Box::new(d100_table);
+            }
+            {
+                let mut d20_table = DynamicTable::default();
+                let column_labels = vec![
+                    Label::new(GOV_CAMEL, GOV),
+                    Label::new(PROFICIENCY_CAMEL, PROFICIENCY),
+                    Label::new(BONUS_CAMEL, BONUS),
+                    Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
+                ];
+                d20_table.add_column_labels(column_labels);
+                for skill in D20_SKILLS.iter() {
+                    let label = Label::new(skill, skill);
+
+                    let key = format!("d20_skill_{}_proficiency", skill);
+                    let proficiency = get_attr_val_num_o(&self.current_attributes, key, main_id);
+                    let key = format!("d20_skill_{}_bonus", skill);
+                    let bonus = get_attr_val_num_o(&self.current_attributes, key, main_id);
+                    let key = format!("d20_skill_{}_governed_by", skill);
+                    let gov = get_attr_val_str_o(&self.current_attributes, key, main_id);
+                    let total = (bonus + proficiency).to_string();
+
+                    let rows = vec![gov, proficiency.to_string(), bonus.to_string(), total];
+                    d20_table.add_row_with_label(label, rows);
+                }
+                self.d20_skill_table = Box::new(d20_table);
+            }
             self.images = imagemap;
             self.current = Some(loaded);
         }
         Ok(())
     }
-    /// This function exists for dry.
-    fn get_attr_val_num(attrs: &[(AttributeKey, AttributeValue)], needle: &str) -> i64 {
-        attrs
-            .iter()
-            .find(|(k, _)| k.key() == needle)
-            .expect("Is there.")
-            .1
-            .value_num()
-            .unwrap_or_default()
-    }
+
     // Reset an image.
     pub(super) fn set_image(
         dbs: &mut Option<LoadedDbs>,
@@ -139,8 +225,10 @@ impl AZCharFourth {
     ) -> Result<(), String> {
         if let Some(ref mut dbs) = dbs {
             for r in rows.iter() {
-                if let Some((ref mut k, ref mut v)) =
-                    part.attributes_mut().iter_mut().find(|(k, _)| k.key() == &r.label)
+                if let Some((ref mut k, ref mut v)) = part
+                    .attributes_mut()
+                    .iter_mut()
+                    .find(|(k, _)| k.key() == &r.label)
                 {
                     match r.value.parse() {
                         Ok(v1) if Some(v1) != v.value_num() => {
@@ -158,6 +246,45 @@ impl AZCharFourth {
         }
         Ok(())
     }
+}
+
+/// This function exists for dry.
+fn get_attr_val_num(
+    attrs: &FnvHashMap<AttributeKey, AttributeValue>,
+    needle: &str,
+    of: i64,
+) -> i64 {
+    attrs
+        .get(&AttributeKey::new(needle.to_owned(), of))
+        .expect(&format!("{} is there.", needle))
+        .value_num()
+        .unwrap_or_default()
+}
+/// This function exists for dry.
+fn get_attr_val_num_o(
+    attrs: &FnvHashMap<AttributeKey, AttributeValue>,
+    needle: String,
+    of: i64,
+) -> i64 {
+    attrs
+        .get(&AttributeKey::new(needle, of))
+        .expect("Owned num attribute is there.")
+        .value_num()
+        .unwrap_or_default()
+}
+/// This function exists for dry.
+fn get_attr_val_str_o(
+    attrs: &FnvHashMap<AttributeKey, AttributeValue>,
+    needle: String,
+    of: i64,
+) -> String {
+    let x = &format!("{} is there.", needle);
+    attrs
+        .get(&AttributeKey::new(needle, of))
+        .expect("Owned text attribute is there.")
+        .value_text()
+        .clone()
+        .unwrap_or_default()
 }
 
 fn process_image(image: &dbimg::Image) -> Result<egui_extras::RetainedImage, String> {

@@ -194,6 +194,10 @@ impl AttributeKey {
     pub fn key(&self) -> &str {
         &self.key
     }
+
+    pub fn new(key: String, of: i64) -> Self {
+        Self { key, of }
+    }
 }
 
 enum NewOrOldAttribute {
