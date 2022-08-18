@@ -39,7 +39,7 @@ const D100_SKILLS: [&str; 13] = [
     "Underworld",
 ];
 const PROFICIENCY: &str = "proficiency";
-const PROFICIENCY_CAMEL: &str = "Proficiency";
+pub(super) const PROFICIENCY_CAMEL: &str = "Proficiency";
 const BONUS: &str = "bonus";
 const BONUS_CAMEL: &str = "Bonus";
 const TOTAL_CAMEL: &str = "Total";
@@ -278,7 +278,6 @@ fn get_attr_val_str_o(
     needle: String,
     of: i64,
 ) -> String {
-    let x = &format!("{} is there.", needle);
     attrs
         .get(&AttributeKey::new(needle, of))
         .expect("Owned text attribute is there.")

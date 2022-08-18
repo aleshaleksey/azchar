@@ -1,7 +1,6 @@
 use super::AZCharFourth;
 
 use egui::Ui;
-const D20_SKILL: &str = "d20_skill_";
 
 #[derive(Debug, Default)]
 pub(super) struct Row {
@@ -36,28 +35,6 @@ pub(super) struct DynamicTable {
 }
 
 impl DynamicTable {
-    pub(super) fn empty_with_row_column_counts(r: usize, c: usize) -> Self {
-        let column_labels = std::iter::repeat(Label::default())
-            .take(c)
-            .collect::<Vec<_>>();
-        let row_labels = std::iter::repeat(Label::default())
-            .take(r)
-            .collect::<Vec<_>>();
-        let mut cells = Vec::new();
-        for _ in 0..c {
-            cells.push(
-                std::iter::repeat(String::default())
-                    .take(r)
-                    .collect::<Vec<_>>(),
-            );
-        }
-        DynamicTable {
-            column_labels,
-            row_labels,
-            cells,
-        }
-    }
-
     pub(super) fn add_column_labels(&mut self, cl: Vec<Label>) {
         debug_assert!(self.column_labels.is_empty(), "Column labels not empty.");
         debug_assert!(self.cells.is_empty(), "Row cells not empty.");
@@ -80,20 +57,24 @@ impl DynamicTable {
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.selectable_label(false, "D100 SKILLS");
+                let _ = ui.selectable_label(false, "D100 SKILLS").clicked();
                 for l in self.column_labels.iter() {
-                    ui.selectable_label(false, &l.visible);
+                    let _ = ui.selectable_label(false, &l.visible).clicked();
                 }
             });
-            for (r_idx, (rl, mut row)) in self
+            for (r_idx, (rl, row)) in self
                 .row_labels
                 .iter()
                 .zip(self.cells.iter_mut())
                 .enumerate()
             {
                 ui.horizontal(|ui| {
-                    ui.selectable_label(false, &rl.visible);
-                    for (c_idx, mut r) in row.iter_mut().enumerate() {
+                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    // Total must be total.
+                    if let (Ok(a), Ok(b)) = (row[0].parse::<i64>(), row[1].parse::<i64>()) {
+                        row[2] = (a + b).to_string();
+                    }
+                    for (c_idx, r) in row.iter_mut().enumerate() {
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
                         let changed = ui.add_sized([w, 21.], edit).changed();
                         if changed {
@@ -108,6 +89,7 @@ impl DynamicTable {
 
     pub(super) fn d20_skill_table(
         &mut self,
+        proficiency: Option<i64>,
         ui: &mut Ui,
         width: f32,
     ) -> Result<Vec<(usize, usize)>, String> {
@@ -115,30 +97,39 @@ impl DynamicTable {
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.selectable_label(false, "D20 SKILLS");
+                let _ = ui.selectable_label(false, "D20 SKILLS").clicked();
                 for l in self.column_labels.iter() {
-                    ui.selectable_label(false, &l.visible);
+                    let _ = ui.selectable_label(false, &l.visible).clicked();
                 }
             });
-            for (r_idx, (rl, mut row)) in self
+            for (r_idx, (rl, row)) in self
                 .row_labels
                 .iter()
                 .zip(self.cells.iter_mut())
                 .enumerate()
             {
                 ui.horizontal(|ui| {
-                    ui.selectable_label(false, &rl.visible);
-                    ui.selectable_label(false, &row[0]); // GOV
+                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    let _ = ui.selectable_label(false, &row[0]).clicked(); // GOV
                     {
                         // BOX
-                        let edit = egui::RadioButton::new(row[1] != "0", "");
-                        let changed = ui.add_sized([w, 21.], edit).changed();
-                        if changed {
+                        let proficient = row[1] != "0";
+                        let edit = egui::RadioButton::new(proficient, "");
+                        let changed = ui.add_sized([w, 21.], edit).clicked();
+                        if changed && proficient {
+                            row[1] = "0".to_string();
+                            used.push((r_idx, 1));
+                        } else if changed {
+                            row[1] = proficiency.unwrap_or_default().to_string();
                             used.push((r_idx, 1));
                         }
+                        // Total must be total. TODO: stat.
+                        if let (Ok(a), Ok(b)) = (row[1].parse::<i64>(), row[2].parse::<i64>()) {
+                            row[3] = (a + b).to_string();
+                        }
                     }
-                    ui.selectable_label(false, &rl.visible);
-                    for (c_idx, mut r) in row.iter_mut().enumerate().skip(2) {
+                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    for (c_idx, r) in row.iter_mut().enumerate().skip(2) {
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
                         let changed = ui.add_sized([w, 21.], edit).changed();
                         if changed {
