@@ -1,13 +1,14 @@
-use self::table::{DynamicTable, Row};
+use self::tables::{DynamicTable, Row};
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 use azchar_database::character::character::CompleteCharacter;
+use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};
 
 use eframe;
 use eframe::egui::Widget;
-
 use fnv::FnvHashMap;
+use std::path::PathBuf;
 
 const LEVEL: &str = "Level";
 const PROFICIENCY: &str = "Proficiency";
@@ -27,16 +28,23 @@ pub(crate) struct AZCharFourth {
     cfg_path: String,
     dbs: Option<LoadedDbs>,
     char_list: Vec<CharacterDbRef>,
-    hidden_list: bool,
+    new_char: Option<String>,
+    hidden_char_list: bool,
     current: Option<CompleteCharacter>,
     images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
     current_attributes: FnvHashMap<AttributeKey, AttributeValue>,
     default_img: egui_extras::RetainedImage,
+    hidden_main_tables: bool,
     main_attr_table: [Row; 6],
     main_level_pro_table: [Row; 2],
     main_stat_table: [Row; 8],
+    hidden_skill_tables: bool,
     d20_skill_table: Box<DynamicTable>,
     d100_skill_table: Box<DynamicTable>,
+    hidden_resource_tables: bool,
+    resources_basic: Box<DynamicTable>,
+    resources_points: Box<DynamicTable>,
+    resources_body_hp: Box<DynamicTable>,
 }
 
 impl Default for AZCharFourth {
@@ -46,10 +54,14 @@ impl Default for AZCharFourth {
                 .unwrap();
         Self {
             db_path: String::from("fusion.db"),
-            cfg_path: String::new(),
+            cfg_path: String::from("examples/cjfusion.toml"),
             dbs: None,
             char_list: Vec::new(),
-            hidden_list: true,
+            new_char: None,
+            hidden_char_list: true,
+            hidden_main_tables: false,
+            hidden_skill_tables: false,
+            hidden_resource_tables: false,
             current: None,
             images: FnvHashMap::default(),
             current_attributes: FnvHashMap::default(),
@@ -75,7 +87,28 @@ impl Default for AZCharFourth {
             ],
             d100_skill_table: Box::new(DynamicTable::default()),
             d20_skill_table: Box::new(DynamicTable::default()),
+            resources_basic: Box::new(DynamicTable::default()),
+            resources_points: Box::new(DynamicTable::default()),
+            resources_body_hp: Box::new(DynamicTable::default()),
         }
+    }
+}
+
+fn get_sys_config(cfg_path: &str, db_path: &str) -> Result<(), String> {
+    let cfg = SystemConfig::from_config(&PathBuf::from(cfg_path))?;
+    cfg.into_system_single(&PathBuf::from(db_path))?;
+    Ok(())
+}
+
+fn create_new_char(
+    new_name: &str,
+    dbs: &mut Option<LoadedDbs>,
+) -> Result<Vec<CharacterDbRef>, String> {
+    if let Some(ref mut dbs) = dbs {
+        dbs.create_sheet(new_name)?;
+        Ok(dbs.list_characters()?)
+    } else {
+        Err(String::from("No DB loaded."))
     }
 }
 
@@ -89,7 +122,10 @@ impl eframe::App for AZCharFourth {
                     ui.text_edit_singleline(&mut self.cfg_path);
 
                     if ui.button("Create System").clicked() {
-                        println!("Unsupported!");
+                        match get_sys_config(&self.cfg_path, &self.db_path) {
+                            Ok(_) => {}
+                            Err(e) => println!("Couldn't create system: {:?}", e),
+                        };
                     }
                 });
                 ui.horizontal(|ui| {
@@ -99,7 +135,7 @@ impl eframe::App for AZCharFourth {
                     if ui.button("Load System").clicked() {
                         match self.load_system() {
                             Err(e) => println!("Could not connect: {:?}", e),
-                            Ok(_) => self.hidden_list = false,
+                            Ok(_) => self.hidden_char_list = false,
                         };
                     };
                 });
@@ -112,16 +148,16 @@ impl eframe::App for AZCharFourth {
                 // NB: We can hide the list.
                 // A button to hide the list of characters.
                 if !self.char_list.is_empty() {
-                    let label = if !self.hidden_list {
+                    let label = if !self.hidden_char_list {
                         "Hide List"
                     } else {
                         "Show List"
                     };
                     if ui.button(label).clicked() {
-                        self.hidden_list = !self.hidden_list;
+                        self.hidden_char_list = !self.hidden_char_list;
                     }
                 }
-                if !self.hidden_list {
+                if !self.hidden_char_list {
                     ui.heading("Character List:");
                     for i in 0..self.char_list.len() {
                         // The button for each independant character.
@@ -141,9 +177,27 @@ impl eframe::App for AZCharFourth {
                         });
                     }
                     // Create new character.
-                    if ui.button("Create New Character.").clicked() {
-                        println!("Pretending to make a new character.");
-                    }
+                    ui.horizontal(|ui| {
+                        match (
+                            &mut self.new_char,
+                            ui.button("Create New Character.").clicked(),
+                        ) {
+                            (&mut Some(ref new_name), true) => {
+                                match create_new_char(new_name, &mut self.dbs) {
+                                    Ok(chars) => self.char_list = chars,
+                                    Err(e) => println!("Erro creating character: {:?}", e),
+                                };
+                                self.new_char = None;
+                            }
+                            (Some(ref mut new_name), false) => {
+                                ui.text_edit_singleline(new_name);
+                            }
+                            (ref mut c, true) => {
+                                **c = Some(String::from("Lord Stupid IV"));
+                            }
+                            _ => {}
+                        }
+                    });
                 }
 
                 // Display the character.
@@ -157,184 +211,5 @@ impl eframe::App for AZCharFourth {
     }
 }
 
-impl AZCharFourth {
-    fn set_main_tables(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        let char = self
-            .current
-            .as_mut()
-            .expect("Do not call when no character.");
-        ui.horizontal(|ui| {
-            // Portrait or default for box.
-            let portrait = self.images.get(&char.id()).unwrap_or(&self.default_img);
-            {
-                let ib = egui::ImageButton::new(portrait.texture_id(ctx), [128., 128.]);
-                if ib.ui(ui).clicked() {
-                    if let Some(path) = rfd::FileDialog::new()
-                        .add_filter("image", &["png", "jpg", "jpeg", "bmp"])
-                        .pick_file()
-                    {
-                        println!("Picked: {:?}", path);
-                        let name = char.name().to_owned();
-                        let uuid = char.uuid().to_owned();
-                        let id = char.id().unwrap();
-                        let res = AZCharFourth::set_image(
-                            &mut self.dbs,
-                            &mut char.image,
-                            &mut self.images,
-                            name,
-                            uuid,
-                            id,
-                            path,
-                        );
-                        if let Err(e) = res {
-                            println!("Couldn't set image: {:?}", e);
-                        }
-                    } else {
-                        println!("Failed to pick a file.");
-                    }
-                }
-            }
-            // Set the three attribute tables.
-            ui.vertical(|ui| {
-                {
-                    let rows = &mut self.main_attr_table;
-                    match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
-                        Err(e) => println!("Error: {}", e),
-                        Ok(true) => {
-                            char.name = rows[0].value.to_owned();
-                            if let Ok(n) = rows[1].value.parse() {
-                                char.speed = n;
-                            }
-                            if let Ok(n) = rows[2].value.parse() {
-                                char.weight = Some(n);
-                            }
-                            char.size = Some(rows[3].value.to_owned());
-                            if let Ok(n) = rows[4].value.parse() {
-                                char.hp_current = Some(n);
-                            }
-                            if let Ok(n) = rows[5].value.parse() {
-                                char.hp_total = Some(n);
-                            }
-                            let part = char.to_bare_part();
-
-                            let res = AZCharFourth::update_main(&mut self.dbs, part);
-                            if let Err(e) = res {
-                                println!("Couldn't set image: {:?}", e);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-                {
-                    let rows = &mut self.main_level_pro_table;
-                    match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
-                        Err(e) => println!("Error: {}", e),
-                        Ok(true) => {
-                            let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
-                            if let Err(e) = res {
-                                println!("Couldn't set image: {:?}", e);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-                {
-                    let rows = &mut self.main_stat_table;
-                    match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
-                        Err(e) => println!("Error: {}", e),
-                        Ok(true) => {
-                            let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
-                            if let Err(e) = res {
-                                println!("Couldn't set image: {:?}", e);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-            });
-        });
-    }
-
-    fn set_skill_tables(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
-        let char = self
-            .current
-            .as_mut()
-            .expect("Do not call when no character.");
-        ui.horizontal(|ui| {
-            let proficiency = self
-                .current_attributes
-                .get(&AttributeKey::new(PROFICIENCY.to_string(), char.id().unwrap_or_default()))
-                .map(|v| v.value_num())
-                .unwrap_or_default();
-            match self.d20_skill_table.d20_skill_table(proficiency, ui, MAIN_W / 2.) {
-                Err(e) => println!("Error d20-skill table: {:?}", e),
-                Ok(dat) if !dat.is_empty() => {
-                    Self::update_skill_table(
-                        char,
-                        dat,
-                        &mut self.dbs,
-                        "d20",
-                        &mut self.current_attributes,
-                        &mut self.d20_skill_table,
-                    );
-                }
-                _ => {}
-            }
-            match self.d100_skill_table.d100_skill_table(ui, MAIN_W / 2.) {
-                Err(e) => println!("Error d100-skill table: {:?}", e),
-                Ok(dat) if !dat.is_empty() => {
-                    Self::update_skill_table(
-                        char,
-                        dat,
-                        &mut self.dbs,
-                        "d100",
-                        &mut self.current_attributes,
-                        &mut self.d20_skill_table,
-                    );
-                }
-                _ => {}
-            }
-        });
-    }
-
-    fn update_skill_table(
-        char: &CompleteCharacter,
-        // (row, column)
-        references: Vec<(usize, usize)>,
-        dbs: &mut Option<LoadedDbs>,
-        skill_kind: &str,
-        attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
-        table: &mut Box<DynamicTable>,
-    ) {
-        let dbs = match dbs.as_mut() {
-            Some(d) => d,
-            None => return,
-        };
-        for (r_idx, c_idx) in references {
-            let attr_label = &table.column_labels[c_idx].key;
-            let skill_label = &table.row_labels[c_idx].key;
-
-            let key = format!("{}_skill_{}_{}", skill_kind, skill_label, attr_label);
-            let of = char.id().expect("This character has been through the DB.");
-            // If we have a valid value in this cell, we work, if not we skip.
-            let val_n = match table.cells[r_idx][c_idx].parse() {
-                Ok(v) => Some(v),
-                Err(_) => continue,
-            };
-            let key = AttributeKey::new(key, of);
-
-            if let Some(val) = attributes.get_mut(&key) {
-                val.update_value_num_by_ref(val_n);
-                println!("Val updated to: {:?}", val);
-                let identifier = (char.name().to_owned(), char.uuid().to_owned());
-                match dbs.create_update_attribute(key, val.to_owned(), identifier) {
-                    Err(e) => println!("Couldn't update attribute: {:?}", e),
-                    _ => {}
-                }
-            }
-        }
-    }
-}
-
 mod connection;
-mod table;
+mod tables;

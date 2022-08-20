@@ -83,12 +83,16 @@ impl SystemConfig {
         path: &std::path::Path,
         system_name: &str,
     ) -> Result<LoadedDbs, String> {
+        let file_name = format!("{}.db", system_name);
+        let file_path = PathBuf::from(path).join(&file_name);
+        self.into_system_single(&file_path)
+    }
+
+    pub fn into_system_single(self, file_path: &std::path::Path) -> Result<LoadedDbs, String> {
         // The required tables.
         use crate::root_db::system::permitted_attributes::dsl as pa_dsl;
         use crate::root_db::system::permitted_parts::dsl as pp_dsl;
 
-        let file_name = format!("{}.db", system_name);
-        let file_path = PathBuf::from(path).join(&file_name);
         if file_path.exists() {
             return Err(format!(
                 "{:?} already exists as a file! Try again.",
@@ -96,7 +100,7 @@ impl SystemConfig {
             ));
         }
 
-        let _sheet_db = File::create(file_path.clone()).map_err(ma)?;
+        let _sheet_db = File::create(file_path).map_err(ma)?;
         let file_path = file_path.canonicalize().map_err(ma)?;
         let file_path_string = file_path.to_string_lossy();
 

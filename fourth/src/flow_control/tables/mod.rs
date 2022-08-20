@@ -183,3 +183,7 @@ impl AZCharFourth {
         Ok(used)
     }
 }
+
+pub(super) mod main;
+pub(super) mod resource;
+pub(super) mod skill;

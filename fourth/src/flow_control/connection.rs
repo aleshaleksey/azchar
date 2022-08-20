@@ -1,4 +1,4 @@
-use super::table::{DynamicTable, Label, Row};
+use super::tables::{DynamicTable, Label, Row};
 use super::*;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
@@ -38,6 +38,36 @@ const D100_SKILLS: [&str; 13] = [
     "Unarmed",
     "Underworld",
 ];
+const BASICS: [&str; 8] = [
+    "Race",
+    "Alignment",
+    "Height",
+    "Hair",
+    "Eyes",
+    "Age",
+    "Skin",
+    "Player",
+];
+const POINTS: [(&str, &str, bool); 8] = [
+    ("Flair", "flair", false),
+    ("Surge", "surge", false),
+    ("Strain", "strain", false),
+    ("MP pool", "mp", true),
+    ("MP daily", "mp_use_day", true),
+    ("Ki pool", "ki", true),
+    ("Ki daily", "ki_use_day", true),
+    ("Psi daily", "psi_use_day", true),
+];
+const BODY_PARTS: [&str; 8] = [
+    "Head",
+    "Neck",
+    "Left Arm",
+    "Right Arm",
+    "Body",
+    "Groin",
+    "Left Leg",
+    "Right Leg",
+];
 const PROFICIENCY: &str = "proficiency";
 pub(super) const PROFICIENCY_CAMEL: &str = "Proficiency";
 const BONUS: &str = "bonus";
@@ -61,7 +91,7 @@ impl AZCharFourth {
             let loaded = dbs.load_character((name.to_owned(), uuid.to_owned()))?;
             let mut imagemap = FnvHashMap::default();
             // Insert primary image.
-            if let Some(ref data) = loaded.image().as_ref() {
+            if let Some(data) = loaded.image().as_ref() {
                 let processed = process_image(data)?;
                 imagemap.insert(loaded.id(), processed);
             }
@@ -73,7 +103,7 @@ impl AZCharFourth {
 
             // Insert part images.
             for c in loaded.parts().iter() {
-                if let Some(ref data) = c.image.as_ref() {
+                if let Some(data) = c.image.as_ref() {
                     let processed = process_image(data)?;
                     imagemap.insert(loaded.id(), processed);
                 }
@@ -176,6 +206,47 @@ impl AZCharFourth {
                 }
                 self.d20_skill_table = Box::new(d20_table);
             }
+            {
+                let mut resource_basic = DynamicTable::default();
+                resource_basic.add_column_labels(vec![Label::new("Values", "")]);
+
+                for basic in BASICS.iter() {
+                    let label = Label::new(basic, basic);
+                    let needle = basic.to_owned().to_owned();
+                    let val = get_attr_val_str_o(&self.current_attributes, needle, main_id);
+                    resource_basic.add_row_with_label(label, vec![val])
+                }
+                self.resources_basic = Box::new(resource_basic);
+            }
+            // const POINTS: [&str; 7] = [
+            //     "Flair",
+            //     "Surge",
+            //     "Strain",
+            //     "MP pool",
+            //     "MP daily",
+            //     "Ki pool",
+            //     "Ki daily"
+            //     "Psi daily",
+            // ]
+            {
+                let mut resource_points = DynamicTable::default();
+                self.resources_points = Box::new(resource_points);
+            }
+            // const BODY_PARTS: [&str; 8] = [
+            //     "Head",
+            //     "Neck",
+            //     "Left Arm",
+            //     "Right Arm",
+            //     "Body",
+            //     "Groin",
+            //     "Left Leg",
+            //     "Right Leg",
+            // ];
+            {
+                let mut resource_body_hp = DynamicTable::default();
+                self.resources_body_hp = Box::new(resource_body_hp);
+            }
+
             self.images = imagemap;
             self.current = Some(loaded);
         }
@@ -228,7 +299,7 @@ impl AZCharFourth {
                 if let Some((ref mut k, ref mut v)) = part
                     .attributes_mut()
                     .iter_mut()
-                    .find(|(k, _)| k.key() == &r.label)
+                    .find(|(k, _)| k.key() == r.label)
                 {
                     match r.value.parse() {
                         Ok(v1) if Some(v1) != v.value_num() => {
