@@ -49,8 +49,8 @@ const BASICS: [&str; 8] = [
     "Player",
 ];
 const POINTS: [(&str, &str, bool); 8] = [
-    ("Flair", "flair", false),
-    ("Surge", "surge", false),
+    ("Flair", "flair", true),
+    ("Surge", "surge", true),
     ("Strain", "strain", false),
     ("MP pool", "mp", true),
     ("MP daily", "mp_use_day", true),
@@ -68,11 +68,20 @@ const BODY_PARTS: [&str; 8] = [
     "Left Leg",
     "Right Leg",
 ];
+
+const MAXIMUM: &str = "maximum";
+const MAXIMUM_CAMEL: &str = "Maximum";
+const CURRENT: &str = "current";
+const CURRENT_CAMEL: &str = "Current";
+
 const PROFICIENCY: &str = "proficiency";
 pub(super) const PROFICIENCY_CAMEL: &str = "Proficiency";
+
 const BONUS: &str = "bonus";
 const BONUS_CAMEL: &str = "Bonus";
+
 const TOTAL_CAMEL: &str = "Total";
+
 const GOV: &str = "governed_by";
 const GOV_CAMEL: &str = "Governed By";
 
@@ -218,6 +227,30 @@ impl AZCharFourth {
                 }
                 self.resources_basic = Box::new(resource_basic);
             }
+            {
+                let mut resource_points = DynamicTable::default();
+                let column_labels = vec![
+                    Label::new(CURRENT_CAMEL, CURRENT),
+                    Label::new(MAXIMUM_CAMEL, MAXIMUM),
+                ];
+                resource_points.add_column_labels(column_labels);
+                for (label, key, dual) in POINTS.iter() {
+                    let l = Label::new(label, key);
+                    if *dual {
+                        let needle = format!("{}_current", key);
+                        let cur = get_attr_val_str_o(&self.current_attributes, needle, main_id);
+                        let needle = format!("{}_maximum", key);
+                        let max = get_attr_val_str_o(&self.current_attributes, needle, main_id);
+                        resource_points.add_row_with_label(l, vec![cur, max]);
+                    } else {
+                        // TODO, allow variable length columns.
+                        let needle = key.to_owned().to_owned();
+                        let single = get_attr_val_str_o(&self.current_attributes, needle, main_id);
+                        resource_points.add_row_with_label(l, vec![single.clone(), single]);
+                    }
+                }
+                self.resources_points = Box::new(resource_points);
+            }
             // const POINTS: [&str; 7] = [
             //     "Flair",
             //     "Surge",
@@ -228,10 +261,6 @@ impl AZCharFourth {
             //     "Ki daily"
             //     "Psi daily",
             // ]
-            {
-                let mut resource_points = DynamicTable::default();
-                self.resources_points = Box::new(resource_points);
-            }
             // const BODY_PARTS: [&str; 8] = [
             //     "Head",
             //     "Neck",

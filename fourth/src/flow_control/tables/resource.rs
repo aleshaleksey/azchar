@@ -33,6 +33,22 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
+                match self
+                    .resources_points
+                    .set_attr_based_resource("BASICS", ui, MAIN_W / 3.)
+                {
+                    Err(e) => println!("Error updating basics: {:?}", e),
+                    Ok(dat) if !dat.is_empty() => {
+                        Self::update_text_attr_table(
+                            char,
+                            dat,
+                            &mut self.dbs,
+                            &mut self.current_attributes,
+                            &mut self.resources_points,
+                        );
+                    }
+                    _ => {}
+                }
                 // match self
                 //     .d20_skill_table
                 //     .d20_skill_table(proficiency, ui, MAIN_W / 2.)
