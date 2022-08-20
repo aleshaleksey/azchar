@@ -1,6 +1,6 @@
 use self::tables::{DynamicTable, Row};
 
-use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+use azchar_database::character::attribute::AttributeKey;
 use azchar_database::character::character::CompleteCharacter;
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};
@@ -32,7 +32,6 @@ pub(crate) struct AZCharFourth {
     hidden_char_list: bool,
     current: Option<CompleteCharacter>,
     images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
-    current_attributes: FnvHashMap<AttributeKey, AttributeValue>,
     default_img: egui_extras::RetainedImage,
     hidden_main_tables: bool,
     main_attr_table: [Row; 6],
@@ -64,7 +63,6 @@ impl Default for AZCharFourth {
             hidden_resource_tables: false,
             current: None,
             images: FnvHashMap::default(),
-            current_attributes: FnvHashMap::default(),
             default_img,
             main_level_pro_table: [Row::default(), Row::default()],
             main_attr_table: [

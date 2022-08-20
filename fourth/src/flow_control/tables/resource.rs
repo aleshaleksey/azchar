@@ -1,9 +1,10 @@
+use crate::flow_control::connection::find_part;
+use crate::flow_control::tables::{AttrValueKind, CharIdPack};
 use crate::flow_control::*;
 use crate::AZCharFourth;
 
 use eframe;
 // use eframe::egui::Widget;
-use fnv::FnvHashMap;
 
 impl AZCharFourth {
     pub(crate) fn set_resource_tables(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
@@ -17,69 +18,79 @@ impl AZCharFourth {
         }
         if !self.hidden_resource_tables {
             ui.horizontal(|ui| {
-                match self
-                    .resources_basic
-                    .set_attr_based_resource("BASICS", ui, MAIN_W / 3.)
-                {
+                match self.resources_basic.set_attr_based_resource(
+                    "",
+                    ui,
+                    MAIN_W / 3.,
+                    AttrValueKind::Text,
+                ) {
                     Err(e) => println!("Error updating basics: {:?}", e),
                     Ok(dat) if !dat.is_empty() => {
-                        Self::update_text_attr_table(
-                            char,
+                        let pack = CharIdPack::from_complete(char);
+                        Self::update_attr_table(
+                            AttrValueKind::Text,
+                            pack,
                             dat,
                             &mut self.dbs,
-                            &mut self.current_attributes,
+                            char.attribute_map.as_mut().expect("Always set."),
                             &mut self.resources_basic,
                         );
                     }
                     _ => {}
                 }
-                match self
-                    .resources_points
-                    .set_attr_based_resource("BASICS", ui, MAIN_W / 3.)
-                {
+                match self.resources_points.set_attr_based_resource(
+                    "",
+                    ui,
+                    MAIN_W / 3.,
+                    AttrValueKind::Num,
+                ) {
                     Err(e) => println!("Error updating basics: {:?}", e),
                     Ok(dat) if !dat.is_empty() => {
-                        Self::update_text_attr_table(
-                            char,
+                        let pack = CharIdPack::from_complete(char);
+                        Self::update_attr_table(
+                            AttrValueKind::Num,
+                            pack,
                             dat,
                             &mut self.dbs,
-                            &mut self.current_attributes,
+                            char.attribute_map.as_mut().expect("Always set."),
                             &mut self.resources_points,
                         );
                     }
                     _ => {}
                 }
-                // match self
-                //     .d20_skill_table
-                //     .d20_skill_table(proficiency, ui, MAIN_W / 2.)
-                // {
-                //     Err(e) => println!("Error d20-skill table: {:?}", e),
-                //     Ok(dat) if !dat.is_empty() => {
-                //         Self::update_resource_table(
-                //             char,
-                //             dat,
-                //             &mut self.dbs,
-                //             "d20",
-                //             &mut self.current_attributes,
-                //             &mut self.d20_skill_table,
-                //         );
-                //     }
-                //     _ => {}
-                // }
-                // match self.d100_skill_table.d100_skill_table(ui, MAIN_W / 2.) {
-                //     Err(e) => println!("Error d100-skill table: {:?}", e),
-                //     Ok(dat) if !dat.is_empty() => {
-                //         Self::update_resource_table(
-                //             char,
-                //             dat,
-                //             &mut self.dbs,
-                //             "d100",
-                //             &mut self.current_attributes,
-                //             &mut self.d20_skill_table,
-                //         );
-                //     }
-                //     _ => {}
-                // }
+                match self.resources_body_hp.set_attr_based_resource(
+                    "",
+                    ui,
+                    MAIN_W / 3.,
+                    AttrValueKind::Num,
+                ) {
+                    Ok(dat) => {
+                        for i in 0..self.resources_body_hp.row_labels.len() {
+                            // We use visible here because we index parts by `visible`.
+                            let key = &self.resources_body_hp.row_labels[i].visible;
+                            let d = dat
+                                .iter()
+                                .filter(|(r_idx, _)| *r_idx == i)
+                                .copied()
+                                .collect::<Vec<_>>();
+                            if !d.is_empty() {
+                                if let Some(c) = find_part(char, key) {
+                                    println!("Part to update: {:?}", c);
+                                    let pack = CharIdPack::from_part(char, c);
+                                    Self::update_attr_table(
+                                        AttrValueKind::Num,
+                                        pack,
+                                        d,
+                                        &mut self.dbs,
+                                        char.attribute_map.as_mut().expect("Always set."),
+                                        &mut self.resources_body_hp,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => println!("Error setting resources: {:?}", e),
+                }
             });
         }
     }

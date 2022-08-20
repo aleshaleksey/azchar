@@ -434,6 +434,8 @@ pub struct CompleteCharacter {
     pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
     pub image: Option<Image>,
     pub notes: Vec<Note>,
+    #[serde(skip)]
+    pub attribute_map: Option<FnvHashMap<AttributeKey, AttributeValue>>,
 }
 
 impl CompleteCharacter {
@@ -467,6 +469,19 @@ impl CompleteCharacter {
 
     pub fn image(&self) -> &Option<Image> {
         &self.image
+    }
+
+    pub fn create_attribute_map(&mut self) {
+        let mut map = FnvHashMap::default();
+        for (k, v) in self.attributes.iter() {
+            map.insert(k.to_owned(), v.to_owned());
+        }
+        for p in self.parts.iter_mut() {
+            for (k, v) in p.attributes.iter() {
+                map.insert(k.to_owned(), v.to_owned());
+            }
+        }
+        self.attribute_map = Some(map);
     }
 
     /// Compare the main parts of two complete characters: NB: Attributes not compared.
@@ -582,6 +597,7 @@ impl CompleteCharacter {
             attributes: core_attrs,
             image: core_image,
             notes,
+            attribute_map: None,
         })
     }
 

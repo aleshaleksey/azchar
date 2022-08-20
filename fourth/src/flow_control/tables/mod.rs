@@ -1,11 +1,18 @@
+use super::connection::CharIdPack;
 use super::AZCharFourth;
 
 use azchar_database::character::character::CompleteCharacter;
 use azchar_database::LoadedDbs;
 
+use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 use egui::Ui;
 use fnv::FnvHashMap;
-use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+
+#[derive(Clone, Copy, Debug)]
+pub(super) enum AttrValueKind {
+    Num,
+    Text,
+}
 
 #[derive(Debug, Default)]
 pub(super) struct Row {
@@ -135,10 +142,14 @@ impl DynamicTable {
                     }
                     let _ = ui.selectable_label(false, &rl.visible).clicked();
                     for (c_idx, r) in row.iter_mut().enumerate().skip(2) {
+                        let old = r.to_owned();
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
+
                         let changed = ui.add_sized([w, 21.], edit).changed();
-                        if changed {
+                        if changed && r.parse::<i64>().is_ok() {
                             used.push((r_idx, c_idx));
+                        } else if changed {
+                            *r = old;
                         }
                     }
                 });
@@ -152,6 +163,7 @@ impl DynamicTable {
         resource_kind: &str,
         ui: &mut Ui,
         width: f32,
+        kind: AttrValueKind,
     ) -> Result<Vec<(usize, usize)>, String> {
         let w = width / (1. + self.column_labels.len() as f32);
         let mut used = Vec::new();
@@ -171,10 +183,16 @@ impl DynamicTable {
                 ui.horizontal(|ui| {
                     let _ = ui.selectable_label(false, &rl.visible).clicked();
                     for (c_idx, r) in row.iter_mut().enumerate() {
+                        let old = r.to_owned();
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
-                        let changed = ui.add_sized([w, 21.], edit).changed();
-                        if changed {
-                            used.push((r_idx, c_idx));
+
+                        match (kind, ui.add_sized([w, 21.], edit).changed()) {
+                            (AttrValueKind::Text, true) => used.push((r_idx, c_idx)),
+                            (AttrValueKind::Num, true) if r.parse::<i64>().is_ok() => {
+                                used.push((r_idx, c_idx))
+                            }
+                            (AttrValueKind::Num, true) => *r = old,
+                            _ => {}
                         }
                     }
                 });
@@ -225,7 +243,7 @@ impl AZCharFourth {
     }
 
     fn update_skill_table(
-        char: &CompleteCharacter,
+        char: CharIdPack,
         // (row, column)
         references: Vec<(usize, usize)>,
         dbs: &mut Option<LoadedDbs>,
@@ -242,7 +260,7 @@ impl AZCharFourth {
             let skill_label = &table.row_labels[r_idx].key;
 
             let key = format!("{}_skill_{}_{}", skill_kind, skill_label, attr_label);
-            let of = char.id().expect("This character has been through the DB.");
+            let of = char.id.expect("This character has been through the DB.");
             // If we have a valid value in this cell, we work, if not we skip.
             let val_n = match table.cells[r_idx][c_idx].parse() {
                 Ok(v) => Some(v),
@@ -252,7 +270,7 @@ impl AZCharFourth {
 
             if let Some(val) = attributes.get_mut(&key) {
                 val.update_value_num_by_ref(val_n);
-                let identifier = (char.name().to_owned(), char.uuid().to_owned());
+                let identifier = (char.name.to_owned(), char.uuid.to_owned());
                 match dbs.create_update_attribute(key, val.to_owned(), identifier) {
                     Err(e) => println!("Couldn't update attribute: {:?}", e),
                     Ok(r) => println!("Updated: {:?}", r),
@@ -261,8 +279,9 @@ impl AZCharFourth {
         }
     }
 
-    fn update_text_attr_table(
-        char: &CompleteCharacter,
+    fn update_attr_table(
+        kind: AttrValueKind,
+        char: CharIdPack,
         references: Vec<(usize, usize)>,
         dbs: &mut Option<LoadedDbs>,
         attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
@@ -274,23 +293,30 @@ impl AZCharFourth {
         };
         for (r_idx, c_idx) in references {
             let suffix = &table.column_labels[c_idx].key;
-            let suffix = match suffix.is_empty() {
-                true => String::new(),
-                false => format!("_{}", suffix),
-            };
-
             let prefix = &table.row_labels[r_idx].key;
 
+            let suffix = match (prefix.is_empty(), suffix.is_empty()) {
+                (_, true) => String::new(),
+                (true, false) => suffix.to_owned(),
+                (false, false) => format!("_{}", suffix),
+            };
+
             let key = format!("{}{}", prefix, suffix);
-            let of = char.id().expect("This character has been through the DB.");
+            let of = char.id.expect("This character has been through the DB.");
             let key = AttributeKey::new(key, of);
             println!("Key {:?}", key);
 
             if let Some(val) = attributes.get_mut(&key) {
-                println!("Val {:?}", val);
-                let v = Some(table.cells[r_idx][c_idx].to_owned());
-                val.update_value_text_by_ref(v);
-                let identifier = (char.name().to_owned(), char.uuid().to_owned());
+                let v = &table.cells[r_idx][c_idx];
+                match kind {
+                    AttrValueKind::Num => match v.parse() {
+                        Ok(n) => val.update_value_num_by_ref(Some(n)),
+                        _ => continue,
+                    },
+                    AttrValueKind::Text => val.update_value_text_by_ref(Some(v.to_owned())),
+                };
+
+                let identifier = (char.name.to_owned(), char.uuid.to_owned());
 
                 match dbs.create_update_attribute(key, val.to_owned(), identifier) {
                     Err(e) => println!("Couldn't update attribute: {:?}", e),

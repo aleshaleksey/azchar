@@ -1,9 +1,9 @@
+use crate::flow_control::connection::CharIdPack;
 use crate::flow_control::*;
 use crate::AZCharFourth;
 
 use eframe;
 // use eframe::egui::Widget;
-use fnv::FnvHashMap;
 
 impl AZCharFourth {
     pub(crate) fn set_skill_tables(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
@@ -17,12 +17,12 @@ impl AZCharFourth {
         }
         if !self.hidden_skill_tables {
             ui.horizontal(|ui| {
-                let proficiency = self
-                    .current_attributes
-                    .get(&AttributeKey::new(
-                        PROFICIENCY.to_string(),
-                        char.id().unwrap_or_default(),
-                    ))
+                let char_id = char.id().unwrap_or_default();
+                let proficiency = char
+                    .attribute_map
+                    .as_mut()
+                    .expect("Always set.")
+                    .get(&AttributeKey::new(PROFICIENCY.to_string(), char_id))
                     .map(|v| v.value_num())
                     .unwrap_or_default();
                 match self
@@ -32,11 +32,11 @@ impl AZCharFourth {
                     Err(e) => println!("Error d20-skill table: {:?}", e),
                     Ok(dat) if !dat.is_empty() => {
                         Self::update_skill_table(
-                            char,
+                            CharIdPack::from_complete(char),
                             dat,
                             &mut self.dbs,
                             "d20",
-                            &mut self.current_attributes,
+                            char.attribute_map.as_mut().expect("Always set."),
                             &mut self.d20_skill_table,
                         );
                     }
@@ -46,11 +46,11 @@ impl AZCharFourth {
                     Err(e) => println!("Error d100-skill table: {:?}", e),
                     Ok(dat) if !dat.is_empty() => {
                         Self::update_skill_table(
-                            char,
+                            CharIdPack::from_complete(char),
                             dat,
                             &mut self.dbs,
                             "d100",
-                            &mut self.current_attributes,
+                            char.attribute_map.as_mut().expect("Always set."),
                             &mut self.d20_skill_table,
                         );
                     }
