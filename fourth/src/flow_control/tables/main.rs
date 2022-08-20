@@ -1,7 +1,6 @@
 use crate::flow_control::*;
 use crate::AZCharFourth;
 
-use eframe;
 // use eframe::egui::Widget;
 
 impl AZCharFourth {
@@ -144,11 +143,7 @@ fn update_all_proficiencies(
         for (k, v) in map.iter_mut() {
             if k.key().contains("_proficiency") && k.key().contains("_skill_") {
                 v.update_value_num_by_ref(proficiency);
-                dbs.create_update_attribute(
-                    k.to_owned(),
-                    v.to_owned(),
-                    char_key.to_owned(),
-                )?;
+                dbs.create_update_attribute(k.to_owned(), v.to_owned(), char_key.to_owned())?;
             }
         }
     }

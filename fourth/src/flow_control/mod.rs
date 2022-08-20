@@ -1,4 +1,4 @@
-use self::tables::{DynamicTable, Row};
+use self::tables::{DynamicTable, NoteOption, Row};
 
 use azchar_database::character::attribute::AttributeKey;
 use azchar_database::character::character::CompleteCharacter;
@@ -44,6 +44,9 @@ pub(crate) struct AZCharFourth {
     resources_basic: Box<DynamicTable>,
     resources_points: Box<DynamicTable>,
     resources_body_hp: Box<DynamicTable>,
+    hidden_notes: bool,
+    note_window: NoteOption,
+    part_window: Option<i64>,
 }
 
 impl Default for AZCharFourth {
@@ -61,6 +64,9 @@ impl Default for AZCharFourth {
             hidden_main_tables: false,
             hidden_skill_tables: false,
             hidden_resource_tables: false,
+            note_window: NoteOption::None,
+            part_window: None,
+            hidden_notes: false,
             current: None,
             images: FnvHashMap::default(),
             default_img,
@@ -204,6 +210,7 @@ impl eframe::App for AZCharFourth {
                     self.set_main_tables(ui, ctx);
                     self.set_skill_tables(ui, ctx);
                     self.set_resource_tables(ui, ctx);
+                    self.set_notes(ui, ctx);
                 }
             });
         });

@@ -3,7 +3,6 @@ use crate::flow_control::tables::{AttrValueKind, CharIdPack};
 use crate::flow_control::*;
 use crate::AZCharFourth;
 
-use eframe;
 // use eframe::egui::Widget;
 
 impl AZCharFourth {

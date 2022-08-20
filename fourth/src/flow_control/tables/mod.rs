@@ -1,7 +1,7 @@
 use super::connection::CharIdPack;
 use super::AZCharFourth;
 
-use azchar_database::character::character::CompleteCharacter;
+// use azchar_database::character::character::CompleteCharacter;
 use azchar_database::LoadedDbs;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
@@ -328,5 +328,7 @@ impl AZCharFourth {
 }
 
 pub(super) mod main;
+pub(super) mod notes;
 pub(super) mod resource;
 pub(super) mod skill;
+pub(super) use notes::NoteOption;
