@@ -75,7 +75,7 @@ impl AZCharFourth {
         };
         for (r_idx, c_idx) in references {
             let attr_label = &table.column_labels[c_idx].key;
-            let skill_label = &table.row_labels[c_idx].key;
+            let skill_label = &table.row_labels[r_idx].key;
 
             let key = format!("{}_skill_{}_{}", skill_kind, skill_label, attr_label);
             let of = char.id().expect("This character has been through the DB.");
@@ -86,13 +86,14 @@ impl AZCharFourth {
             };
             let key = AttributeKey::new(key, of);
 
+            println!("ridx={}, cidx={}", r_idx, c_idx);
             if let Some(val) = attributes.get_mut(&key) {
                 val.update_value_num_by_ref(val_n);
-                println!("Val updated to: {:?}", val);
+                println!("{:?}: Val updated to: {:?}", key, val);
                 let identifier = (char.name().to_owned(), char.uuid().to_owned());
                 match dbs.create_update_attribute(key, val.to_owned(), identifier) {
                     Err(e) => println!("Couldn't update attribute: {:?}", e),
-                    _ => {}
+                    Ok(r) => println!("Updated: {:?}", r),
                 }
             }
         }
