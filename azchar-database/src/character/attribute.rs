@@ -167,6 +167,10 @@ impl AttributeValue {
         self
     }
 
+    pub fn update_value_text_by_ref(&mut self, value_text: Option<String>) {
+        self.value_text = value_text;
+    }
+
     pub fn value_text(&self) -> &Option<String> {
         &self.value_text
     }

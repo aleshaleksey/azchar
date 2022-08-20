@@ -1,6 +1,11 @@
 use super::AZCharFourth;
 
+use azchar_database::character::character::CompleteCharacter;
+use azchar_database::LoadedDbs;
+
 use egui::Ui;
+use fnv::FnvHashMap;
+use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 
 #[derive(Debug, Default)]
 pub(super) struct Row {
@@ -141,6 +146,42 @@ impl DynamicTable {
         });
         Ok(used)
     }
+
+    pub(super) fn set_attr_based_resource(
+        &mut self,
+        resource_kind: &str,
+        ui: &mut Ui,
+        width: f32,
+    ) -> Result<Vec<(usize, usize)>, String> {
+        let w = width / (1. + self.column_labels.len() as f32);
+        let mut used = Vec::new();
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                let _ = ui.selectable_label(false, resource_kind).clicked();
+                for l in self.column_labels.iter() {
+                    let _ = ui.selectable_label(false, &l.visible).clicked();
+                }
+            });
+            for (r_idx, (rl, row)) in self
+                .row_labels
+                .iter()
+                .zip(self.cells.iter_mut())
+                .enumerate()
+            {
+                ui.horizontal(|ui| {
+                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    for (c_idx, r) in row.iter_mut().enumerate() {
+                        let edit = egui::TextEdit::singleline(r).desired_width(w);
+                        let changed = ui.add_sized([w, 21.], edit).changed();
+                        if changed {
+                            used.push((r_idx, c_idx));
+                        }
+                    }
+                });
+            }
+        });
+        Ok(used)
+    }
 }
 
 impl Row {
@@ -181,6 +222,82 @@ impl AZCharFourth {
             }
         });
         Ok(used)
+    }
+
+    fn update_skill_table(
+        char: &CompleteCharacter,
+        // (row, column)
+        references: Vec<(usize, usize)>,
+        dbs: &mut Option<LoadedDbs>,
+        skill_kind: &str,
+        attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
+        table: &mut Box<DynamicTable>,
+    ) {
+        let dbs = match dbs.as_mut() {
+            Some(d) => d,
+            None => return,
+        };
+        for (r_idx, c_idx) in references {
+            let attr_label = &table.column_labels[c_idx].key;
+            let skill_label = &table.row_labels[r_idx].key;
+
+            let key = format!("{}_skill_{}_{}", skill_kind, skill_label, attr_label);
+            let of = char.id().expect("This character has been through the DB.");
+            // If we have a valid value in this cell, we work, if not we skip.
+            let val_n = match table.cells[r_idx][c_idx].parse() {
+                Ok(v) => Some(v),
+                Err(_) => continue,
+            };
+            let key = AttributeKey::new(key, of);
+
+            if let Some(val) = attributes.get_mut(&key) {
+                val.update_value_num_by_ref(val_n);
+                let identifier = (char.name().to_owned(), char.uuid().to_owned());
+                match dbs.create_update_attribute(key, val.to_owned(), identifier) {
+                    Err(e) => println!("Couldn't update attribute: {:?}", e),
+                    Ok(r) => println!("Updated: {:?}", r),
+                }
+            }
+        }
+    }
+
+    fn update_text_attr_table(
+        char: &CompleteCharacter,
+        references: Vec<(usize, usize)>,
+        dbs: &mut Option<LoadedDbs>,
+        attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
+        table: &mut Box<DynamicTable>,
+    ) {
+        let dbs = match dbs.as_mut() {
+            Some(d) => d,
+            None => return,
+        };
+        for (r_idx, c_idx) in references {
+            let suffix = &table.column_labels[c_idx].key;
+            let suffix = match suffix.is_empty() {
+                true => String::new(),
+                false => format!("_{}", suffix),
+            };
+
+            let prefix = &table.row_labels[r_idx].key;
+
+            let key = format!("{}{}", prefix, suffix);
+            let of = char.id().expect("This character has been through the DB.");
+            let key = AttributeKey::new(key, of);
+            println!("Key {:?}", key);
+
+            if let Some(val) = attributes.get_mut(&key) {
+                println!("Val {:?}", val);
+                let v = Some(table.cells[r_idx][c_idx].to_owned());
+                val.update_value_text_by_ref(v);
+                let identifier = (char.name().to_owned(), char.uuid().to_owned());
+
+                match dbs.create_update_attribute(key, val.to_owned(), identifier) {
+                    Err(e) => println!("Couldn't update attribute: {:?}", e),
+                    Ok(r) => println!("Updated: {:?}", r),
+                }
+            }
+        }
     }
 }
 

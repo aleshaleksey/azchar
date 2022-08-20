@@ -205,6 +205,7 @@ impl eframe::App for AZCharFourth {
                     ui.heading(char.name());
                     self.set_main_tables(ui, ctx);
                     self.set_skill_tables(ui, ctx);
+                    self.set_resource_tables(ui, ctx);
                 }
             });
         });
