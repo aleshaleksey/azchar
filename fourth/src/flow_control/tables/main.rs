@@ -1,6 +1,6 @@
+use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-
 // use eframe::egui::Widget;
 
 impl AZCharFourth {
@@ -14,39 +14,21 @@ impl AZCharFourth {
         }
         let mut reset = false;
         if !self.hidden_main_tables {
-            ui.separator();
+            separator(ui);
+            let key = (char.name().to_owned(), char.uuid().to_owned());
+            let cid = char.id().expect("It's been through the DB.");
             ui.horizontal(|ui| {
                 // Portrait or default for box.
-                let portrait = self.images.get(&char.id()).unwrap_or(&self.default_img);
-                {
-                    let ib = egui::ImageButton::new(portrait.texture_id(ctx), [136., 136.]);
-                    if ib.ui(ui).clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .add_filter("image", &["png", "jpg", "jpeg", "bmp"])
-                            .pick_file()
-                        {
-                            println!("Picked: {:?}", path);
-                            let name = char.name().to_owned();
-                            let uuid = char.uuid().to_owned();
-                            let id = char.id().unwrap();
-                            let res = AZCharFourth::set_image(
-                                &mut self.dbs,
-                                &mut char.image,
-                                &mut self.images,
-                                name,
-                                uuid,
-                                id,
-                                path,
-                            );
-                            if let Err(e) = res {
-                                println!("Couldn't set image: {:?}", e);
-                            }
-                        } else {
-                            println!("Failed to pick a file.");
-                        }
-                    }
-                    ui.separator();
-                }
+                set_image(
+                    &self.default_img,
+                    ctx,
+                    ui,
+                    self.dbs.as_mut().expect("DBS are loaded by definiiton"),
+                    &mut char.image,
+                    key,
+                    cid,
+                    &mut self.images,
+                );
                 // Set the three attribute tables.
                 ui.vertical(|ui| {
                     {
@@ -80,7 +62,7 @@ impl AZCharFourth {
                             _ => {}
                         };
                     }
-                    ui.separator();
+                    separator(ui);
                     {
                         let rows = &mut self.main_level_pro_table;
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
@@ -100,7 +82,7 @@ impl AZCharFourth {
                             _ => {}
                         };
                     }
-                    ui.separator();
+                    separator(ui);
                     {
                         let rows = &mut self.main_stat_table;
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {

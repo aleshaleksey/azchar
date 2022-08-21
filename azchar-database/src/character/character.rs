@@ -329,7 +329,7 @@ impl InputCharacter {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CharacterPart {
     id: Option<i64>,
-    pub(crate) name: String,
+    pub name: String,
     uuid: String,
     pub(crate) character_type: String,
     pub speed: i32,

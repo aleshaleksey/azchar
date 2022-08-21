@@ -1,5 +1,6 @@
 use crate::flow_control::*;
 use crate::AZCharFourth;
+use crate::flow_control::images::set_image;
 
 use azchar_database::character::character::InputCharacter;
 use azchar_database::character::*;
@@ -32,12 +33,6 @@ impl PartOption {
     }
     pub(crate) fn is_existing(&self) -> bool {
         matches!(self, &Self::Existing(_))
-    }
-    pub(crate) fn is_this_part(&self, id: i64) -> bool {
-        match self {
-            Self::Existing(i) => id == *i,
-            _ => false,
-        }
     }
     fn set_and_update_new_part(
         &mut self,
@@ -118,46 +113,48 @@ impl AZCharFourth {
             self.hidden_attacks = !self.hidden_attacks;
         }
         if !self.hidden_attacks {
-            ui.separator();
+            separator(ui);
             if let Err(e) = self.set_parts_list(ui, Part::Ability, Some("attack")) {
                 println!("We have a problem: {:?}", e);
             };
         }
-        ui.separator();
+        separator(ui);
 
         if ui.selectable_label(false, "Character Specials").clicked() {
             self.hidden_specials = !self.hidden_specials;
         }
         if !self.hidden_specials {
-            ui.separator();
+            separator(ui);
             if let Err(e) = self.set_parts_list(ui, Part::Ability, Some("specials")) {
                 println!("We have a problem: {:?}", e);
             };
         }
-        ui.separator();
+        separator(ui);
 
         if ui.selectable_label(false, "Character Inventory").clicked() {
             self.hidden_inventory = !self.hidden_inventory;
         }
         if !self.hidden_inventory {
-            ui.separator();
+            separator(ui);
             if let Err(e) = self.set_parts_list(ui, Part::InventoryItem, None) {
                 println!("We have a problem: {:?}", e);
             };
         }
-        ui.separator();
+        separator(ui);
 
         if ui.selectable_label(false, "Character Spells").clicked() {
             self.hidden_spells = !self.hidden_spells;
         }
         if !self.hidden_spells {
-            ui.separator();
+            separator(ui);
             if let Err(e) = self.set_parts_list(ui, Part::Ability, Some("spells")) {
                 println!("We have a problem: {:?}", e);
             };
         }
         if let PartOption::Existing(id) = self.part_window {
-            self.display_part_details(ui, id, ctx);
+            if let Err(e) = self.display_part_details(ui, id, ctx) {
+                println!("Part detail error: {:?}", e);
+            }
         }
     }
 
@@ -240,16 +237,192 @@ impl AZCharFourth {
         Ok(())
     }
 
-    fn display_part_details(&mut self, ui: &mut egui::Ui, part_id: i64, ctx: &egui::Context) {
+    fn display_part_details(
+        &mut self,
+        _ui: &mut egui::Ui,
+        part_id: i64,
+        ctx: &egui::Context,
+    ) -> Result<(), String> {
+        const LABEL_SIZE: [f32; 2] = [200., 21.];
         egui::Area::new("part-details")
             .default_pos(egui::pos2(32.0, 32.0))
             .show(ctx, |ui| {
+                ui.set_style(styles::style());
                 crate::styles::default_frame().show(ui, |ui| {
-                    ui.selectable_label(false, "Floating text!");
-                    ui.selectable_label(false, "Doubling text!");
-                    ui.selectable_label(false, "Integer text!");
+                    let char = self.current.as_ref().expect("There's a character here.");
+                    let key = (char.name.to_owned(), char.uuid().to_owned());
+
+                    let dbs = self.dbs.as_mut().expect("We could not get here otherwise.");
+                    let part = self
+                        .current
+                        .as_mut()
+                        .expect("`current` is real.")
+                        .parts
+                        .iter_mut()
+                        .find(|p| p.id() == Some(part_id))
+                        .expect("It must be there (borrow checker hates me).");
+
+                    // First set the parts details: NB we do not need things like speed/Weight
+                    // for abilities.
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            let pid = part.id().expect("It's been through the DB.");
+                            // Portrait or default for box.
+                            set_image(
+                                &self.default_img,
+                                ctx,
+                                ui,
+                                dbs,
+                                &mut part.image,
+                                key.clone(),
+                                pid,
+                                &mut self.images,
+                            );
+                            separator(ui);
+                            ui.vertical(|ui| {
+                                // First the part name.
+                                ui.horizontal(|ui| {
+                                    let label = format!("{} name:", part.part_type().to_string());
+                                    let l = egui::SelectableLabel::new(false, &label);
+                                    let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                                    //
+                                    let l = egui::TextEdit::singleline(&mut part.name);
+                                    if ui.add_sized(LABEL_SIZE, l).changed() {
+                                        if let Err(e) =
+                                            dbs.create_update_part(part.to_owned(), key.to_owned())
+                                        {
+                                            println!("Key: {:?}", key);
+                                            println!("Update error: {:?}", e);
+                                        }
+                                    };
+                                    Ok::<(), String>(())
+                                });
+                                // Then the part subtype.
+                                ui.horizontal(|ui| {
+                                    let l = egui::SelectableLabel::new(false, "Subtype:");
+                                    let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                                    //
+                                    let l = egui::Label::new(part.character_type());
+                                    Ok::<(), String>(())
+                                });
+                                // Abilities do not have physical attributes.
+                                if !matches!(part.part_type(), Part::Ability) {
+                                    // Speed.
+                                    ui.horizontal(|ui| {
+                                        let l = egui::SelectableLabel::new(false, "Speed");
+                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+
+                                        let mut speed = part.speed.to_string();
+                                        let l = egui::TextEdit::singleline(&mut speed);
+                                        if ui.add_sized(LABEL_SIZE, l).changed() {
+                                            part.speed = speed.parse::<i32>().unwrap_or(part.speed);
+                                            if let Err(e) = dbs
+                                                .create_update_part(part.to_owned(), key.to_owned())
+                                            {
+                                                println!("Key: {:?}", key);
+                                                println!("Update error: {:?}", e);
+                                            }
+                                        };
+                                        Ok::<(), String>(())
+                                    });
+                                    // Weight.
+                                    ui.horizontal(|ui| {
+                                        let l = egui::SelectableLabel::new(false, "Weight");
+                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+
+                                        let mut w = part.weight.unwrap_or(0).to_string();
+                                        let l = egui::TextEdit::singleline(&mut w);
+                                        if ui.add_sized(LABEL_SIZE, l).changed() {
+                                            if let Ok(r) = w.parse::<i32>() {
+                                                part.weight = Some(r);
+                                                if let Err(e) = dbs.create_update_part(
+                                                    part.to_owned(),
+                                                    key.to_owned(),
+                                                ) {
+                                                    println!("Key: {:?}", key);
+                                                    println!("Update error: {:?}", e);
+                                                }
+                                            }
+                                        };
+                                        Ok::<(), String>(())
+                                    });
+                                    // Size.
+                                    ui.horizontal(|ui| {
+                                        let l = egui::SelectableLabel::new(false, "Size");
+                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+
+                                        let backup_string = String::new();
+                                        let mut s = part
+                                            .size
+                                            .as_ref()
+                                            .unwrap_or(&backup_string)
+                                            .to_string();
+                                        let l = egui::TextEdit::singleline(&mut s);
+                                        if ui.add_sized(LABEL_SIZE, l).changed() {
+                                            part.size = Some(s);
+                                            if let Err(e) = dbs
+                                                .create_update_part(part.to_owned(), key.to_owned())
+                                            {
+                                                println!("Key: {:?}", key);
+                                                println!("Update error: {:?}", e);
+                                            }
+                                        };
+                                        Ok::<(), String>(())
+                                    });
+                                    // HP.
+                                    ui.horizontal(|ui| {
+                                        let l = egui::SelectableLabel::new(false, "HP total");
+                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+
+                                        let mut w = part.hp_total.unwrap_or(0).to_string();
+                                        let l = egui::TextEdit::singleline(&mut w);
+                                        if ui.add_sized(LABEL_SIZE, l).changed() {
+                                            if let Ok(r) = w.parse::<i32>() {
+                                                part.hp_total = Some(r);
+                                                if let Err(e) = dbs.create_update_part(
+                                                    part.to_owned(),
+                                                    key.to_owned(),
+                                                ) {
+                                                    println!("Key: {:?}", key);
+                                                    println!("Update error: {:?}", e);
+                                                }
+                                            }
+                                        };
+                                        Ok::<(), String>(())
+                                    });
+                                    ui.horizontal(|ui| {
+                                        let l = egui::SelectableLabel::new(false, "HP current");
+                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+
+                                        let mut w = part.hp_current.unwrap_or(0).to_string();
+                                        let l = egui::TextEdit::singleline(&mut w);
+                                        if ui.add_sized(LABEL_SIZE, l).changed() {
+                                            if let Ok(r) = w.parse::<i32>() {
+                                                part.hp_current = Some(r);
+                                                if let Err(e) = dbs.create_update_part(
+                                                    part.to_owned(),
+                                                    key.to_owned(),
+                                                ) {
+                                                    println!("Key: {:?}", key);
+                                                    println!("Update error: {:?}", e);
+                                                }
+                                            }
+                                        };
+                                        Ok::<(), String>(())
+                                    });
+                                }
+                            });
+                            // End of basics vertical.
+                        });
+                        // separator(ui);
+                        // End of basics and image horizontal.
+                    });
+                    // End of All hope.
                 });
-            });
+                Ok::<(), String>(())
+            })
+            .inner?;
+        Ok(())
     }
 }
 

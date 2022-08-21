@@ -1,6 +1,6 @@
+use egui::containers::Frame;
 use egui::style::*;
 use egui::Color32;
-use egui::containers::Frame;
 
 pub(crate) fn style() -> Style {
     let mut visuals = Visuals::dark();

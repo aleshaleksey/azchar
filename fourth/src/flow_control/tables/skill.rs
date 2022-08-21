@@ -14,7 +14,7 @@ impl AZCharFourth {
             self.hidden_skill_tables = !self.hidden_skill_tables;
         }
         if !self.hidden_skill_tables {
-            ui.separator();
+            separator(ui);
             ui.horizontal(|ui| {
                 let char_id = char.id().unwrap_or_default();
                 let proficiency = char
@@ -41,7 +41,7 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
-                ui.separator();
+                separator(ui);
                 match self.d100_skill_table.d100_skill_table(ui, MAIN_W / 2.) {
                     Err(e) => println!("Error d100-skill table: {:?}", e),
                     Ok(dat) if !dat.is_empty() => {

@@ -84,7 +84,7 @@ impl AZCharFourth {
             self.hidden_notes = !self.hidden_notes;
         }
         if !self.hidden_notes {
-            ui.separator();
+            separator(ui);
             ui.set_width(500.);
             ui.vertical(|ui| {
                 ui.set_width(500.);

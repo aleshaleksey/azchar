@@ -152,7 +152,7 @@ impl AZCharFourth {
         for c in loaded.parts().iter() {
             if let Some(data) = c.image.as_ref() {
                 let processed = process_image(data)?;
-                imagemap.insert(loaded.id(), processed);
+                imagemap.insert(c.id(), processed);
             }
         }
         self.main_attr_table = [
@@ -319,7 +319,7 @@ impl AZCharFourth {
 
     // Reset an image.
     pub(super) fn set_image(
-        dbs: &mut Option<LoadedDbs>,
+        dbs: &mut LoadedDbs,
         image: &mut Option<dbimg::Image>,
         imagemap: &mut FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
         name: String,
@@ -327,16 +327,16 @@ impl AZCharFourth {
         id: i64,
         path: std::path::PathBuf,
     ) -> Result<(), String> {
-        if let Some(ref mut dbs) = dbs {
-            let input = dbimg::InputImage {
-                of: id,
-                link: path.into_os_string().into_string().map_err(ma)?,
-            };
-            let output = dbs.create_update_image(name, uuid, input)?;
-            let processed = process_image(&output)?;
-            *image = Some(output);
-            imagemap.insert(Some(id), processed);
-        }
+        let input = dbimg::InputImage {
+            of: id,
+            link: path.into_os_string().into_string().map_err(ma)?,
+        };
+
+        let output = dbs.create_update_image(name, uuid, input)?;
+        let processed = process_image(&output)?;
+        *image = Some(output);
+        imagemap.insert(Some(id), processed);
+
         Ok(())
     }
 

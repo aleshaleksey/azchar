@@ -16,7 +16,7 @@ impl AZCharFourth {
             self.hidden_resource_tables = !self.hidden_resource_tables;
         }
         if !self.hidden_resource_tables {
-            ui.separator();
+            separator(ui);
             ui.horizontal(|ui| {
                 match self.resources_basic.set_attr_based_resource(
                     "",
@@ -38,7 +38,7 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
-                ui.separator();
+                separator(ui);
                 match self.resources_points.set_attr_based_resource(
                     "",
                     ui,
@@ -59,7 +59,7 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
-                ui.separator();
+                separator(ui);
                 match self.resources_body_hp.set_attr_based_resource(
                     "",
                     ui,

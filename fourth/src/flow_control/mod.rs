@@ -25,6 +25,10 @@ const WILL: &str = "Will";
 
 const MAIN_W: f32 = 460.;
 
+pub(self) fn separator(ui: &mut egui::Ui) {
+    ui.add(egui::Separator::default().spacing(3.));
+}
+
 pub(crate) struct AZCharFourth {
     frame: Frame,
     db_path: String,
@@ -219,19 +223,19 @@ impl eframe::App for AZCharFourth {
 
                     // Display the character.
                     if let Some(ref mut char) = self.current {
-                        ui.separator();
+                        separator(ui);
                         ui.heading(char.name());
-                        ui.separator();
+                        separator(ui);
                         self.set_main_tables(ui, ctx);
-                        ui.separator();
+                        separator(ui);
                         self.set_resource_tables(ui, ctx);
-                        ui.separator();
+                        separator(ui);
                         self.set_skill_tables(ui, ctx);
-                        ui.separator();
+                        separator(ui);
                         self.set_parts(ui, ctx);
-                        ui.separator();
+                        separator(ui);
                         self.set_notes(ui, ctx);
-                        ui.separator();
+                        separator(ui);
                     }
                 });
             });
@@ -239,4 +243,5 @@ impl eframe::App for AZCharFourth {
 }
 
 mod connection;
+mod images;
 mod tables;
