@@ -89,7 +89,9 @@ impl AZCharFourth {
             self.hidden_notes = !self.hidden_notes;
         }
         if !self.hidden_notes {
+            ui.set_width(500.);
             egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.set_width(500.);
                 let new_clicked = ui.selectable_label(false, "Add New Note").clicked();
                 if self.note_window.is_none() && new_clicked {
                     self.note_window = NoteOption::New(InputNote::default());
@@ -98,26 +100,27 @@ impl AZCharFourth {
                     println!("Error with new note: {:?}", e);
                 }
                 for i in (0..char.notes.len()).rev() {
-                    let row = ui.horizontal(|ui| {
-                        let n = &char.notes[i];
-                        // Label
-                        let id = n.id.to_string();
-                        let id = egui::SelectableLabel::new(false, &id);
-                        let id = ui.add_sized([30., 21.], id).clicked();
-                        // Title.
-                        let lab = egui::SelectableLabel::new(false, &n.title);
-                        let lab = ui.add_sized([30., 21.], lab).clicked();
-                        // Date.
-                        let date = egui::SelectableLabel::new(false, &n.date);
-                        let date = ui.add_sized([30., 21.], date).clicked();
-                        if self.note_window.is_none() && (lab || id || date) {
-                            self.note_window = NoteOption::Existing(n.id);
-                            println!("Current status: {:?}", self.note_window);
-                        } else if (lab || id || date) && self.note_window.is_existing() {
-                            self.note_window = NoteOption::None;
-                            println!("Current status: {:?}", self.note_window);
-                        }
-                    }).response.rect;
+                    let row = ui
+                        .horizontal(|ui| {
+                            let n = &char.notes[i];
+                            // Label
+                            let id = n.id.to_string();
+                            let id = egui::SelectableLabel::new(false, &id);
+                            let id = ui.add_sized([30., 21.], id).clicked();
+                            // Title.
+                            let lab = egui::SelectableLabel::new(false, &n.title);
+                            let lab = ui.add(lab).clicked();
+                            // Date.
+                            let date = egui::SelectableLabel::new(false, &n.date);
+                            let date = ui.add(date).clicked();
+                            if self.note_window.is_none() && (lab || id || date) {
+                                self.note_window = NoteOption::Existing(n.id);
+                            } else if (lab || id || date) && self.note_window.is_existing() {
+                                self.note_window = NoteOption::None;
+                            }
+                        })
+                        .response
+                        .rect;
 
                     // If titles are set, and we hav selected this note.
                     if self.note_window.is_this_note(char.notes[i].id) {
@@ -137,7 +140,7 @@ impl AZCharFourth {
                                 .desired_width(width)
                                 .lock_focus(true)
                                 .cursor_at_end(true);
-                            if ui.add(note_edit).changed() {
+                            if ui.add_sized([500., 300.], note_edit).changed() {
                                 if let Err(e) =
                                     dbs.update_note(name.to_owned(), uuid.to_owned(), n.to_owned())
                                 {

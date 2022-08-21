@@ -1,4 +1,5 @@
 use self::tables::{DynamicTable, NoteOption, Row};
+use super::styles;
 
 use azchar_database::character::attribute::AttributeKey;
 use azchar_database::character::character::CompleteCharacter;
@@ -7,6 +8,7 @@ use azchar_database::{CharacterDbRef, LoadedDbs};
 
 use eframe;
 use eframe::egui::Widget;
+use egui::containers::Frame;
 use fnv::FnvHashMap;
 use std::path::PathBuf;
 
@@ -24,6 +26,7 @@ const WILL: &str = "Will";
 const MAIN_W: f32 = 320.;
 
 pub(crate) struct AZCharFourth {
+    frame: Frame,
     db_path: String,
     cfg_path: String,
     dbs: Option<LoadedDbs>,
@@ -49,12 +52,13 @@ pub(crate) struct AZCharFourth {
     part_window: Option<i64>,
 }
 
-impl Default for AZCharFourth {
-    fn default() -> Self {
+impl AZCharFourth {
+    pub(crate) fn with_frame(f: Frame) -> Self {
         let default_img =
             egui_extras::RetainedImage::from_image_bytes("-9999", include_bytes!("default.jpg"))
                 .unwrap();
         Self {
+            frame: f,
             db_path: String::from("fusion.db"),
             cfg_path: String::from("examples/cjfusion.toml"),
             dbs: None,
@@ -64,9 +68,9 @@ impl Default for AZCharFourth {
             hidden_main_tables: false,
             hidden_skill_tables: false,
             hidden_resource_tables: false,
+            hidden_notes: true,
             note_window: NoteOption::None,
             part_window: None,
-            hidden_notes: false,
             current: None,
             images: FnvHashMap::default(),
             default_img,
@@ -118,102 +122,102 @@ fn create_new_char(
 
 impl eframe::App for AZCharFourth {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    // First here we insert the line for potential system reference.
-                    ui.label("System reference document:");
-                    ui.text_edit_singleline(&mut self.cfg_path);
+        let style = styles::style();
+        egui::CentralPanel::default()
+            .frame(self.frame.to_owned())
+            .show(ctx, |ui| {
+                ui.set_style(style);
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        // First here we insert the line for potential system reference.
+                        ui.label("System reference document:");
+                        ui.text_edit_singleline(&mut self.cfg_path);
 
-                    if ui.button("Create System").clicked() {
-                        match get_sys_config(&self.cfg_path, &self.db_path) {
-                            Ok(_) => {}
-                            Err(e) => println!("Couldn't create system: {:?}", e),
-                        };
-                    }
-                });
-                ui.horizontal(|ui| {
-                    // Then we insert the line for potential DB path.
-                    ui.label("Core DB path:");
-                    ui.text_edit_singleline(&mut self.db_path);
-                    if ui.button("Load System").clicked() {
-                        match self.load_system() {
-                            Err(e) => println!("Could not connect: {:?}", e),
-                            Ok(_) => self.hidden_char_list = false,
-                        };
-                    };
-                });
-
-                ui.label(format!("Dbs loaded: {:?}", self.dbs.is_some()));
-                ui.label(format!("Character count in DB: {:?}", self.char_list.len()));
-                ui.label(format!("Character loaded: {}", self.current.is_some()));
-                // Set a list of characters.
-                // We cannot iter because of burrow.)
-                // NB: We can hide the list.
-                // A button to hide the list of characters.
-                if !self.char_list.is_empty() {
-                    let label = if !self.hidden_char_list {
-                        "Hide List"
-                    } else {
-                        "Show List"
-                    };
-                    if ui.button(label).clicked() {
-                        self.hidden_char_list = !self.hidden_char_list;
-                    }
-                }
-                if !self.hidden_char_list {
-                    ui.heading("Character List:");
-                    for i in 0..self.char_list.len() {
-                        // The button for each independant character.
-                        ui.horizontal(|ui| {
-                            let c = &self.char_list[i];
-                            let c_name = c.name().to_owned();
-                            let c_uuid = c.uuid().to_owned();
-                            ui.label(format!("{}.) ", i));
-                            if ui.button(format!("{} ({})", c_name, c_uuid)).clicked() {
-                                if let Err(err) = self.load_character(&c_name, &c_uuid) {
-                                    println!("Could not load character: {}", err);
-                                }
+                        if ui.button("Create System").clicked() {
+                            match get_sys_config(&self.cfg_path, &self.db_path) {
+                                Ok(_) => {}
+                                Err(e) => println!("Couldn't create system: {:?}", e),
                             };
-                            if ui.button("Delete").clicked() {
-                                println!("We shall pretend to delete {}", c_name);
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        // Then we insert the line for potential DB path.
+                        ui.label("Core DB path:");
+                        ui.text_edit_singleline(&mut self.db_path);
+                        if ui.button("Load System").clicked() {
+                            match self.load_system() {
+                                Err(e) => println!("Could not connect: {:?}", e),
+                                Ok(_) => self.hidden_char_list = false,
+                            };
+                        };
+                    });
+                    // Set a list of characters.
+                    // We cannot iter because of burrow.)
+                    // NB: We can hide the list.
+                    // A button to hide the list of characters.
+                    if !self.char_list.is_empty() {
+                        let label = if !self.hidden_char_list {
+                            "Hide List"
+                        } else {
+                            "Show List"
+                        };
+                        if ui.button(label).clicked() {
+                            self.hidden_char_list = !self.hidden_char_list;
+                        }
+                    }
+                    if !self.hidden_char_list {
+                        ui.heading("Character List:");
+                        for i in 0..self.char_list.len() {
+                            // The button for each independant character.
+                            ui.horizontal(|ui| {
+                                let c = &self.char_list[i];
+                                let c_name = c.name().to_owned();
+                                let c_uuid = c.uuid().to_owned();
+                                ui.label(format!("{}.) ", i));
+                                if ui.button(format!("{} ({})", c_name, c_uuid)).clicked() {
+                                    if let Err(err) = self.load_character(&c_name, &c_uuid) {
+                                        println!("Could not load character: {}", err);
+                                    }
+                                };
+                                if ui.button("Delete").clicked() {
+                                    println!("We shall pretend to delete {}", c_name);
+                                }
+                            });
+                        }
+                        // Create new character.
+                        ui.horizontal(|ui| {
+                            match (
+                                &mut self.new_char,
+                                ui.button("Create New Character.").clicked(),
+                            ) {
+                                (&mut Some(ref new_name), true) => {
+                                    match create_new_char(new_name, &mut self.dbs) {
+                                        Ok(chars) => self.char_list = chars,
+                                        Err(e) => println!("Erro creating character: {:?}", e),
+                                    };
+                                    self.new_char = None;
+                                }
+                                (Some(ref mut new_name), false) => {
+                                    ui.text_edit_singleline(new_name);
+                                }
+                                (ref mut c, true) => {
+                                    **c = Some(String::from("Lord Stupid IV"));
+                                }
+                                _ => {}
                             }
                         });
                     }
-                    // Create new character.
-                    ui.horizontal(|ui| {
-                        match (
-                            &mut self.new_char,
-                            ui.button("Create New Character.").clicked(),
-                        ) {
-                            (&mut Some(ref new_name), true) => {
-                                match create_new_char(new_name, &mut self.dbs) {
-                                    Ok(chars) => self.char_list = chars,
-                                    Err(e) => println!("Erro creating character: {:?}", e),
-                                };
-                                self.new_char = None;
-                            }
-                            (Some(ref mut new_name), false) => {
-                                ui.text_edit_singleline(new_name);
-                            }
-                            (ref mut c, true) => {
-                                **c = Some(String::from("Lord Stupid IV"));
-                            }
-                            _ => {}
-                        }
-                    });
-                }
 
-                // Display the character.
-                if let Some(ref mut char) = self.current {
-                    ui.heading(char.name());
-                    self.set_main_tables(ui, ctx);
-                    self.set_skill_tables(ui, ctx);
-                    self.set_resource_tables(ui, ctx);
-                    self.set_notes(ui, ctx);
-                }
+                    // Display the character.
+                    if let Some(ref mut char) = self.current {
+                        ui.heading(char.name());
+                        self.set_main_tables(ui, ctx);
+                        self.set_resource_tables(ui, ctx);
+                        self.set_skill_tables(ui, ctx);
+                        self.set_notes(ui, ctx);
+                    }
+                });
             });
-        });
     }
 }
 

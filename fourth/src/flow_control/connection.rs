@@ -205,7 +205,7 @@ impl AZCharFourth {
         {
             let mut d100_table = DynamicTable::default();
             let column_labels = vec![
-                Label::new(PROFICIENCY_CAMEL, PROFICIENCY),
+                Label::new("Prof", PROFICIENCY),
                 Label::new(BONUS_CAMEL, BONUS),
                 Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
             ];
@@ -228,7 +228,7 @@ impl AZCharFourth {
             let mut d20_table = DynamicTable::default();
             let column_labels = vec![
                 Label::new(GOV_CAMEL, GOV),
-                Label::new(PROFICIENCY_CAMEL, PROFICIENCY),
+                Label::new("Prof", PROFICIENCY),
                 Label::new(BONUS_CAMEL, BONUS),
                 Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
             ];
