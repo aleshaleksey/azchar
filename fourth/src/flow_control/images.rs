@@ -1,8 +1,8 @@
 use crate::AZCharFourth;
 
 use azchar_database::character::character::CompleteCharacter;
-use azchar_database::LoadedDbs;
 use azchar_database::character::image::Image;
+use azchar_database::LoadedDbs;
 
 use eframe;
 use eframe::egui::Widget;
@@ -27,13 +27,7 @@ pub(crate) fn set_image(
         {
             println!("Picked: {:?}", path);
             let res = AZCharFourth::set_image(
-                dbs,
-                char_image,
-                images,
-                char_name,
-                char_uuid,
-                part_id,
-                path
+                dbs, char_image, images, char_name, char_uuid, part_id, path,
             );
             if let Err(e) = res {
                 println!("Couldn't set image: {:?}", e);

@@ -1,6 +1,6 @@
+use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-use crate::flow_control::images::set_image;
 
 use azchar_database::character::character::InputCharacter;
 use azchar_database::character::*;
@@ -75,10 +75,8 @@ impl PartOption {
                             ) {
                                 Err(e) => println!("Error updating note: {:?}", e),
                                 Ok(updated_char) => {
-                                    let new = PartOption::None;
                                     *char = updated_char;
                                     char.create_attribute_map();
-                                    println!("{:?}", char);
                                     return true;
                                 }
                             }
@@ -100,15 +98,6 @@ impl PartOption {
 
 impl AZCharFourth {
     pub(crate) fn set_parts(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        let char = self
-            .current
-            .as_mut()
-            .expect("Do not call when no character.");
-        let dbs = self
-            .dbs
-            .as_mut()
-            .expect("We have a DB because we have a character.");
-
         if ui.selectable_label(false, "Character Attacks").clicked() {
             self.hidden_attacks = !self.hidden_attacks;
         }
@@ -147,7 +136,7 @@ impl AZCharFourth {
         }
         if !self.hidden_spells {
             separator(ui);
-            if let Err(e) = self.set_parts_list(ui, Part::Ability, Some("spells")) {
+            if let Err(e) = self.set_parts_list(ui, Part::Ability, Some("spell")) {
                 println!("We have a problem: {:?}", e);
             };
         }
@@ -244,6 +233,7 @@ impl AZCharFourth {
         ctx: &egui::Context,
     ) -> Result<(), String> {
         const LABEL_SIZE: [f32; 2] = [200., 21.];
+        const SMALL_LABEL_SIZE: [f32; 2] = [60., 21.];
         egui::Area::new("part-details")
             .default_pos(egui::pos2(32.0, 32.0))
             .show(ctx, |ui| {
@@ -278,7 +268,7 @@ impl AZCharFourth {
                                 pid,
                                 &mut self.images,
                             );
-                            separator(ui);
+
                             ui.vertical(|ui| {
                                 // First the part name.
                                 ui.horizontal(|ui| {
@@ -303,6 +293,7 @@ impl AZCharFourth {
                                     let _ = ui.add_sized(LABEL_SIZE, l).clicked();
                                     //
                                     let l = egui::Label::new(part.character_type());
+                                    let _ = ui.add_sized(LABEL_SIZE, l).clicked();
                                     Ok::<(), String>(())
                                 });
                                 // Abilities do not have physical attributes.
@@ -391,6 +382,7 @@ impl AZCharFourth {
                                         Ok::<(), String>(())
                                     });
                                     ui.horizontal(|ui| {
+                                        separator(ui);
                                         let l = egui::SelectableLabel::new(false, "HP current");
                                         let _ = ui.add_sized(LABEL_SIZE, l).clicked();
 
@@ -414,7 +406,92 @@ impl AZCharFourth {
                             });
                             // End of basics vertical.
                         });
-                        // separator(ui);
+                        // Insert Blurb && Insert Attributes.
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            if let Some((k, v)) =
+                                part.attributes.iter_mut().find(|a| a.0.key() == "Blurb")
+                            {
+                                if v.value_text().as_ref().is_none() {
+                                    v.update_value_text_by_ref(Some(String::new()));
+                                }
+                                let mut content =
+                                    v.value_text().as_ref().expect("Is some").to_owned();
+                                let width = 2. * LABEL_SIZE[0] + SMALL_LABEL_SIZE[0];
+                                let note_edit = egui::TextEdit::multiline(&mut content)
+                                    .frame(true)
+                                    .margin(egui::Vec2::new(2., 2.))
+                                    .desired_rows(10)
+                                    .desired_width(width)
+                                    .lock_focus(true)
+                                    .cursor_at_end(true);
+                                if ui.add_sized([500., 100.], note_edit).changed() {
+                                    v.update_value_text_by_ref(Some(content));
+                                    if let Err(e) = dbs.create_update_attribute(
+                                        k.to_owned(),
+                                        v.to_owned(),
+                                        key.to_owned(),
+                                    ) {
+                                        println!("Key: {:?}", key);
+                                        println!("Update error: {:?}", e);
+                                    }
+                                }
+                            }
+                            ui.horizontal(|ui| {
+                                let l = egui::SelectableLabel::new(false, "Attribute");
+                                let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                                //
+                                let l = egui::SelectableLabel::new(false, "Num Value");
+                                let _ = ui.add_sized(SMALL_LABEL_SIZE, l).clicked();
+                                //
+                                let l = egui::SelectableLabel::new(false, "Text Value");
+                                let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                            });
+                            for (k, v) in part
+                                .attributes
+                                .iter_mut()
+                                .filter(|(k, _)| k.key() != "Blurb")
+                            {
+                                ui.horizontal(|ui| {
+                                    // Deal with the label.
+                                    let label = k.key().split("_").last().unwrap_or_default();
+                                    let l = egui::SelectableLabel::new(false, label);
+                                    let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                                    // Deal with the numerical value.
+                                    let mut w = v.value_num().unwrap_or(0).to_string();
+                                    let l = egui::TextEdit::singleline(&mut w);
+                                    if ui.add_sized(SMALL_LABEL_SIZE, l).changed() {
+                                        if let Ok(r) = w.parse::<i64>() {
+                                            v.update_value_num_by_ref(Some(r));
+                                            if let Err(e) = dbs.create_update_attribute(
+                                                k.to_owned(),
+                                                v.to_owned(),
+                                                key.to_owned(),
+                                            ) {
+                                                println!("Key: {:?}", key);
+                                                println!("Update error: {:?}", e);
+                                            }
+                                        }
+                                    };
+                                    // Deal with the string value.
+                                    let default = String::new();
+                                    let mut w =
+                                        v.value_text().as_ref().unwrap_or(&default).to_string();
+                                    let l = egui::TextEdit::singleline(&mut w);
+                                    if ui.add_sized(LABEL_SIZE, l).changed() {
+                                        v.update_value_text_by_ref(Some(w));
+                                        if let Err(e) = dbs.create_update_attribute(
+                                            k.to_owned(),
+                                            v.to_owned(),
+                                            key.to_owned(),
+                                        ) {
+                                            println!("Key: {:?}", key);
+                                            println!("Update error: {:?}", e);
+                                        }
+                                    };
+                                    Ok::<(), String>(())
+                                });
+                            }
+                        });
                         // End of basics and image horizontal.
                     });
                     // End of All hope.
