@@ -1,8 +1,6 @@
 use egui::style::*;
 use egui::Color32;
-use egui::Rounding;
-
-use std::collections::BTreeMap;
+use egui::containers::Frame;
 
 pub(crate) fn style() -> Style {
     let mut visuals = Visuals::dark();
@@ -20,4 +18,19 @@ pub(crate) fn style() -> Style {
     style.interaction = interaction;
     style.visuals = visuals;
     style
+}
+
+pub(crate) fn default_frame() -> Frame {
+    let margin = Margin {
+        left: 5.,
+        right: 5.,
+        top: 5.,
+        bottom: 5.,
+    };
+
+    Frame::none()
+        .fill(egui::Color32::from_rgb(110, 99, 88))
+        .stroke(egui::Stroke::new(3., egui::Color32::from_rgb(33, 22, 11)))
+        .inner_margin(margin)
+        .outer_margin(margin)
 }

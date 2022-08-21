@@ -79,9 +79,9 @@ const BODY_PARTS: [&str; 8] = [
 ];
 
 const MAXIMUM: &str = "maximum";
-const MAXIMUM_CAMEL: &str = "Maximum";
+const MAXIMUM_CAMEL: &str = "Max";
 const CURRENT: &str = "current";
-const CURRENT_CAMEL: &str = "Current";
+const CURRENT_CAMEL: &str = "Now";
 
 const PROFICIENCY: &str = "proficiency";
 pub(super) const PROFICIENCY_CAMEL: &str = "Proficiency";

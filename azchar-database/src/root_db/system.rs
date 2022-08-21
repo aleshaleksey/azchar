@@ -37,9 +37,9 @@ table!(
 #[table_name = "permitted_parts"]
 pub struct PermittedPart {
     id: i64,
-    pub(crate) part_name: String,
+    pub part_name: String,
     #[diesel(deserialize_as = "i32")]
-    pub(crate) part_type: Part,
+    pub part_type: Part,
     pub(crate) obligatory: bool,
 }
 

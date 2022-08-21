@@ -1,4 +1,4 @@
-use self::tables::{DynamicTable, NoteOption, Row};
+use self::tables::{DynamicTable, NoteOption, PartOption, Row};
 use super::styles;
 
 use azchar_database::character::attribute::AttributeKey;
@@ -49,7 +49,11 @@ pub(crate) struct AZCharFourth {
     resources_body_hp: Box<DynamicTable>,
     hidden_notes: bool,
     note_window: NoteOption,
-    part_window: Option<i64>,
+    hidden_attacks: bool,
+    hidden_specials: bool,
+    hidden_inventory: bool,
+    hidden_spells: bool,
+    part_window: PartOption,
 }
 
 impl AZCharFourth {
@@ -68,9 +72,13 @@ impl AZCharFourth {
             hidden_main_tables: false,
             hidden_skill_tables: false,
             hidden_resource_tables: false,
+            hidden_attacks: true,
+            hidden_specials: true,
+            hidden_inventory: true,
+            hidden_spells: true,
             hidden_notes: true,
             note_window: NoteOption::None,
-            part_window: None,
+            part_window: PartOption::None,
             current: None,
             images: FnvHashMap::default(),
             default_img,
@@ -175,9 +183,10 @@ impl eframe::App for AZCharFourth {
                                 let c_uuid = c.uuid().to_owned();
                                 ui.label(format!("{}.) ", i));
                                 if ui.button(format!("{} ({})", c_name, c_uuid)).clicked() {
-                                    if let Err(err) = self.load_character(&c_name, &c_uuid) {
-                                        println!("Could not load character: {}", err);
-                                    }
+                                    match self.load_character(&c_name, &c_uuid) {
+                                        Ok(_) => self.hidden_char_list = true,
+                                        Err(err) => println!("Could not load character: {}", err),
+                                    };
                                 };
                                 if ui.button("Delete").clicked() {
                                     println!("We shall pretend to delete {}", c_name);
@@ -210,11 +219,19 @@ impl eframe::App for AZCharFourth {
 
                     // Display the character.
                     if let Some(ref mut char) = self.current {
+                        ui.separator();
                         ui.heading(char.name());
+                        ui.separator();
                         self.set_main_tables(ui, ctx);
+                        ui.separator();
                         self.set_resource_tables(ui, ctx);
+                        ui.separator();
                         self.set_skill_tables(ui, ctx);
+                        ui.separator();
+                        self.set_parts(ui, ctx);
+                        ui.separator();
                         self.set_notes(ui, ctx);
+                        ui.separator();
                     }
                 });
             });

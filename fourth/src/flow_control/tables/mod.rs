@@ -114,11 +114,7 @@ impl DynamicTable {
             ui.horizontal(|ui| {
                 let l = SelectableLabel::new(false, "D20 SKILLS");
                 let _ = ui.add_sized([2. * w, 21.], l).clicked();
-                for (l, w) in self
-                    .column_labels
-                    .iter()
-                    .zip([w * 2., w, w, w, w].iter())
-                {
+                for (l, w) in self.column_labels.iter().zip([w * 2., w, w, w, w].iter()) {
                     let l = SelectableLabel::new(false, &l.visible);
                     let _ = ui.add_sized([*w, 21.], l).clicked();
                 }
@@ -172,18 +168,17 @@ impl DynamicTable {
         &mut self,
         resource_kind: &str,
         ui: &mut Ui,
-        _width: f32,
+        (label_w, data_w): (f32, f32),
         kind: AttrValueKind,
     ) -> Result<Vec<(usize, usize)>, String> {
-        let w = 50.;
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 let l = SelectableLabel::new(false, resource_kind);
-                let _ = ui.add_sized([w * 1.5, 21.], l).clicked();
+                let _ = ui.add_sized([label_w, 21.], l).clicked();
                 for l in self.column_labels.iter() {
                     let l = SelectableLabel::new(false, &l.visible);
-                    let _ = ui.add_sized([w * 1., 21.], l).clicked();
+                    let _ = ui.add_sized([data_w, 21.], l).clicked();
                 }
             });
             for (r_idx, (rl, row)) in self
@@ -194,13 +189,13 @@ impl DynamicTable {
             {
                 ui.horizontal(|ui| {
                     let l = SelectableLabel::new(false, &rl.visible);
-                    let _ = ui.add_sized([w * 1.5, 21.], l).clicked();
+                    let _ = ui.add_sized([label_w, 21.], l).clicked();
 
                     for (c_idx, r) in row.iter_mut().enumerate() {
                         let old = r.to_owned();
-                        let edit = egui::TextEdit::singleline(r).desired_width(w);
+                        let edit = egui::TextEdit::singleline(r).desired_width(data_w);
 
-                        match (kind, ui.add_sized([w * 1., 21.], edit).changed()) {
+                        match (kind, ui.add_sized([data_w, 21.], edit).changed()) {
                             (AttrValueKind::Text, true) => used.push((r_idx, c_idx)),
                             (AttrValueKind::Num, true) if r.parse::<i64>().is_ok() => {
                                 used.push((r_idx, c_idx))
@@ -343,6 +338,8 @@ impl AZCharFourth {
 
 pub(super) mod main;
 pub(super) mod notes;
+pub(super) mod parts;
 pub(super) mod resource;
 pub(super) mod skill;
 pub(super) use notes::NoteOption;
+pub(super) use parts::PartOption;

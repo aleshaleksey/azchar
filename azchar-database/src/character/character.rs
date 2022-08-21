@@ -259,7 +259,7 @@ impl NewCharacter {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 /// This is used purely for creating new parts.
 pub struct InputCharacter {
     pub name: String,
@@ -430,8 +430,8 @@ pub struct CompleteCharacter {
     pub size: Option<String>,
     pub hp_total: Option<i32>,
     pub hp_current: Option<i32>,
-    pub(crate) parts: Vec<CharacterPart>,
-    pub(crate) attributes: Vec<(AttributeKey, AttributeValue)>,
+    pub parts: Vec<CharacterPart>,
+    pub attributes: Vec<(AttributeKey, AttributeValue)>,
     pub image: Option<Image>,
     pub notes: Vec<Note>,
     #[serde(skip)]
@@ -457,6 +457,10 @@ impl CompleteCharacter {
 
     pub fn parts(&self) -> &[CharacterPart] {
         &self.parts
+    }
+
+    pub fn parts_mut(&mut self) -> &mut Vec<CharacterPart> {
+        &mut self.parts
     }
 
     pub fn attributes(&self) -> &[(AttributeKey, AttributeValue)] {

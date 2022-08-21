@@ -14,11 +14,12 @@ impl AZCharFourth {
         }
         let mut reset = false;
         if !self.hidden_main_tables {
+            ui.separator();
             ui.horizontal(|ui| {
                 // Portrait or default for box.
                 let portrait = self.images.get(&char.id()).unwrap_or(&self.default_img);
                 {
-                    let ib = egui::ImageButton::new(portrait.texture_id(ctx), [128., 128.]);
+                    let ib = egui::ImageButton::new(portrait.texture_id(ctx), [136., 136.]);
                     if ib.ui(ui).clicked() {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("image", &["png", "jpg", "jpeg", "bmp"])
@@ -44,6 +45,7 @@ impl AZCharFourth {
                             println!("Failed to pick a file.");
                         }
                     }
+                    ui.separator();
                 }
                 // Set the three attribute tables.
                 ui.vertical(|ui| {
@@ -78,6 +80,7 @@ impl AZCharFourth {
                             _ => {}
                         };
                     }
+                    ui.separator();
                     {
                         let rows = &mut self.main_level_pro_table;
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
@@ -97,6 +100,7 @@ impl AZCharFourth {
                             _ => {}
                         };
                     }
+                    ui.separator();
                     {
                         let rows = &mut self.main_stat_table;
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {

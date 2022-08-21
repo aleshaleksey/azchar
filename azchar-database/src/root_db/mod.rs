@@ -38,9 +38,9 @@ pub struct LoadedDbs {
     // Connections to character sheets with the character name and connections.
     connections: FnvHashMap<(String, String), BasicConnection>,
     // This shows permitted attributes.
-    pub(crate) permitted_attrs: Vec<PermittedAttribute>,
+    pub permitted_attrs: Vec<PermittedAttribute>,
     /// This shows parts keys.
-    pub(crate) permitted_parts: Vec<PermittedPart>,
+    pub permitted_parts: Vec<PermittedPart>,
     /// Keep the config around.
     root_path: String,
 }

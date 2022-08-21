@@ -16,11 +16,12 @@ impl AZCharFourth {
             self.hidden_resource_tables = !self.hidden_resource_tables;
         }
         if !self.hidden_resource_tables {
+            ui.separator();
             ui.horizontal(|ui| {
                 match self.resources_basic.set_attr_based_resource(
                     "",
                     ui,
-                    MAIN_W / 3.,
+                    (68., 75.),
                     AttrValueKind::Text,
                 ) {
                     Err(e) => println!("Error updating basics: {:?}", e),
@@ -37,10 +38,11 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
+                ui.separator();
                 match self.resources_points.set_attr_based_resource(
                     "",
                     ui,
-                    MAIN_W / 3.,
+                    (60., 40.),
                     AttrValueKind::Num,
                 ) {
                     Err(e) => println!("Error updating basics: {:?}", e),
@@ -57,10 +59,11 @@ impl AZCharFourth {
                     }
                     _ => {}
                 }
+                ui.separator();
                 match self.resources_body_hp.set_attr_based_resource(
                     "",
                     ui,
-                    MAIN_W / 3.,
+                    (70., 40.),
                     AttrValueKind::Num,
                 ) {
                     Ok(dat) => {

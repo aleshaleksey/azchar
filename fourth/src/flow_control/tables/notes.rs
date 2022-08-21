@@ -58,14 +58,6 @@ impl NoteOption {
                         Ok::<_, String>(NoteOption::None)
                     })
                     .inner?;
-                if finish.is_existing() {
-                    let _ = egui::TextEdit::multiline(new.content.as_mut().unwrap())
-                        .frame(true)
-                        .margin(egui::Vec2::new(2., 2.))
-                        .desired_rows(20)
-                        .lock_focus(true)
-                        .cursor_at_end(true);
-                }
                 finish
             }
             _ => NoteOption::None,
@@ -92,8 +84,9 @@ impl AZCharFourth {
             self.hidden_notes = !self.hidden_notes;
         }
         if !self.hidden_notes {
+            ui.separator();
             ui.set_width(500.);
-            egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.vertical(|ui| {
                 ui.set_width(500.);
                 let new_clicked = ui.selectable_label(false, "Add New Note").clicked();
                 if self.note_window.is_none() && new_clicked {
@@ -114,7 +107,7 @@ impl AZCharFourth {
                             let id = ui.add_sized([30., 21.], id).clicked();
                             // Title.
                             let lab = egui::SelectableLabel::new(false, &n.title);
-                            let lab = ui.add(lab).clicked();
+                            let lab = ui.add_sized([300., 21.], lab).clicked();
                             // Date.
                             let date = egui::SelectableLabel::new(false, &n.date);
                             let date = ui.add(date).clicked();
