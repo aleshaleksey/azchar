@@ -15,6 +15,9 @@ impl NoteOption {
     pub(crate) fn is_none(&self) -> bool {
         matches!(self, &NoteOption::None)
     }
+    pub(crate) fn is_new(&self) -> bool {
+        matches!(self, &NoteOption::New(_))
+    }
     pub(crate) fn is_existing(&self) -> bool {
         matches!(self, &NoteOption::Existing(_))
     }
@@ -95,6 +98,8 @@ impl AZCharFourth {
                 let new_clicked = ui.selectable_label(false, "Add New Note").clicked();
                 if self.note_window.is_none() && new_clicked {
                     self.note_window = NoteOption::New(InputNote::default());
+                } else if self.note_window.is_new() && new_clicked {
+                    self.note_window = NoteOption::None;
                 }
                 if let Err(e) = self.note_window.set_and_update_new_note(char, dbs, ui) {
                     println!("Error with new note: {:?}", e);

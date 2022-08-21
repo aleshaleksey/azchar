@@ -5,7 +5,7 @@ use super::AZCharFourth;
 use azchar_database::LoadedDbs;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
-use egui::Ui;
+use egui::{SelectableLabel, Ui};
 use fnv::FnvHashMap;
 
 #[derive(Clone, Copy, Debug)]
@@ -69,9 +69,11 @@ impl DynamicTable {
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                let _ = ui.selectable_label(false, "D100 SKILLS").clicked();
+                let l = SelectableLabel::new(false, "D100 SKILLS");
+                let _ = ui.add_sized([w * 2., 21.], l).clicked();
                 for l in self.column_labels.iter() {
-                    let _ = ui.selectable_label(false, &l.visible).clicked();
+                    let l = SelectableLabel::new(false, &l.visible);
+                    let _ = ui.add_sized([w, 21.], l).clicked();
                 }
             });
             for (r_idx, (rl, row)) in self
@@ -81,7 +83,8 @@ impl DynamicTable {
                 .enumerate()
             {
                 ui.horizontal(|ui| {
-                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    let l = SelectableLabel::new(false, &rl.visible);
+                    let _ = ui.add_sized([w * 2., 21.], l).clicked();
                     // Total must be total.
                     if let (Ok(a), Ok(b)) = (row[0].parse::<i64>(), row[1].parse::<i64>()) {
                         row[2] = (a + b).to_string();
@@ -109,9 +112,15 @@ impl DynamicTable {
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                let _ = ui.selectable_label(false, "D20 SKILLS").clicked();
-                for l in self.column_labels.iter() {
-                    let _ = ui.selectable_label(false, &l.visible).clicked();
+                let l = SelectableLabel::new(false, "D20 SKILLS");
+                let _ = ui.add_sized([2. * w, 21.], l).clicked();
+                for (l, w) in self
+                    .column_labels
+                    .iter()
+                    .zip([w * 2., w, w, w, w].iter())
+                {
+                    let l = SelectableLabel::new(false, &l.visible);
+                    let _ = ui.add_sized([*w, 21.], l).clicked();
                 }
             });
             for (r_idx, (rl, row)) in self
@@ -121,8 +130,10 @@ impl DynamicTable {
                 .enumerate()
             {
                 ui.horizontal(|ui| {
-                    let _ = ui.selectable_label(false, &rl.visible).clicked();
-                    let _ = ui.selectable_label(false, &row[0]).clicked(); // GOV
+                    let l = SelectableLabel::new(false, &rl.visible);
+                    let _ = ui.add_sized([w * 2., 21.], l).clicked();
+                    let l = SelectableLabel::new(false, &row[0]); // GOV
+                    let _ = ui.add_sized([w * 2., 21.], l).clicked();
                     {
                         // BOX
                         let proficient = row[1] != "0";
@@ -140,7 +151,6 @@ impl DynamicTable {
                             row[3] = (a + b).to_string();
                         }
                     }
-                    let _ = ui.selectable_label(false, &rl.visible).clicked();
                     for (c_idx, r) in row.iter_mut().enumerate().skip(2) {
                         let old = r.to_owned();
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
@@ -162,16 +172,18 @@ impl DynamicTable {
         &mut self,
         resource_kind: &str,
         ui: &mut Ui,
-        width: f32,
+        _width: f32,
         kind: AttrValueKind,
     ) -> Result<Vec<(usize, usize)>, String> {
-        let w = width / (1. + self.column_labels.len() as f32);
+        let w = 50.;
         let mut used = Vec::new();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                let _ = ui.selectable_label(false, resource_kind).clicked();
+                let l = SelectableLabel::new(false, resource_kind);
+                let _ = ui.add_sized([w * 1.5, 21.], l).clicked();
                 for l in self.column_labels.iter() {
-                    let _ = ui.selectable_label(false, &l.visible).clicked();
+                    let l = SelectableLabel::new(false, &l.visible);
+                    let _ = ui.add_sized([w * 1., 21.], l).clicked();
                 }
             });
             for (r_idx, (rl, row)) in self
@@ -181,12 +193,14 @@ impl DynamicTable {
                 .enumerate()
             {
                 ui.horizontal(|ui| {
-                    let _ = ui.selectable_label(false, &rl.visible).clicked();
+                    let l = SelectableLabel::new(false, &rl.visible);
+                    let _ = ui.add_sized([w * 1.5, 21.], l).clicked();
+
                     for (c_idx, r) in row.iter_mut().enumerate() {
                         let old = r.to_owned();
                         let edit = egui::TextEdit::singleline(r).desired_width(w);
 
-                        match (kind, ui.add_sized([w, 21.], edit).changed()) {
+                        match (kind, ui.add_sized([w * 1., 21.], edit).changed()) {
                             (AttrValueKind::Text, true) => used.push((r_idx, c_idx)),
                             (AttrValueKind::Num, true) if r.parse::<i64>().is_ok() => {
                                 used.push((r_idx, c_idx))

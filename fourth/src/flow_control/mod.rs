@@ -23,7 +23,7 @@ const JUDGEMENT: &str = "Judgement";
 const CHARM: &str = "Charm";
 const WILL: &str = "Will";
 
-const MAIN_W: f32 = 320.;
+const MAIN_W: f32 = 460.;
 
 pub(crate) struct AZCharFourth {
     frame: Frame,
