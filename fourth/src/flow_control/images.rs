@@ -1,6 +1,5 @@
 use crate::AZCharFourth;
 
-use azchar_database::character::character::CompleteCharacter;
 use azchar_database::character::image::Image;
 use azchar_database::LoadedDbs;
 

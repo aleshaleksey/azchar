@@ -7,7 +7,6 @@ use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};
 
 use eframe;
-use eframe::egui::Widget;
 use egui::containers::Frame;
 use fnv::FnvHashMap;
 use std::path::PathBuf;
@@ -35,6 +34,7 @@ pub(crate) struct AZCharFourth {
     cfg_path: String,
     dbs: Option<LoadedDbs>,
     char_list: Vec<CharacterDbRef>,
+    char_for_deletion: Option<(String, String)>,
     new_char: Option<String>,
     hidden_char_list: bool,
     current: Option<CompleteCharacter>,
@@ -71,6 +71,7 @@ impl AZCharFourth {
             cfg_path: String::from("examples/cjfusion.toml"),
             dbs: None,
             char_list: Vec::new(),
+            char_for_deletion: None,
             new_char: None,
             hidden_char_list: true,
             hidden_main_tables: false,
@@ -193,10 +194,12 @@ impl eframe::App for AZCharFourth {
                                     };
                                 };
                                 if ui.button("Delete").clicked() {
-                                    println!("We shall pretend to delete {}", c_name);
+                                    self.char_for_deletion =
+                                        Some((c_name.to_owned(), c_uuid.to_owned()));
                                 }
                             });
                         }
+                        self.delete_dialog(ctx);
                         // Create new character.
                         ui.horizontal(|ui| {
                             match (
@@ -239,6 +242,55 @@ impl eframe::App for AZCharFourth {
                     }
                 });
             });
+    }
+}
+
+impl AZCharFourth {
+    fn delete_dialog(&mut self, ctx: &egui::Context) {
+        let cd = self.char_for_deletion.clone();
+        let char_for_deletion = &mut self.char_for_deletion;
+        let char_list = &mut self.char_list;
+        let dbs = &mut self.dbs;
+        let current_key = self
+            .current
+            .as_ref()
+            .map(|c| (c.name().to_owned(), c.uuid().to_owned()));
+        let current = &mut self.current;
+
+        if let (Some((n, u)), Some(ref mut dbs)) = (cd, dbs) {
+            egui::Area::new("part-details")
+                .default_pos(egui::pos2(32.0, 32.0))
+                .show(ctx, |ui| {
+                    ui.set_style(styles::style());
+                    self.frame.show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            ui.label(
+                                "Confirm character deletion.\nA deleted character is gone forever.",
+                            );
+                            ui.horizontal(|ui| {
+                                if ui.button("Delete!").clicked() {
+                                    match dbs.delete_character(n.to_owned(), u.to_owned()) {
+                                        Err(e) => println!("Failed to delete: {:?}", e),
+                                        Ok(_) => match dbs.list_characters() {
+                                            Err(e) => println!("Failed to delete: {:?}", e),
+                                            Ok(l) => *char_list = l,
+                                        },
+                                    };
+                                    if let Some((rn, ru)) = current_key {
+                                        if rn == n && ru == u {
+                                            *current = None;
+                                        }
+                                    }
+                                    *char_for_deletion = None;
+                                };
+                                if ui.button("No!").clicked() {
+                                    *char_for_deletion = None;
+                                };
+                            });
+                        });
+                    });
+                });
+        }
     }
 }
 

@@ -3,7 +3,6 @@ use crate::flow_control::*;
 use crate::AZCharFourth;
 
 use azchar_database::character::character::InputCharacter;
-use azchar_database::character::*;
 use azchar_database::shared::Part;
 
 type Key<'a> = (Part, Option<&'a str>);
@@ -238,7 +237,7 @@ impl AZCharFourth {
             .default_pos(egui::pos2(32.0, 32.0))
             .show(ctx, |ui| {
                 ui.set_style(styles::style());
-                crate::styles::default_frame().show(ui, |ui| {
+                self.frame.show(ui, |ui| {
                     let char = self.current.as_ref().expect("There's a character here.");
                     let key = (char.name.to_owned(), char.uuid().to_owned());
 
