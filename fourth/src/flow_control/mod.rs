@@ -197,6 +197,23 @@ impl eframe::App for AZCharFourth {
                                     self.char_for_deletion =
                                         Some((c_name.to_owned(), c_uuid.to_owned()));
                                 }
+                                // TODO: Do this properly.
+                                if ui.button("Export (JSON)").clicked() {
+                                    let dbs = self.dbs.as_mut().expect("DBS loaded");
+                                    if let Ok(char) = dbs.load_character((c_name, c_uuid)) {
+                                        let name = format!("{}-{}.json", char.name(), char.uuid());
+                                        let file = match std::fs::File::create(name) {
+                                            Ok(f) => f,
+                                            Err(e) => {
+                                                println!("Error: {:?}", e);
+                                                return;
+                                            }
+                                        };
+                                        if let Err(e) = serde_json::to_writer_pretty(file, &char) {
+                                                println!("Couldn't export character: {:?}.", e);
+                                        };
+                                    }
+                                }
                             });
                         }
                         self.delete_dialog(ctx);
