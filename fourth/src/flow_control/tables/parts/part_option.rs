@@ -21,11 +21,18 @@ fn filter_parts<'a>(dbs: &'a LoadedDbs, part: &InputCharacter) -> Vec<&'a str> {
         .collect::<Vec<_>>()
 }
 
-// use eframe::egui::Widget;
+#[derive(Debug, Clone)]
+pub(crate) struct PartKeys {
+    pub(crate) idx: usize,
+    pub(crate) id: i64,
+    pub(crate) part_type: Part,
+    pub(crate) character_type: String,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum PartOption {
     /// This is the idx of the part on the parts vector.
-    ExistingIdx(usize),
+    ExistingIdx(PartKeys),
     New(InputCharacter),
     None,
 }

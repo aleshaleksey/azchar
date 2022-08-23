@@ -342,4 +342,4 @@ pub(super) mod parts;
 pub(super) mod resource;
 pub(super) mod skill;
 pub(super) use notes::NoteOption;
-pub(super) use parts::PartOption;
+pub(super) use parts::{AttrOption, PartOption};

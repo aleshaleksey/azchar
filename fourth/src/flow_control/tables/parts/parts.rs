@@ -1,13 +1,12 @@
 use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
+use super::part_option::PartKeys;
+use super::*;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
 use azchar_database::shared::Part;
-
-const LABEL_SIZE: [f32; 2] = [200., 21.];
-const SMALL_LABEL_SIZE: [f32; 2] = [60., 21.];
 
 impl AZCharFourth {
     pub(crate) fn set_parts(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
@@ -53,8 +52,8 @@ impl AZCharFourth {
                 println!("We have a use std::sync::Mutex;problem: {:?}", e);
             };
         }
-        if let PartOption::ExistingIdx(id) = self.part_window {
-            if let Err(e) = self.display_part_details(ui, id, ctx) {
+        if let PartOption::ExistingIdx(ref keys) = self.part_window {
+            if let Err(e) = self.display_part_details(ui, keys.to_owned(), ctx) {
                 println!("Part detail error: {:?}", e);
             }
         }
@@ -128,10 +127,16 @@ impl AZCharFourth {
 
                     if self.part_window.is_none() && (name || id || w || kind) {
                         let id = p.id().unwrap_or_default();
-                        self.part_window = PartOption::ExistingIdx(i);
+                        let keys = PartKeys {
+                            idx: i,
+                            id: p.id().expect("It's been through the DB"),
+                            part_type: p.part_type(),
+                            character_type: p.character_type().to_owned(),
+                        };
+                        self.part_window = PartOption::ExistingIdx(keys);
                         let mut attr = InputAttribute::default();
                         attr.of = id;
-                        self.attr_option = Some(attr);
+                        self.attr_option = AttrOption::New(attr);
                     } else if (name || id || w) && self.part_window.is_existing() {
                         self.part_window = PartOption::None;
                     }
@@ -145,7 +150,7 @@ impl AZCharFourth {
     fn display_part_details(
         &mut self,
         _ui: &mut egui::Ui,
-        part_idx: usize,
+        p_keys: PartKeys,
         ctx: &egui::Context,
     ) -> Result<(), String> {
         egui::Area::new("part-details")
@@ -155,13 +160,6 @@ impl AZCharFourth {
                 self.frame.show(ui, |ui| {
                     // First set the parts details: NB we do not need things like speed/Weight
                     // for abilities.
-                    let part =
-                        &mut self.current.as_mut().expect("`current` is real.").parts[part_idx];
-
-                    let pid: i64 = part.id().expect("It's been through the DB.");
-                    let part_type: Part = part.part_type();
-                    let character_type = part.character_type().to_string();
-
                     ui.vertical(|ui| {
                         let dbs = self.dbs.as_mut().expect("We could not get here otherwise.");
 
@@ -171,7 +169,7 @@ impl AZCharFourth {
                         ui.horizontal(|ui| {
                             let part =
                                 &mut self.current.as_mut().expect("`current` is real.").parts
-                                    [part_idx];
+                                    [p_keys.idx];
                             // Portrait or default for box.
                             set_image(
                                 &self.default_img,
@@ -180,14 +178,14 @@ impl AZCharFourth {
                                 dbs,
                                 &mut part.image,
                                 char_key.clone(),
-                                pid,
+                                p_keys.id,
                                 &mut self.images,
                             );
 
                             ui.vertical(|ui| {
                                 // First the part name.
                                 ui.horizontal(|ui| {
-                                    let label = format!("{} name:", part_type.to_string());
+                                    let label = format!("{} name:", p_keys.part_type.to_string());
                                     let l = egui::SelectableLabel::new(false, &label);
                                     let _ = ui.add_sized(LABEL_SIZE, l).clicked();
                                     //
@@ -207,12 +205,12 @@ impl AZCharFourth {
                                     let l = egui::SelectableLabel::new(false, "Subtype:");
                                     let _ = ui.add_sized(LABEL_SIZE, l).clicked();
                                     //
-                                    let l = egui::Label::new(&character_type);
+                                    let l = egui::Label::new(&p_keys.character_type);
                                     let _ = ui.add_sized(LABEL_SIZE, l).clicked();
                                     Ok::<(), String>(())
                                 });
                                 // Abilities do not have physical attributes.
-                                if !matches!(part_type, Part::Ability) {
+                                if !matches!(p_keys.part_type, Part::Ability) {
                                     // Speed.
                                     ui.horizontal(|ui| {
                                         let l = egui::SelectableLabel::new(false, "Speed");
@@ -328,7 +326,7 @@ impl AZCharFourth {
                             {
                                 let part =
                                     &mut self.current.as_mut().expect("`current` is real.").parts
-                                        [part_idx];
+                                        [p_keys.idx];
 
                                 if let Some((k, v)) =
                                     part.attributes.iter_mut().find(|a| a.0.key() == "Blurb")
@@ -423,90 +421,9 @@ impl AZCharFourth {
                                     });
                             }
                             // End of attribute list.
-                            if let Some(ref mut new_attr) = self.attr_option {
-                                let displayed_key = new_attr
-                                    .key
-                                    .split('_')
-                                    .last()
-                                    .unwrap_or_default()
-                                    .to_owned();
-
-                                ui.horizontal(|ui| {
-                                    let part = &mut self
-                                        .current
-                                        .as_mut()
-                                        .expect("`current` is real.")
-                                        .parts[part_idx];
-                                    egui::ComboBox::from_label("")
-                                        .width(LABEL_SIZE[0])
-                                        .selected_text(displayed_key)
-                                        .show_ui(ui, |ui| {
-                                            let part_attrs = &part.attributes;
-                                            let permitted =
-                                                dbs.permitted_attrs.iter().filter(|pa| {
-                                                    part_attrs.iter().all(|x| x.0.key() != &pa.key)
-                                                        && pa
-                                                            .part_name
-                                                            .as_ref()
-                                                            .map(|x| x == &character_type)
-                                                            .unwrap_or(true)
-                                                        && pa
-                                                            .part_type
-                                                            .as_ref()
-                                                            .map(|x| *x == part_type)
-                                                            .unwrap_or(true)
-                                                });
-                                            for v in permitted {
-                                                let displayed_tail = v
-                                                    .key
-                                                    .split('_')
-                                                    .last()
-                                                    .unwrap_or_default()
-                                                    .to_owned();
-                                                ui.selectable_value(
-                                                    &mut new_attr.key,
-                                                    v.key.to_owned(),
-                                                    displayed_tail,
-                                                );
-                                            }
-                                        });
-
-                                    if let Some(p) = dbs.permitted_attrs.iter().find(|pa| {
-                                        (&pa.key == &new_attr.key)
-                                            && pa
-                                                .part_name
-                                                .as_ref()
-                                                .map(|x| x == &character_type)
-                                                .unwrap_or(true)
-                                            && pa
-                                                .part_type
-                                                .as_ref()
-                                                .map(|x| *x == part_type)
-                                                .unwrap_or(true)
-                                    }) {
-                                        new_attr.description =
-                                            Some(p.attribute_description.to_owned());
-                                        let l = egui::SelectableLabel::new(
-                                            false,
-                                            &p.attribute_description,
-                                        );
-                                        let _ = ui.add_sized(LABEL_SIZE, l).clicked();
-                                    }
-                                    if ui.button("Add Attribute").clicked() {
-                                        match dbs.create_attribute(
-                                            new_attr.to_owned(),
-                                            char_key.to_owned(),
-                                        ) {
-                                            Err(e) => println!("Couldn't add attribute: {:?}", e),
-                                            Ok(mut c) => {
-                                                c.create_attribute_map();
-                                                let char = self.current.as_mut().expect("Exists");
-                                                *char = c;
-                                            }
-                                        }
-                                    }
-                                });
-                            }
+                            let current = self.current.as_mut().expect("Definitely here.");
+                            self.attr_option
+                                .set_add_attribute_dialog(ui, current, dbs, &p_keys);
                         });
                         // End of basics and image horizontal.
                     });
