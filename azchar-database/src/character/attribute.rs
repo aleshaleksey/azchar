@@ -58,7 +58,7 @@ impl Attribute {
     }
 }
 
-#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Insertable, Serialize, Deserialize)]
 #[table_name = "attributes"]
 pub struct NewAttribute {
     pub key: String,

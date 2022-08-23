@@ -46,11 +46,11 @@ pub struct PermittedPart {
 /// This represents a permitted attribute, to be created on a new sheet.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PermittedAttribute {
-    pub(crate) key: String,
+    pub key: String,
     pub(crate) attribute_type: i32,
-    pub(crate) attribute_description: String,
-    pub(crate) part_name: Option<String>,
-    pub(crate) part_type: Option<Part>,
+    pub attribute_description: String,
+    pub part_name: Option<String>,
+    pub part_type: Option<Part>,
     pub(crate) obligatory: bool,
 }
 

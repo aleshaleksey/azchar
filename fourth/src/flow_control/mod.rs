@@ -1,7 +1,7 @@
 use self::tables::{DynamicTable, NoteOption, PartOption, Row};
 use super::styles;
 
-use azchar_database::character::attribute::AttributeKey;
+use azchar_database::character::attribute::{AttributeKey, InputAttribute};
 use azchar_database::character::character::CompleteCharacter;
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};
@@ -58,6 +58,7 @@ pub(crate) struct AZCharFourth {
     hidden_inventory: bool,
     hidden_spells: bool,
     part_window: PartOption,
+    attr_option: Option<InputAttribute>,
 }
 
 impl AZCharFourth {
@@ -84,6 +85,7 @@ impl AZCharFourth {
             hidden_notes: true,
             note_window: NoteOption::None,
             part_window: PartOption::None,
+            attr_option: None,
             current: None,
             images: FnvHashMap::default(),
             default_img,
@@ -210,7 +212,7 @@ impl eframe::App for AZCharFourth {
                                             }
                                         };
                                         if let Err(e) = serde_json::to_writer_pretty(file, &char) {
-                                                println!("Couldn't export character: {:?}.", e);
+                                            println!("Couldn't export character: {:?}.", e);
                                         };
                                     }
                                 }
