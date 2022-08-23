@@ -24,7 +24,8 @@ fn filter_parts<'a>(dbs: &'a LoadedDbs, part: &InputCharacter) -> Vec<&'a str> {
 // use eframe::egui::Widget;
 #[derive(Clone, Debug)]
 pub(crate) enum PartOption {
-    Existing(i64),
+    /// This is the idx of the part on the parts vector.
+    ExistingIdx(usize),
     New(InputCharacter),
     None,
 }
@@ -37,7 +38,7 @@ impl PartOption {
         matches!(self, &Self::New(_))
     }
     pub(crate) fn is_existing(&self) -> bool {
-        matches!(self, &Self::Existing(_))
+        matches!(self, &Self::ExistingIdx(_))
     }
     pub(super) fn set_and_update_new_part(
         &mut self,
