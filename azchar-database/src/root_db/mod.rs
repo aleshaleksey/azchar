@@ -53,6 +53,9 @@ impl LoadedDbs {
 
     /// Load databases from a custom path.
     pub fn custom(path: &str) -> Result<Self, String> {
+        if !std::path::Path::exists(&PathBuf::from(path)) {
+            return Err(format!("DB \"{}\" does not exist.", path));
+        }
         let mut root_db = BasicConnection::new(path);
         let connections = CharacterDbRef::get_all(root_db.connect()?)?
             .into_iter()

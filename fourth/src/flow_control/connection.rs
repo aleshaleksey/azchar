@@ -1,4 +1,4 @@
-use super::tables::{DynamicTable, Label, Row};
+use super::tables::{DynamicTable, Label, Row, AttrValueKind};
 use super::*;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
@@ -174,12 +174,13 @@ impl AZCharFourth {
         ];
 
         let main_id = loaded.id().expect("A databse character has an id");
+        let char_proficiency;
         {
             let level = get_attr_val_num(attribute_map, LEVEL, main_id);
-            let proficiency = get_attr_val_num(attribute_map, PROFICIENCY_CAMEL, main_id);
+            char_proficiency = get_attr_val_num(attribute_map, PROFICIENCY_CAMEL, main_id);
             self.main_level_pro_table = [
                 Row::with_label("Level", &level.to_string(), LEVEL),
-                Row::with_label("Proficiency", &proficiency.to_string(), PROFICIENCY_CAMEL),
+                Row::with_label("Proficiency", &char_proficiency.to_string(), PROFICIENCY_CAMEL),
             ];
         }
         {
@@ -205,13 +206,13 @@ impl AZCharFourth {
         {
             let mut d100_table = DynamicTable::default();
             let column_labels = vec![
-                Label::new("Prof", PROFICIENCY),
-                Label::new(BONUS_CAMEL, BONUS),
-                Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
+                Label::new("Prof", PROFICIENCY, AttrValueKind::Num),
+                Label::new(BONUS_CAMEL, BONUS, AttrValueKind::Num),
+                Label::new(TOTAL_CAMEL, TOTAL_CAMEL, AttrValueKind::Num),
             ];
             d100_table.add_column_labels(column_labels);
             for skill in D100_SKILLS.iter() {
-                let label = Label::new(skill, skill);
+                let label = Label::new(skill, skill, AttrValueKind::Num);
 
                 let key = format!("d100_skill_{}_proficiency", skill);
                 let proficiency = get_attr_val_num_o(attribute_map, key, main_id);
@@ -227,22 +228,26 @@ impl AZCharFourth {
         {
             let mut d20_table = DynamicTable::default();
             let column_labels = vec![
-                Label::new(GOV_CAMEL, GOV),
-                Label::new("Prof", PROFICIENCY),
-                Label::new(BONUS_CAMEL, BONUS),
-                Label::new(TOTAL_CAMEL, TOTAL_CAMEL),
+                Label::new(GOV_CAMEL, GOV, AttrValueKind::Text),
+                Label::new("Prof", PROFICIENCY, AttrValueKind::Text),
+                Label::new(BONUS_CAMEL, BONUS, AttrValueKind::Num),
+                Label::new(TOTAL_CAMEL, TOTAL_CAMEL, AttrValueKind::Num),
             ];
             d20_table.add_column_labels(column_labels);
             for skill in D20_SKILLS.iter() {
-                let label = Label::new(skill, skill);
+                let label = Label::new(skill, skill, AttrValueKind::Num);
 
                 let key = format!("d20_skill_{}_proficiency", skill);
-                let proficiency = get_attr_val_num_o(attribute_map, key, main_id);
+                let proficiency = get_attr_val_str_o(attribute_map, key, main_id);
                 let key = format!("d20_skill_{}_bonus", skill);
                 let bonus = get_attr_val_num_o(attribute_map, key, main_id);
                 let key = format!("d20_skill_{}_governed_by", skill);
                 let gov = get_attr_val_str_o(attribute_map, key, main_id);
-                let total = (bonus + proficiency).to_string();
+                let p = match proficiency.as_ref() {
+                    "Yes" => char_proficiency,
+                    _ => 0,
+                };
+                let total = (bonus + p).to_string();
 
                 let rows = vec![gov, proficiency.to_string(), bonus.to_string(), total];
                 d20_table.add_row_with_label(label, rows);
@@ -251,10 +256,10 @@ impl AZCharFourth {
         }
         {
             let mut resource_basic = DynamicTable::default();
-            resource_basic.add_column_labels(vec![Label::new("Values", "")]);
+            resource_basic.add_column_labels(vec![Label::new("Values", "", AttrValueKind::Text)]);
 
             for basic in BASICS.iter() {
-                let label = Label::new(basic, basic);
+                let label = Label::new(basic, basic, AttrValueKind::Text);
                 let needle = basic.to_owned().to_owned();
                 let val = get_attr_val_str_o(attribute_map, needle, main_id);
                 resource_basic.add_row_with_label(label, vec![val])
@@ -264,12 +269,12 @@ impl AZCharFourth {
         {
             let mut resource_points = DynamicTable::default();
             let column_labels = vec![
-                Label::new(CURRENT_CAMEL, CURRENT),
-                Label::new(MAXIMUM_CAMEL, MAXIMUM),
+                Label::new(CURRENT_CAMEL, CURRENT, AttrValueKind::Num),
+                Label::new(MAXIMUM_CAMEL, MAXIMUM, AttrValueKind::Num),
             ];
             resource_points.add_column_labels(column_labels);
             for (label, key, dual) in POINTS.iter() {
-                let l = Label::new(label, key);
+                let l = Label::new(label, key, AttrValueKind::Num);
                 if *dual {
                     let needle = format!("{}_current", key);
                     let cur = get_attr_val_num_o(attribute_map, needle, main_id);
@@ -290,12 +295,12 @@ impl AZCharFourth {
             let mut resource_body_hp = DynamicTable::default();
             let c_labels = PART_HPS
                 .iter()
-                .map(|(l, k)| Label::new(l, k))
+                .map(|(l, k)| Label::new(l, k, AttrValueKind::Num))
                 .collect::<Vec<_>>();
             resource_body_hp.add_column_labels(c_labels);
 
             for part in BODY_PARTS {
-                let row_label = Label::new(part, "");
+                let row_label = Label::new(part, "", AttrValueKind::Num);
 
                 let part_id = match find_part(&loaded, &row_label.visible) {
                     Some(ref part) => part.id().expect("This comes from the DB"),

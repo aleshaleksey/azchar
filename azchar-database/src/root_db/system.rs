@@ -18,6 +18,7 @@ table!(
         attribute_type -> Integer,
         attribute_description -> Text,
         part_name -> Nullable<Text>,
+        default_value -> Nullable<Text>,
         part_type -> Nullable<Integer>,
         obligatory -> Bool,
     }
@@ -50,6 +51,7 @@ pub struct PermittedAttribute {
     pub(crate) attribute_type: i32,
     pub attribute_description: String,
     pub part_name: Option<String>,
+    pub default_value: Option<String>,
     pub part_type: Option<Part>,
     pub(crate) obligatory: bool,
 }
@@ -57,9 +59,9 @@ pub struct PermittedAttribute {
 impl<DB, ST> Queryable<ST, DB> for PermittedAttribute
 where
     DB: Backend,
-    (String, i32, String, Option<String>, Option<i32>, bool): FromSqlRow<ST, DB>,
+    (String, i32, String, Option<String>, Option<String>, Option<i32>, bool): FromSqlRow<ST, DB>,
 {
-    type Row = (String, i32, String, Option<String>, Option<i32>, bool);
+    type Row = (String, i32, String, Option<String>, Option<String>, Option<i32>, bool);
 
     fn build(row: Self::Row) -> Self {
         PermittedAttribute {
@@ -67,8 +69,9 @@ where
             attribute_type: row.1,
             attribute_description: row.2,
             part_name: row.3,
-            part_type: row.4.map(Into::into),
-            obligatory: row.5,
+            default_value: row.4,
+            part_type: row.5.map(Into::into),
+            obligatory: row.6,
         }
     }
 }
@@ -194,6 +197,7 @@ pub(crate) struct NewPermittedAttribute {
     pub(crate) attribute_type: i32,
     pub(crate) attribute_description: String,
     pub(crate) part_name: Option<String>,
+    pub(crate) default_value: Option<String>,
     pub(crate) part_type: Option<Part>,
     pub(crate) obligatory: bool,
 }

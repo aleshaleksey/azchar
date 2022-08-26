@@ -28,7 +28,6 @@ impl AZCharFourth {
                     Ok(dat) if !dat.is_empty() => {
                         let pack = CharIdPack::from_complete(char);
                         Self::update_attr_table(
-                            AttrValueKind::Text,
                             pack,
                             dat,
                             &mut self.dbs,
@@ -49,7 +48,6 @@ impl AZCharFourth {
                     Ok(dat) if !dat.is_empty() => {
                         let pack = CharIdPack::from_complete(char);
                         Self::update_attr_table(
-                            AttrValueKind::Num,
                             pack,
                             dat,
                             &mut self.dbs,
@@ -80,7 +78,6 @@ impl AZCharFourth {
                                     println!("Part to update: {:?}", c);
                                     let pack = CharIdPack::from_part(char, c);
                                     Self::update_attr_table(
-                                        AttrValueKind::Num,
                                         pack,
                                         d,
                                         &mut self.dbs,

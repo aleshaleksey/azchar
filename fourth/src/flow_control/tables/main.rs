@@ -72,10 +72,10 @@ impl AZCharFourth {
                                 if let Err(e) = res {
                                     println!("Update level/proficiency: {:?}", e);
                                 } else {
-                                    // This is a special case for this system.
-                                    if let Err(e) = update_all_proficiencies(&mut self.dbs, char) {
-                                        println!("Can't update all: {:?}", e);
-                                    };
+                                    // // This is a special case for this system.
+                                    // if let Err(e) = update_all_proficiencies(&mut self.dbs, char) {
+                                    //     println!("Can't update all: {:?}", e);
+                                    // };
                                     reset = true;
                                 }
                             }
@@ -111,27 +111,4 @@ impl AZCharFourth {
             }
         }
     }
-}
-
-// This is needed because we have a stupid ownership model.
-fn update_all_proficiencies(
-    dbs: &mut Option<LoadedDbs>,
-    char: &mut CompleteCharacter,
-) -> Result<(), String> {
-    if let Some(ref mut dbs) = dbs {
-        let char_key = (char.name.to_owned(), char.uuid().to_owned());
-        let char_id = char.id().unwrap_or_default();
-        let map = char.attribute_map.as_mut().expect("Always set.");
-        let proficiency = map
-            .get(&AttributeKey::new(PROFICIENCY.to_string(), char_id))
-            .map(|v| v.value_num())
-            .flatten();
-        for (k, v) in map.iter_mut() {
-            if k.key().contains("_proficiency") && k.key().contains("_skill_") {
-                v.update_value_num_by_ref(proficiency);
-                dbs.create_update_attribute(k.to_owned(), v.to_owned(), char_key.to_owned())?;
-            }
-        }
-    }
-    Ok(())
 }

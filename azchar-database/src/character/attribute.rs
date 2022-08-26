@@ -80,10 +80,19 @@ impl NewAttribute {
     }
 
     pub(crate) fn from_permitted(ch_id: i64, permitted: &PermittedAttribute) -> Self {
+        let (value_text, value_num) = if let Some(ref val) = permitted.default_value {
+            let n = match val.parse::<i64>() {
+                Ok(n) => Some(n),
+                Err(_) => None,
+            };
+            (Some(val.to_owned()), n)
+        } else {
+            (None, None)
+        };
         NewAttribute {
             key: permitted.key.to_owned(),
-            value_num: None,
-            value_text: None,
+            value_num,
+            value_text,
             description: Some(permitted.attribute_description.to_owned()),
             of: ch_id,
         }

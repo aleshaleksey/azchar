@@ -11,6 +11,7 @@ create table permitted_attributes(
 	attribute_type INTEGER NOT NULL,
 	attribute_description TEXT NOT NULL,
 	part_name TEXT,
+	default_value TEXT,
 	part_type INTEGER,
 	obligatory BOOLEAN NOT NULL,
 	PRIMARY KEY(key, part_name, part_type)

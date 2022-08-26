@@ -44,6 +44,7 @@ pub(super) struct PermittedAttribute {
     part_name: Option<String>,
     part_type: Option<Part>,
     obligatory: bool,
+    default: Option<String>,
 }
 
 impl From<PermittedAttribute> for NewPermittedAttribute {
@@ -52,6 +53,7 @@ impl From<PermittedAttribute> for NewPermittedAttribute {
             key: a.key,
             attribute_type: a.attribute_type,
             attribute_description: a.attribute_description,
+            default_value: a.default,
             part_name: a.part_name,
             part_type: a.part_type,
             obligatory: a.obligatory,

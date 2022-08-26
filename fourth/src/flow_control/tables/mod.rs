@@ -14,6 +14,12 @@ pub(super) enum AttrValueKind {
     Text,
 }
 
+impl Default for AttrValueKind {
+    fn default() -> Self {
+        Self::Num
+    }
+}
+
 #[derive(Debug, Default)]
 pub(super) struct Row {
     pub(super) title: String,
@@ -25,13 +31,15 @@ pub(super) struct Row {
 pub(super) struct Label {
     pub(super) visible: String,
     pub(super) key: String,
+    pub(super) kind: AttrValueKind,
 }
 
 impl Label {
-    pub(super) fn new(visible: &str, key: &str) -> Self {
+    pub(super) fn new(visible: &str, key: &str, kind: AttrValueKind) -> Self {
         Self {
             visible: visible.to_owned(),
             key: key.to_owned(),
+            kind,
         }
     }
 }
@@ -132,19 +140,23 @@ impl DynamicTable {
                     let _ = ui.add_sized([w * 2., 21.], l).clicked();
                     {
                         // BOX
-                        let proficient = row[1] != "0";
+                        let proficient = row[1] == "Yes";
                         let edit = egui::RadioButton::new(proficient, "");
                         let changed = ui.add_sized([w, 21.], edit).clicked();
                         if changed && proficient {
-                            row[1] = "0".to_string();
+                            row[1] = "No".to_string();
                             used.push((r_idx, 1));
                         } else if changed {
-                            row[1] = proficiency.unwrap_or_default().to_string();
+                            row[1] = "Yes".to_string();
                             used.push((r_idx, 1));
                         }
                         // Total must be total. TODO: stat.
-                        if let (Ok(a), Ok(b)) = (row[1].parse::<i64>(), row[2].parse::<i64>()) {
-                            row[3] = (a + b).to_string();
+                        if let Ok(b) = row[2].parse::<i64>() {
+                            let p = match row[1].as_ref() {
+                                "Yes" => proficiency.unwrap_or_default(),
+                                _ => 0,
+                            };
+                            row[3] = (p + b).to_string();
                         }
                     }
                     for (c_idx, r) in row.iter_mut().enumerate().skip(2) {
@@ -267,18 +279,23 @@ impl AZCharFourth {
         for (r_idx, c_idx) in references {
             let attr_label = &table.column_labels[c_idx].key;
             let skill_label = &table.row_labels[r_idx].key;
+            let kind = &table.column_labels[c_idx].kind;
 
             let key = format!("{}_skill_{}_{}", skill_kind, skill_label, attr_label);
             let of = char.id.expect("This character has been through the DB.");
-            // If we have a valid value in this cell, we work, if not we skip.
-            let val_n = match table.cells[r_idx][c_idx].parse() {
-                Ok(v) => Some(v),
-                Err(_) => continue,
-            };
             let key = AttributeKey::new(key, of);
 
             if let Some(val) = attributes.get_mut(&key) {
-                val.update_value_num_by_ref(val_n);
+                let tv = &table.cells[r_idx][c_idx];
+                match kind {
+                    // If we have a valid value in this cell, we work, if not we skip.
+                    AttrValueKind::Num => match tv.parse::<i64>() {
+                        Ok(v) => val.update_value_num_by_ref(Some(v)),
+                        Err(_) => continue,
+                    }
+                    // Anything is good for text.
+                    AttrValueKind::Text => val.update_value_text_by_ref(Some(tv.to_string())),
+                };
                 let identifier = (char.name.to_owned(), char.uuid.to_owned());
                 match dbs.create_update_attribute(key, val.to_owned(), identifier) {
                     Err(e) => println!("Couldn't update attribute: {:?}", e),
@@ -289,7 +306,6 @@ impl AZCharFourth {
     }
 
     fn update_attr_table(
-        kind: AttrValueKind,
         char: CharIdPack,
         references: Vec<(usize, usize)>,
         dbs: &mut Option<LoadedDbs>,
@@ -303,6 +319,7 @@ impl AZCharFourth {
         for (r_idx, c_idx) in references {
             let suffix = &table.column_labels[c_idx].key;
             let prefix = &table.row_labels[r_idx].key;
+            let kind = table.column_labels[c_idx].kind;
 
             let suffix = match (prefix.is_empty(), suffix.is_empty()) {
                 (_, true) => String::new(),
@@ -313,7 +330,6 @@ impl AZCharFourth {
             let key = format!("{}{}", prefix, suffix);
             let of = char.id.expect("This character has been through the DB.");
             let key = AttributeKey::new(key, of);
-            println!("Key {:?}", key);
 
             if let Some(val) = attributes.get_mut(&key) {
                 let v = &table.cells[r_idx][c_idx];
