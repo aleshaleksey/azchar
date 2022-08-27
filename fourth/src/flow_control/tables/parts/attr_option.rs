@@ -19,7 +19,7 @@ impl AttrOption {
         current: &mut CompleteCharacter,
         dbs: &mut LoadedDbs,
         p_keys: &PartKeys,
-    ) {
+    ) -> Result<(), String> {
         if let AttrOption::New(ref mut new_attr) = self {
             let displayed_key = new_attr
                 .key
@@ -79,14 +79,16 @@ impl AttrOption {
                 if ui.button("Add Attribute").clicked() {
                     let char_key = (current.name().to_owned(), current.uuid().to_owned());
                     match dbs.create_attribute(new_attr.to_owned(), char_key) {
-                        Err(e) => println!("Couldn't add attribute: {:?}", e),
+                        Err(e) => return Err(format!("Couldn't add attribute: {:?}", e)),
                         Ok(mut c) => {
                             c.create_attribute_map();
                             *current = c;
                         }
                     }
                 }
-            });
+                Ok(())
+            }).inner?;
         }
+        Ok(())
     }
 }

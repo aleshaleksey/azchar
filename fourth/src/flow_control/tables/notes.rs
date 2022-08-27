@@ -1,5 +1,6 @@
 use crate::flow_control::*;
 use crate::AZCharFourth;
+use crate::flow_control::error_dialog;
 
 use azchar_database::character::*;
 
@@ -47,7 +48,7 @@ impl NoteOption {
                                 char.uuid().to_owned(),
                                 new.to_owned(),
                             ) {
-                                Err(e) => println!("Error updating note: {:?}", e),
+                                Err(e) => return Err(e),
                                 Ok(n) => {
                                     let new = NoteOption::Existing(n.id);
                                     char.notes.push(n);
@@ -95,7 +96,7 @@ impl AZCharFourth {
                     self.note_window = NoteOption::None;
                 }
                 if let Err(e) = self.note_window.set_and_update_new_note(char, dbs, ui) {
-                    println!("Error with new note: {:?}", e);
+                    error_dialog::fill(e, &mut self.error_dialog);
                 }
                 for i in (0..char.notes.len()).rev() {
                     let row = ui
@@ -142,7 +143,7 @@ impl AZCharFourth {
                                 if let Err(e) =
                                     dbs.update_note(name.to_owned(), uuid.to_owned(), n.to_owned())
                                 {
-                                    println!("Error updating note: {:?}", e);
+                                    error_dialog::fill(e, &mut self.error_dialog);
                                 }
                             }
                         }

@@ -288,7 +288,7 @@ impl AZCharFourth {
                         .desired_width(width)
                         .interactive(v.active);
                     match (v.kind, ui.add_sized([width, 21.], edit).changed()) {
-                        (AttrValueKind::Text, true) => used= true,
+                        (AttrValueKind::Text, true) => used = true,
                         (AttrValueKind::Num, true) if v.val.parse::<i64>().is_ok() => {
                             used = true;
                         }
@@ -316,10 +316,10 @@ impl AZCharFourth {
         skill_kind: &str,
         attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
         table: &mut Box<DynamicTable>,
-    ) {
+    ) -> Result<(), String> {
         let dbs = match dbs.as_mut() {
             Some(d) => d,
-            None => return,
+            None => return Ok(()),
         };
         for (r_idx, c_idx) in references {
             let attr_label = &table.column_labels[c_idx].key;
@@ -343,11 +343,12 @@ impl AZCharFourth {
                 };
                 let identifier = (char.name.to_owned(), char.uuid.to_owned());
                 match dbs.create_update_attribute(key.to_owned(), val.to_owned(), identifier) {
-                    Err(e) => println!("Couldn't update attribute: {:?}", e),
+                    Err(e) => return Err(format!("Couldn't update attribute: {:?}", e)),
                     Ok(_) => println!("Updated: {:?}", key),
                 }
             }
         }
+        Ok(())
     }
 
     fn update_attr_table(
@@ -356,10 +357,10 @@ impl AZCharFourth {
         dbs: &mut Option<LoadedDbs>,
         attributes: &mut FnvHashMap<AttributeKey, AttributeValue>,
         table: &mut Box<DynamicTable>,
-    ) {
+    ) -> Result<(), String> {
         let dbs = match dbs.as_mut() {
             Some(d) => d,
-            None => return,
+            None => return Ok(()),
         };
         for (r_idx, c_idx) in references {
             let suffix = &table.column_labels[c_idx].key;
@@ -389,11 +390,12 @@ impl AZCharFourth {
                 let identifier = (char.name.to_owned(), char.uuid.to_owned());
 
                 match dbs.create_update_attribute(key, val.to_owned(), identifier) {
-                    Err(e) => println!("Couldn't update attribute: {:?}", e),
+                    Err(e) => return Err(format!("Couldn't create attribute {:?}", e)),
                     Ok(r) => println!("Updated: {:?}", r),
                 }
             }
         }
+        Ok(())
     }
 }
 

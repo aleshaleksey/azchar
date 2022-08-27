@@ -59,6 +59,7 @@ pub(crate) struct AZCharFourth {
     hidden_spells: bool,
     part_window: PartOption,
     attr_option: AttrOption,
+    error_dialog: Option<String>,
 }
 
 impl AZCharFourth {
@@ -116,6 +117,7 @@ impl AZCharFourth {
             resources_basic: Box::new(DynamicTable::default()),
             resources_points: Box::new(DynamicTable::default()),
             resources_body_hp: Box::new(DynamicTable::default()),
+            error_dialog: None,
         }
     }
 }
@@ -154,7 +156,7 @@ impl eframe::App for AZCharFourth {
                         if ui.button("Create System").clicked() {
                             match get_sys_config(&self.cfg_path, &self.db_path) {
                                 Ok(_) => {}
-                                Err(e) => println!("Couldn't create system: {:?}", e),
+                                Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
                             };
                         }
                     });
@@ -164,7 +166,7 @@ impl eframe::App for AZCharFourth {
                         ui.text_edit_singleline(&mut self.db_path);
                         if ui.button("Load System").clicked() {
                             match self.load_system() {
-                                Err(e) => println!("Could not connect: {:?}", e),
+                                Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
                                 Ok(_) => self.hidden_char_list = false,
                             };
                         };
@@ -195,7 +197,7 @@ impl eframe::App for AZCharFourth {
                                 if ui.button(format!("{} ({})", c_name, c_uuid)).clicked() {
                                     match self.load_character(&c_name, &c_uuid) {
                                         Ok(_) => self.hidden_char_list = true,
-                                        Err(err) => println!("Could not load character: {}", err),
+                                        Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
                                     };
                                 };
                                 if ui.button("Delete").clicked() {
@@ -210,12 +212,12 @@ impl eframe::App for AZCharFourth {
                                         let file = match std::fs::File::create(name) {
                                             Ok(f) => f,
                                             Err(e) => {
-                                                println!("Error: {:?}", e);
+                                                 error_dialog::fill(e, &mut self.error_dialog);
                                                 return;
                                             }
                                         };
                                         if let Err(e) = serde_json::to_writer_pretty(file, &char) {
-                                            println!("Couldn't export character: {:?}.", e);
+                                             error_dialog::fill(e, &mut self.error_dialog);
                                         };
                                     }
                                 }
@@ -231,7 +233,7 @@ impl eframe::App for AZCharFourth {
                                 (&mut Some(ref new_name), true) => {
                                     match create_new_char(new_name, &mut self.dbs) {
                                         Ok(chars) => self.char_list = chars,
-                                        Err(e) => println!("Erro creating character: {:?}", e),
+                                        Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                                     };
                                     self.new_char = None;
                                 }
@@ -262,6 +264,7 @@ impl eframe::App for AZCharFourth {
                         self.set_notes(ui, ctx);
                         separator(ui);
                     }
+                    self.set_error_dialog(ctx);
                 });
             });
     }
@@ -292,9 +295,9 @@ impl AZCharFourth {
                             ui.horizontal(|ui| {
                                 if ui.button("Delete!").clicked() {
                                     match dbs.delete_character(n.to_owned(), u.to_owned()) {
-                                        Err(e) => println!("Failed to delete: {:?}", e),
+                                        Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
                                         Ok(_) => match dbs.list_characters() {
-                                            Err(e) => println!("Failed to delete: {:?}", e),
+                                            Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
                                             Ok(l) => *char_list = l,
                                         },
                                     };
@@ -317,5 +320,6 @@ impl AZCharFourth {
 }
 
 mod connection;
+mod error_dialog;
 mod images;
 mod tables;

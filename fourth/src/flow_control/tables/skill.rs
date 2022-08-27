@@ -1,5 +1,6 @@
 use crate::flow_control::connection::CharIdPack;
 use crate::flow_control::*;
+use crate::flow_control::error_dialog;
 use crate::AZCharFourth;
 // use eframe::egui::Widget;
 
@@ -28,31 +29,35 @@ impl AZCharFourth {
                     .d20_skill_table
                     .d20_skill_table(proficiency, ui, MAIN_W / 2.)
                 {
-                    Err(e) => println!("Error d20-skill table: {:?}", e),
+                    Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
-                        Self::update_skill_table(
+                        if let Err(e) = Self::update_skill_table(
                             CharIdPack::from_complete(char),
                             dat,
                             &mut self.dbs,
                             "d20",
                             char.attribute_map.as_mut().expect("Always set."),
                             &mut self.d20_skill_table,
-                        );
+                        ) {
+                            error_dialog::fill(e, &mut self.error_dialog);
+                        };
                     }
                     _ => {}
                 }
                 separator(ui);
                 match self.d100_skill_table.d100_skill_table(ui, MAIN_W / 2.) {
-                    Err(e) => println!("Error d100-skill table: {:?}", e),
+                    Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
-                        Self::update_skill_table(
+                        if let Err(e) = Self::update_skill_table(
                             CharIdPack::from_complete(char),
                             dat,
                             &mut self.dbs,
                             "d100",
                             char.attribute_map.as_mut().expect("Always set."),
                             &mut self.d100_skill_table,
-                        );
+                        ) {
+                            error_dialog::fill(e, &mut self.error_dialog);
+                        };
                     }
                     _ => {}
                 }

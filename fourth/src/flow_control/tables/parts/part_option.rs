@@ -86,19 +86,19 @@ impl PartOption {
                                 new.to_owned(),
                                 (char.name().to_owned(), char.uuid().to_owned()),
                             ) {
-                                Err(e) => println!("Error updating note: {:?}", e),
+                                Err(e) => return Err(format!("{:?}", e)),
                                 Ok(updated_char) => {
                                     *char = updated_char;
                                     char.create_attribute_map();
-                                    return true;
+                                    return Ok(true);
                                 }
                             }
                         };
-                        false
+                        Ok(false)
                     })
                 })
                 .inner
-                .inner
+                .inner?
             }
             _ => false,
         };

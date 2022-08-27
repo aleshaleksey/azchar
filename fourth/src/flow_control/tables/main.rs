@@ -18,7 +18,7 @@ impl AZCharFourth {
             let cid = char.id().expect("It's been through the DB.");
             ui.horizontal(|ui| {
                 // Portrait or default for box.
-                set_image(
+                if let Err(e) = set_image(
                     &self.default_img,
                     ctx,
                     ui,
@@ -27,13 +27,15 @@ impl AZCharFourth {
                     key,
                     cid,
                     &mut self.images,
-                );
+                ) {
+                    error_dialog::fill(e, &mut self.error_dialog);
+                };
                 // Set the three attribute tables.
                 ui.vertical(|ui| {
                     {
                         let rows = &mut self.main_attr_table;
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
-                            Err(e) => println!("Error: {}", e),
+                            Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                             Ok(true) => {
                                 char.name = rows[0].val.to_owned();
                                 if let Ok(n) = rows[1].val.parse() {
@@ -47,7 +49,8 @@ impl AZCharFourth {
 
                                 let res = AZCharFourth::update_main(&mut self.dbs, part);
                                 if let Err(e) = res {
-                                    println!("Couldn't set image: {:?}", e);
+                                    let e = format!("Couldn't set image: {:?}", e);
+                                    error_dialog::fill(e, &mut self.error_dialog);
                                 } else {
                                     reset = true;
                                 }
@@ -63,7 +66,8 @@ impl AZCharFourth {
                             Ok(true) => {
                                 let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
                                 if let Err(e) = res {
-                                    println!("Update level/proficiency: {:?}", e);
+                                    let e = format!("Update level/proficiency: {:?}", e);
+                                    error_dialog::fill(e, &mut self.error_dialog);
                                 } else {
                                     reset = true;
                                 }
@@ -77,7 +81,8 @@ impl AZCharFourth {
                                 let part = char.to_bare_part();
                                 let res = AZCharFourth::update_main(&mut self.dbs, part);
                                 if let Err(e) = res {
-                                    println!("Couldn't set image: {:?}", e);
+                                    let e = format!("Couldn't set image: {:?}", e);
+                                    error_dialog::fill(e, &mut self.error_dialog);
                                 } else {
                                     reset = true;
                                 }
@@ -93,7 +98,8 @@ impl AZCharFourth {
                             Ok(true) => {
                                 let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
                                 if let Err(e) = res {
-                                    println!("Couldn't set image: {:?}", e);
+                                    let e = format!("Couldn't set image: {:?}", e);
+                                    error_dialog::fill(e, &mut self.error_dialog);
                                 } else {
                                     reset = true;
                                 }

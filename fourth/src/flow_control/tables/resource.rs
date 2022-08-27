@@ -1,6 +1,7 @@
 use crate::flow_control::connection::find_part;
 use crate::flow_control::tables::{AttrValueKind, CharIdPack};
 use crate::flow_control::*;
+use crate::flow_control::error_dialog;
 use crate::AZCharFourth;
 
 // use eframe::egui::Widget;
@@ -24,16 +25,18 @@ impl AZCharFourth {
                     (68., 75.),
                     AttrValueKind::Text,
                 ) {
-                    Err(e) => println!("Error updating basics: {:?}", e),
+                    Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
                         let pack = CharIdPack::from_complete(char);
-                        Self::update_attr_table(
+                        if let Err(e) = Self::update_attr_table(
                             pack,
                             dat,
                             &mut self.dbs,
                             char.attribute_map.as_mut().expect("Always set."),
                             &mut self.resources_basic,
-                        );
+                        ) {
+                            error_dialog::fill(e, &mut self.error_dialog);
+                        };
                     }
                     _ => {}
                 }
@@ -44,16 +47,18 @@ impl AZCharFourth {
                     (60., 40.),
                     AttrValueKind::Num,
                 ) {
-                    Err(e) => println!("Error updating basics: {:?}", e),
+                    Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
                         let pack = CharIdPack::from_complete(char);
-                        Self::update_attr_table(
+                        if let Err(e) = Self::update_attr_table(
                             pack,
                             dat,
                             &mut self.dbs,
                             char.attribute_map.as_mut().expect("Always set."),
                             &mut self.resources_points,
-                        );
+                        ) {
+                            error_dialog::fill(e, &mut self.error_dialog);
+                        };
                     }
                     _ => {}
                 }
@@ -75,20 +80,21 @@ impl AZCharFourth {
                                 .collect::<Vec<_>>();
                             if !d.is_empty() {
                                 if let Some(c) = find_part(char, key) {
-                                    println!("Part to update: {:?}", c);
                                     let pack = CharIdPack::from_part(char, c);
-                                    Self::update_attr_table(
+                                    if let Err(e) = Self::update_attr_table(
                                         pack,
                                         d,
                                         &mut self.dbs,
                                         char.attribute_map.as_mut().expect("Always set."),
                                         &mut self.resources_body_hp,
-                                    );
+                                    ) {
+                                        error_dialog::fill(e, &mut self.error_dialog);
+                                    };
                                 }
                             }
                         }
                     }
-                    Err(e) => println!("Error setting resources: {:?}", e),
+                    Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                 }
             });
         }

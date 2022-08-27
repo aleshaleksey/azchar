@@ -16,7 +16,7 @@ pub(crate) fn set_image(
     (char_name, char_uuid): (String, String),
     part_id: i64,
     images: &mut FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
-) {
+) -> Result<(), String> {
     let portrait = images.get(&Some(part_id)).unwrap_or(default_image);
     let ib = egui::ImageButton::new(portrait.texture_id(ctx), [136., 136.]);
     if ib.ui(ui).clicked() {
@@ -29,11 +29,12 @@ pub(crate) fn set_image(
                 dbs, char_image, images, char_name, char_uuid, part_id, path,
             );
             if let Err(e) = res {
-                println!("Couldn't set image: {:?}", e);
+                return Err(format!("Couldn't set image: {:?}", e));
             }
         } else {
-            println!("Failed to pick a file.");
+            return Err("Failed to pick a file.".to_string());
         }
     }
     super::separator(ui);
+    Ok(())
 }
