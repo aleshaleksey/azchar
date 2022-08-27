@@ -9,7 +9,7 @@ use egui::{SelectableLabel, Ui};
 use fnv::FnvHashMap;
 
 fn default_stat_transform(raw: i64) -> i64 {
-    (raw - 10) / 2
+    raw / 2 - 5
 }
 
 #[derive(Clone, Copy, Debug)]
