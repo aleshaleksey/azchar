@@ -1,6 +1,6 @@
+use crate::flow_control::error_dialog;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-use crate::flow_control::error_dialog;
 
 use azchar_database::character::*;
 

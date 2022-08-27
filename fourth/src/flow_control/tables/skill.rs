@@ -1,6 +1,6 @@
 use crate::flow_control::connection::CharIdPack;
-use crate::flow_control::*;
 use crate::flow_control::error_dialog;
+use crate::flow_control::*;
 use crate::AZCharFourth;
 // use eframe::egui::Widget;
 
@@ -27,7 +27,7 @@ impl AZCharFourth {
                     .unwrap_or_default();
                 match self
                     .d20_skill_table
-                    .d20_skill_table(proficiency, ui, MAIN_W / 2.)
+                    .d20_skill_table(char, proficiency, ui, MAIN_W / 2.)
                 {
                     Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {

@@ -1,9 +1,9 @@
 use super::part_option::PartKeys;
 use super::*;
+use crate::flow_control::error_dialog;
 use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-use crate::flow_control::error_dialog;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
@@ -227,7 +227,8 @@ impl AZCharFourth {
                                                 part.to_owned(),
                                                 char_key.to_owned(),
                                             ) {
-                                                let e = format!("Key: {:?}, Error:{:?}", char_key, e);
+                                                let e =
+                                                    format!("Key: {:?}, Error:{:?}", char_key, e);
                                                 error_dialog::fill(e, &mut self.error_dialog);
                                             }
                                         }
@@ -247,7 +248,10 @@ impl AZCharFourth {
                                                     part.to_owned(),
                                                     char_key.to_owned(),
                                                 ) {
-                                                    let e = format!("Key: {:?}, Error:{:?}", char_key, e);
+                                                    let e = format!(
+                                                        "Key: {:?}, Error:{:?}",
+                                                        char_key, e
+                                                    );
                                                     error_dialog::fill(e, &mut self.error_dialog);
                                                 }
                                             }
@@ -272,7 +276,8 @@ impl AZCharFourth {
                                                 part.to_owned(),
                                                 char_key.to_owned(),
                                             ) {
-                                                let e = format!("Key: {:?}, Error:{:?}", char_key, e);
+                                                let e =
+                                                    format!("Key: {:?}, Error:{:?}", char_key, e);
                                                 error_dialog::fill(e, &mut self.error_dialog);
                                             }
                                         }
@@ -292,7 +297,10 @@ impl AZCharFourth {
                                                     part.to_owned(),
                                                     char_key.to_owned(),
                                                 ) {
-                                                    let e = format!("Key: {:?}, Error:{:?}", char_key, e);
+                                                    let e = format!(
+                                                        "Key: {:?}, Error:{:?}",
+                                                        char_key, e
+                                                    );
                                                     error_dialog::fill(e, &mut self.error_dialog);
                                                 }
                                             }
@@ -313,7 +321,10 @@ impl AZCharFourth {
                                                     part.to_owned(),
                                                     char_key.to_owned(),
                                                 ) {
-                                                    let e = format!("Key: {:?}, Error:{:?}", char_key, e);
+                                                    let e = format!(
+                                                        "Key: {:?}, Error:{:?}",
+                                                        char_key, e
+                                                    );
                                                     error_dialog::fill(e, &mut self.error_dialog);
                                                 }
                                             }
@@ -394,8 +405,14 @@ impl AZCharFourth {
                                                             v.to_owned(),
                                                             char_key.to_owned(),
                                                         ) {
-                                                            let e = format!("Key: {:?}, Error:{:?}", char_key, e);
-                                                            error_dialog::fill(e, &mut self.error_dialog);
+                                                            let e = format!(
+                                                                "Key: {:?}, Error:{:?}",
+                                                                char_key, e
+                                                            );
+                                                            error_dialog::fill(
+                                                                e,
+                                                                &mut self.error_dialog,
+                                                            );
                                                         }
                                                     }
                                                 };
@@ -414,8 +431,14 @@ impl AZCharFourth {
                                                         v.to_owned(),
                                                         char_key.to_owned(),
                                                     ) {
-                                                        let e = format!("Key: {:?}, Error:{:?}", char_key, e);
-                                                        error_dialog::fill(e, &mut self.error_dialog);
+                                                        let e = format!(
+                                                            "Key: {:?}, Error:{:?}",
+                                                            char_key, e
+                                                        );
+                                                        error_dialog::fill(
+                                                            e,
+                                                            &mut self.error_dialog,
+                                                        );
                                                     }
                                                 };
                                                 Ok::<(), String>(())
@@ -425,10 +448,12 @@ impl AZCharFourth {
                             }
                             // End of attribute list.
                             let current = self.current.as_mut().expect("Definitely here.");
-                            if let Err(e) = self.attr_option
-                                .set_add_attribute_dialog(ui, current, dbs, &p_keys){
-                                    error_dialog::fill(e, &mut self.error_dialog);
-                                };
+                            if let Err(e) = self
+                                .attr_option
+                                .set_add_attribute_dialog(ui, current, dbs, &p_keys)
+                            {
+                                error_dialog::fill(e, &mut self.error_dialog);
+                            };
                         });
                         // End of basics and image horizontal.
                     });

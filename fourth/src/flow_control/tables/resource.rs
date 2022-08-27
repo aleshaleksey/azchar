@@ -1,7 +1,7 @@
 use crate::flow_control::connection::find_part;
+use crate::flow_control::error_dialog;
 use crate::flow_control::tables::{AttrValueKind, CharIdPack};
 use crate::flow_control::*;
-use crate::flow_control::error_dialog;
 use crate::AZCharFourth;
 
 // use eframe::egui::Widget;

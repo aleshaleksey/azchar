@@ -263,7 +263,9 @@ impl AZCharFourth {
                     "Yes" => char_proficiency,
                     _ => 0,
                 };
-                let total = (bonus + p).to_string();
+
+                let stat_val = get_attr_val_num_o(attribute_map, gov.to_owned(), main_id);
+                let total = (bonus + p + tables::default_stat_transform(stat_val)).to_string();
 
                 let rows = vec![gov, proficiency.to_string(), bonus.to_string(), total];
                 d20_table.add_row_with_label(label, rows);
@@ -404,7 +406,7 @@ impl AZCharFourth {
 }
 
 /// This function exists for dry.
-fn get_attr_val_num(
+pub(super) fn get_attr_val_num(
     attrs: &FnvHashMap<AttributeKey, AttributeValue>,
     needle: &str,
     of: i64,
@@ -416,7 +418,7 @@ fn get_attr_val_num(
         .unwrap_or_default()
 }
 /// This function exists for dry.
-fn get_attr_val_num_o(
+pub(super) fn get_attr_val_num_o(
     attrs: &FnvHashMap<AttributeKey, AttributeValue>,
     needle: String,
     of: i64,
@@ -428,7 +430,7 @@ fn get_attr_val_num_o(
         .unwrap_or_default()
 }
 /// This function exists for dry.
-fn get_attr_val_str_o(
+pub(super) fn get_attr_val_str_o(
     attrs: &FnvHashMap<AttributeKey, AttributeValue>,
     needle: String,
     of: i64,

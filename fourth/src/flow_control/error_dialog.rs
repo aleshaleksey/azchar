@@ -29,9 +29,6 @@ impl AZCharFourth {
     }
 }
 
-pub(super) fn fill<D: std::fmt::Debug>(
-    error: D,
-    error_container: &mut Option<String>,
-) {
+pub(super) fn fill<D: std::fmt::Debug>(error: D, error_container: &mut Option<String>) {
     *error_container = Some(format!("{:?}", error));
 }

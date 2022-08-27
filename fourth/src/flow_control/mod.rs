@@ -156,7 +156,7 @@ impl eframe::App for AZCharFourth {
                         if ui.button("Create System").clicked() {
                             match get_sys_config(&self.cfg_path, &self.db_path) {
                                 Ok(_) => {}
-                                Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
+                                Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                             };
                         }
                     });
@@ -166,7 +166,7 @@ impl eframe::App for AZCharFourth {
                         ui.text_edit_singleline(&mut self.db_path);
                         if ui.button("Load System").clicked() {
                             match self.load_system() {
-                                Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
+                                Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                                 Ok(_) => self.hidden_char_list = false,
                             };
                         };
@@ -197,7 +197,7 @@ impl eframe::App for AZCharFourth {
                                 if ui.button(format!("{} ({})", c_name, c_uuid)).clicked() {
                                     match self.load_character(&c_name, &c_uuid) {
                                         Ok(_) => self.hidden_char_list = true,
-                                        Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
+                                        Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                                     };
                                 };
                                 if ui.button("Delete").clicked() {
@@ -212,12 +212,12 @@ impl eframe::App for AZCharFourth {
                                         let file = match std::fs::File::create(name) {
                                             Ok(f) => f,
                                             Err(e) => {
-                                                 error_dialog::fill(e, &mut self.error_dialog);
+                                                error_dialog::fill(e, &mut self.error_dialog);
                                                 return;
                                             }
                                         };
                                         if let Err(e) = serde_json::to_writer_pretty(file, &char) {
-                                             error_dialog::fill(e, &mut self.error_dialog);
+                                            error_dialog::fill(e, &mut self.error_dialog);
                                         };
                                     }
                                 }
@@ -295,9 +295,9 @@ impl AZCharFourth {
                             ui.horizontal(|ui| {
                                 if ui.button("Delete!").clicked() {
                                     match dbs.delete_character(n.to_owned(), u.to_owned()) {
-                                        Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
+                                        Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                                         Ok(_) => match dbs.list_characters() {
-                                            Err(e) =>  error_dialog::fill(e, &mut self.error_dialog),
+                                            Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                                             Ok(l) => *char_list = l,
                                         },
                                     };

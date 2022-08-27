@@ -5,10 +5,11 @@ use super::AZCharFourth;
 use azchar_database::LoadedDbs;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
+use azchar_database::character::character::CompleteCharacter;
 use egui::{SelectableLabel, Ui};
 use fnv::FnvHashMap;
 
-fn default_stat_transform(raw: i64) -> i64 {
+pub fn default_stat_transform(raw: i64) -> i64 {
     raw / 2 - 5
 }
 
@@ -158,6 +159,7 @@ impl DynamicTable {
 
     pub(super) fn d20_skill_table(
         &mut self,
+        current: &CompleteCharacter,
         proficiency: Option<i64>,
         ui: &mut Ui,
         width: f32,
@@ -202,7 +204,12 @@ impl DynamicTable {
                                 "Yes" => proficiency.unwrap_or_default(),
                                 _ => 0,
                             };
-                            row[3] = (p + b).to_string();
+                            let c = super::connection::get_attr_val_num_o(
+                                current.attribute_map.as_ref().expect("Prepared earlier"),
+                                row[0].to_owned(),
+                                current.id().expect("It is here."),
+                            );
+                            row[3] = (p + b + default_stat_transform(c)).to_string();
                         }
                     }
                     for (c_idx, r) in row.iter_mut().enumerate().skip(2) {

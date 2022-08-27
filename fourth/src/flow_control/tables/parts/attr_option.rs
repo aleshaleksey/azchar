@@ -87,7 +87,8 @@ impl AttrOption {
                     }
                 }
                 Ok(())
-            }).inner?;
+            })
+            .inner?;
         }
         Ok(())
     }
