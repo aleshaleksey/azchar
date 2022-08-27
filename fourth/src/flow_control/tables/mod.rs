@@ -1,13 +1,14 @@
 use super::connection::CharIdPack;
+use super::dice_dialog::{self, RollKind};
 use super::AZCharFourth;
 
-// use azchar_database::character::character::CompleteCharacter;
 use azchar_database::LoadedDbs;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 use azchar_database::character::character::CompleteCharacter;
 use egui::{SelectableLabel, Ui};
 use fnv::FnvHashMap;
+use libazdice::distribution::RollResults;
 
 pub fn default_stat_transform(raw: i64) -> i64 {
     raw / 2 - 5
@@ -119,6 +120,7 @@ impl DynamicTable {
         &mut self,
         ui: &mut Ui,
         width: f32,
+        dice_roll: &mut Option<RollResults>,
     ) -> Result<Vec<(usize, usize)>, String> {
         let w = width / (1. + self.column_labels.len() as f32);
         let mut used = Vec::new();
@@ -139,9 +141,12 @@ impl DynamicTable {
             {
                 ui.horizontal(|ui| {
                     let l = SelectableLabel::new(false, &rl.visible);
-                    let _ = ui.add_sized([w * 2., 21.], l).clicked();
+                    let roll_clicked = ui.add_sized([w * 2., 21.], l).clicked();
                     // Total must be total.
                     if let (Ok(a), Ok(b)) = (row[0].parse::<i64>(), row[1].parse::<i64>()) {
+                        if roll_clicked {
+                            dice_dialog::fill(RollKind::Normal.d100(), dice_roll);
+                        }
                         row[2] = (a + b).to_string();
                     }
                     for (c_idx, r) in row.iter_mut().enumerate() {
@@ -163,6 +168,7 @@ impl DynamicTable {
         proficiency: Option<i64>,
         ui: &mut Ui,
         width: f32,
+        dice_roll: &mut Option<RollResults>,
     ) -> Result<Vec<(usize, usize)>, String> {
         let w = width / (1. + self.column_labels.len() as f32);
         let mut used = Vec::new();
@@ -183,7 +189,7 @@ impl DynamicTable {
             {
                 ui.horizontal(|ui| {
                     let l = SelectableLabel::new(false, &rl.visible);
-                    let _ = ui.add_sized([w * 2., 21.], l).clicked();
+                    let roll_clicked = ui.add_sized([w * 2., 21.], l).clicked();
                     let l = SelectableLabel::new(false, &row[0]); // GOV
                     let _ = ui.add_sized([w * 2., 21.], l).clicked();
                     {
@@ -209,7 +215,11 @@ impl DynamicTable {
                                 row[0].to_owned(),
                                 current.id().expect("It is here."),
                             );
-                            row[3] = (p + b + default_stat_transform(c)).to_string();
+                            let total = p + b + default_stat_transform(c);
+                            if roll_clicked {
+                                dice_dialog::fill(RollKind::Normal.d20(total), dice_roll);
+                            }
+                            row[3] = total.to_string();
                         }
                     }
                     for (c_idx, r) in row.iter_mut().enumerate().skip(2) {

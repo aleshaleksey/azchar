@@ -5,8 +5,8 @@ impl AZCharFourth {
     pub(super) fn set_error_dialog(&mut self, ctx: &egui::Context) {
         let mut hide = false;
         if let Some(cont) = self.error_dialog.as_ref() {
-            egui::Area::new("part-details")
-                .default_pos(egui::pos2(32.0, 32.0))
+            egui::Area::new("error-details")
+                .default_pos(egui::pos2(100.0, 100.0))
                 .show(ctx, |ui| {
                     ui.set_style(styles::style());
                     self.frame.show(ui, |ui| {

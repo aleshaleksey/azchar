@@ -9,6 +9,7 @@ use azchar_database::{CharacterDbRef, LoadedDbs};
 use eframe;
 use egui::containers::Frame;
 use fnv::FnvHashMap;
+use libazdice::distribution::RollResults;
 use std::path::PathBuf;
 
 const LEVEL: &str = "Level";
@@ -60,6 +61,7 @@ pub(crate) struct AZCharFourth {
     part_window: PartOption,
     attr_option: AttrOption,
     error_dialog: Option<String>,
+    dice_dialog: Option<RollResults>,
 }
 
 impl AZCharFourth {
@@ -118,6 +120,7 @@ impl AZCharFourth {
             resources_points: Box::new(DynamicTable::default()),
             resources_body_hp: Box::new(DynamicTable::default()),
             error_dialog: None,
+            dice_dialog: None,
         }
     }
 }
@@ -265,6 +268,7 @@ impl eframe::App for AZCharFourth {
                         separator(ui);
                     }
                     self.set_error_dialog(ctx);
+                    self.set_dice_dialog(ctx);
                 });
             });
     }
@@ -320,6 +324,7 @@ impl AZCharFourth {
 }
 
 mod connection;
+mod dice_dialog;
 mod error_dialog;
 mod images;
 mod tables;

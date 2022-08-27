@@ -25,10 +25,13 @@ impl AZCharFourth {
                     .get(&AttributeKey::new(PROFICIENCY.to_string(), char_id))
                     .map(|v| v.value_num())
                     .unwrap_or_default();
-                match self
-                    .d20_skill_table
-                    .d20_skill_table(char, proficiency, ui, MAIN_W / 2.)
-                {
+                match self.d20_skill_table.d20_skill_table(
+                    char,
+                    proficiency,
+                    ui,
+                    MAIN_W / 2.,
+                    &mut self.dice_dialog,
+                ) {
                     Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
                         if let Err(e) = Self::update_skill_table(
@@ -45,7 +48,10 @@ impl AZCharFourth {
                     _ => {}
                 }
                 separator(ui);
-                match self.d100_skill_table.d100_skill_table(ui, MAIN_W / 2.) {
+                match self
+                    .d100_skill_table
+                    .d100_skill_table(ui, MAIN_W / 2., &mut self.dice_dialog)
+                {
                     Err(e) => error_dialog::fill(e, &mut self.error_dialog),
                     Ok(dat) if !dat.is_empty() => {
                         if let Err(e) = Self::update_skill_table(
