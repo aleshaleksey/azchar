@@ -64,12 +64,26 @@ impl AZCharFourth {
                     separator(ui);
                     {
                         let rows = &mut self.main_level_pro_table;
-                        match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
+                        match AZCharFourth::horizontal_table(ui, rows, MAIN_W * 0.75) {
                             Err(e) => println!("Error: {}", e),
                             Ok(true) => {
                                 let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);
                                 if let Err(e) = res {
                                     println!("Update level/proficiency: {:?}", e);
+                                } else {
+                                    reset = true;
+                                }
+                                if let Ok(n) = rows[4].val.parse() {
+                                    char.hp_current = Some(n);
+                                }
+                                if let Ok(n) = rows[5].val.parse() {
+                                    char.hp_total = Some(n);
+                                }
+                                
+                                let part = char.to_bare_part();
+                                let res = AZCharFourth::update_main(&mut self.dbs, part);
+                                if let Err(e) = res {
+                                    println!("Couldn't set image: {:?}", e);
                                 } else {
                                     reset = true;
                                 }
@@ -80,7 +94,7 @@ impl AZCharFourth {
                     separator(ui);
                     {
                         let rows = &mut self.main_stat_table;
-                        match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
+                        match AZCharFourth::horizontal_table(ui, rows, MAIN_W * 0.75) {
                             Err(e) => println!("Error: {}", e),
                             Ok(true) => {
                                 let res = AZCharFourth::update_attrs(&mut self.dbs, char, rows);

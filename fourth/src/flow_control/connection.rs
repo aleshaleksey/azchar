@@ -170,18 +170,6 @@ impl AZCharFourth {
                 &loaded.size.to_owned().unwrap_or_default(),
                 AttrValueKind::Text,
             ),
-            Row::new_untransform(
-                "HP",
-                "",
-                &loaded.hp_current.map(|x| x.to_string()).unwrap_or_default(),
-                AttrValueKind::Num,
-            ),
-            Row::new_untransform(
-                "HP total",
-                "",
-                &loaded.hp_total.map(|x| x.to_string()).unwrap_or_default(),
-                AttrValueKind::Num,
-            ),
         ];
 
         let main_id = loaded.id().expect("A databse character has an id");
@@ -195,6 +183,18 @@ impl AZCharFourth {
                     "Proficiency",
                     PROFICIENCY_CAMEL,
                     &char_proficiency.to_string(),
+                    AttrValueKind::Num,
+                ),
+                Row::new_untransform(
+                    "HP",
+                    "",
+                    &loaded.hp_current.map(|x| x.to_string()).unwrap_or_default(),
+                    AttrValueKind::Num,
+                ),
+                Row::new_untransform(
+                    "HP total",
+                    "",
+                    &loaded.hp_total.map(|x| x.to_string()).unwrap_or_default(),
                     AttrValueKind::Num,
                 ),
             ];
