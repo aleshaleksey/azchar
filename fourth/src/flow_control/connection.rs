@@ -1,4 +1,4 @@
-use super::tables::{DynamicTable, Label, Row, AttrValueKind};
+use super::tables::{AttrValueKind, DynamicTable, Label, Row};
 use super::*;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
@@ -156,20 +156,31 @@ impl AZCharFourth {
             }
         }
         self.main_attr_table = [
-            Row::new("Name", loaded.name()),
-            Row::new("Speed", &loaded.speed.to_string()),
-            Row::new(
+            Row::new_untransform("Name", "", loaded.name(), AttrValueKind::Text),
+            Row::new_untransform("Speed", "", &loaded.speed.to_string(), AttrValueKind::Text),
+            Row::new_untransform(
                 "Weight",
+                "",
                 &loaded.weight.map(|x| x.to_string()).unwrap_or_default(),
+                AttrValueKind::Text,
             ),
-            Row::new("Size", &loaded.size.to_owned().unwrap_or_default()),
-            Row::new(
+            Row::new_untransform(
+                "Size",
+                "",
+                &loaded.size.to_owned().unwrap_or_default(),
+                AttrValueKind::Text,
+            ),
+            Row::new_untransform(
                 "HP",
+                "",
                 &loaded.hp_current.map(|x| x.to_string()).unwrap_or_default(),
+                AttrValueKind::Num,
             ),
-            Row::new(
+            Row::new_untransform(
                 "HP total",
+                "",
                 &loaded.hp_total.map(|x| x.to_string()).unwrap_or_default(),
+                AttrValueKind::Num,
             ),
         ];
 
@@ -179,8 +190,13 @@ impl AZCharFourth {
             let level = get_attr_val_num(attribute_map, LEVEL, main_id);
             char_proficiency = get_attr_val_num(attribute_map, PROFICIENCY_CAMEL, main_id);
             self.main_level_pro_table = [
-                Row::with_label("Level", &level.to_string(), LEVEL),
-                Row::with_label("Proficiency", &char_proficiency.to_string(), PROFICIENCY_CAMEL),
+                Row::new_untransform("Level", LEVEL, &level.to_string(), AttrValueKind::Num),
+                Row::new_untransform(
+                    "Proficiency",
+                    PROFICIENCY_CAMEL,
+                    &char_proficiency.to_string(),
+                    AttrValueKind::Num,
+                ),
             ];
         }
         {
@@ -193,14 +209,14 @@ impl AZCharFourth {
             let cha = get_attr_val_num(attribute_map, CHARM, main_id);
             let wil = get_attr_val_num(attribute_map, WILL, main_id);
             self.main_stat_table = [
-                Row::with_label("STR", &str.to_string(), STRENGTH),
-                Row::with_label("REF", &re.to_string(), REFLEX),
-                Row::with_label("TOU", &tou.to_string(), TOUGHNESS),
-                Row::with_label("END", &end.to_string(), ENDURANCE),
-                Row::with_label("INT", &int.to_string(), INTELLIGENCE),
-                Row::with_label("JUD", &jud.to_string(), JUDGEMENT),
-                Row::with_label("CHA", &cha.to_string(), CHARM),
-                Row::with_label("WIL", &wil.to_string(), WILL),
+                Row::new1("STR", STRENGTH, &str.to_string(), AttrValueKind::Num),
+                Row::new1("REF", REFLEX, &re.to_string(), AttrValueKind::Num),
+                Row::new1("TOU", TOUGHNESS, &tou.to_string(), AttrValueKind::Num),
+                Row::new1("END", ENDURANCE, &end.to_string(), AttrValueKind::Num),
+                Row::new1("INT", INTELLIGENCE, &int.to_string(), AttrValueKind::Num),
+                Row::new1("JUD", JUDGEMENT, &jud.to_string(), AttrValueKind::Num),
+                Row::new1("CHA", CHARM, &cha.to_string(), AttrValueKind::Num),
+                Row::new1("WIL", WILL, &wil.to_string(), AttrValueKind::Num),
             ];
         }
         {
@@ -365,11 +381,11 @@ impl AZCharFourth {
     ) -> Result<(), String> {
         if let Some(ref mut dbs) = dbs {
             for r in rows.iter() {
-                let key = AttributeKey::new(r.label.to_owned(), part.id().expect("Here."));
+                let key = AttributeKey::new(r.key.to_owned(), part.id().expect("Here."));
                 if let Some(ref mut v) =
                     &mut part.attribute_map.as_mut().expect("Is here").get_mut(&key)
                 {
-                    match r.value.parse() {
+                    match r.val.parse() {
                         Ok(v1) if Some(v1) != v.value_num() => {
                             v.update_value_num_by_ref(Some(v1));
                             dbs.create_update_attribute(

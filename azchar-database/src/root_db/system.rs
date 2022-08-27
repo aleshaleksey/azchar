@@ -59,9 +59,25 @@ pub struct PermittedAttribute {
 impl<DB, ST> Queryable<ST, DB> for PermittedAttribute
 where
     DB: Backend,
-    (String, i32, String, Option<String>, Option<String>, Option<i32>, bool): FromSqlRow<ST, DB>,
+    (
+        String,
+        i32,
+        String,
+        Option<String>,
+        Option<String>,
+        Option<i32>,
+        bool,
+    ): FromSqlRow<ST, DB>,
 {
-    type Row = (String, i32, String, Option<String>, Option<String>, Option<i32>, bool);
+    type Row = (
+        String,
+        i32,
+        String,
+        Option<String>,
+        Option<String>,
+        Option<i32>,
+        bool,
+    );
 
     fn build(row: Self::Row) -> Self {
         PermittedAttribute {

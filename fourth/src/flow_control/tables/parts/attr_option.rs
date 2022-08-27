@@ -1,9 +1,9 @@
+use super::part_option::PartKeys;
 use super::*;
 use crate::flow_control::*;
-use super::part_option::PartKeys;
 
 use azchar_database::character::attribute::InputAttribute;
-use azchar_database::character::character::{CompleteCharacter};
+use azchar_database::character::character::CompleteCharacter;
 
 #[derive(Clone, Debug)]
 pub(crate) enum AttrOption {
@@ -29,8 +29,7 @@ impl AttrOption {
                 .to_owned();
 
             ui.horizontal(|ui| {
-                let part =
-                    &mut current.parts[p_keys.idx];
+                let part = &mut current.parts[p_keys.idx];
                 egui::ComboBox::from_label("")
                     .width(LABEL_SIZE[0])
                     .selected_text(displayed_key)

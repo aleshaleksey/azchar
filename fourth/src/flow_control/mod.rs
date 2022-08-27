@@ -1,7 +1,7 @@
 use self::tables::{AttrOption, DynamicTable, NoteOption, PartOption, Row};
 use super::styles;
 
-use azchar_database::character::attribute::{AttributeKey};
+use azchar_database::character::attribute::AttributeKey;
 use azchar_database::character::character::CompleteCharacter;
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};

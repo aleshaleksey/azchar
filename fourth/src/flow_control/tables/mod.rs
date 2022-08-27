@@ -8,6 +8,10 @@ use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 use egui::{SelectableLabel, Ui};
 use fnv::FnvHashMap;
 
+fn default_stat_transform(raw: i64) -> i64 {
+    (raw - 10) / 2
+}
+
 #[derive(Clone, Copy, Debug)]
 pub(super) enum AttrValueKind {
     Num,
@@ -18,13 +22,6 @@ impl Default for AttrValueKind {
     fn default() -> Self {
         Self::Num
     }
-}
-
-#[derive(Debug, Default)]
-pub(super) struct Row {
-    pub(super) title: String,
-    pub(super) value: String,
-    pub(super) label: String,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -46,12 +43,61 @@ impl Label {
 
 #[derive(Debug, Default)]
 pub(super) struct DynamicTable {
-    // Labels determine column labels and no. of columns.
+    /// Labels determine column labels and no. of columns.
     pub(super) column_labels: Vec<Label>,
-    // Labels determine row labels and no. of rows.
+    /// Labels determine row labels and no. of rows.
     pub(super) row_labels: Vec<Label>,
-    // Rows is slow, Columns is fast. (Counterintuitive but comfortable)
+    /// Rows is slow, Columns is fast. (Counterintuitive but comfortable)
     pub(super) cells: Vec<Vec<String>>,
+}
+
+#[derive(Debug)]
+pub(super) struct Row {
+    pub(super) label: String,
+    pub(super) key: String,
+    pub(super) val: String,
+    pub(super) kind: AttrValueKind,
+    pub(super) active: bool,
+    pub(super) transform: Option<fn(i64) -> i64>,
+}
+
+impl Default for Row {
+    fn default() -> Self {
+        Self {
+            label: String::new(),
+            key: String::new(),
+            val: String::new(),
+            kind: AttrValueKind::Num,
+            active: true,
+            transform: None,
+        }
+    }
+}
+
+impl Row {
+    /// So far we need only active cells with a default transform.
+    pub(super) fn new1(label: &str, key: &str, val: &str, kind: AttrValueKind) -> Self {
+        Self {
+            label: label.to_string(),
+            key: key.to_string(),
+            val: val.to_string(),
+            kind,
+            active: true,
+            transform: Some(default_stat_transform),
+        }
+    }
+
+    /// So far we need only active cells with a default transform.
+    pub(super) fn new_untransform(label: &str, key: &str, val: &str, kind: AttrValueKind) -> Self {
+        Self {
+            label: label.to_string(),
+            key: key.to_string(),
+            val: val.to_string(),
+            kind,
+            active: true,
+            transform: None,
+        }
+    }
 }
 
 impl DynamicTable {
@@ -223,23 +269,6 @@ impl DynamicTable {
     }
 }
 
-impl Row {
-    pub(super) fn new(title: &str, value: &str) -> Self {
-        Row {
-            title: title.to_owned(),
-            value: value.to_owned(),
-            label: String::with_capacity(0),
-        }
-    }
-    pub(super) fn with_label(title: &str, value: &str, label: &str) -> Self {
-        Row {
-            title: title.to_owned(),
-            value: value.to_owned(),
-            label: label.to_owned(),
-        }
-    }
-}
-
 impl AZCharFourth {
     pub(super) fn horizontal_table(
         ui: &mut Ui,
@@ -247,15 +276,31 @@ impl AZCharFourth {
         width: f32,
     ) -> Result<bool, String> {
         let width = width / values.len() as f32;
+        let second_row = values.iter().all(|v| v.transform.is_some());
         let mut used = false;
         ui.horizontal(|ui| {
             for v in values.iter_mut() {
                 ui.vertical(|ui| {
-                    let _ = ui.selectable_label(false, &v.title);
-                    let edit = egui::TextEdit::singleline(&mut v.value).desired_width(width);
-                    let changed = ui.add_sized([width, 21.], edit).changed();
-                    if changed {
-                        used = true;
+                    let l = SelectableLabel::new(false, &v.label);
+                    let _ = ui.add_sized([width, 21.], l).clicked();
+                    //
+                    let edit = egui::TextEdit::singleline(&mut v.val)
+                        .desired_width(width)
+                        .interactive(v.active);
+                    match (v.kind, ui.add_sized([width, 21.], edit).changed()) {
+                        (AttrValueKind::Text, true) => used= true,
+                        (AttrValueKind::Num, true) if v.val.parse::<i64>().is_ok() => {
+                            used = true;
+                        }
+                        _ => {}
+                    }
+                    if second_row {
+                        let derived = match (v.transform, v.val.parse::<i64>()) {
+                            (Some(ref formula), Ok(n)) => formula(n).to_string(),
+                            _ => v.val.to_string(),
+                        };
+                        let label = egui::SelectableLabel::new(false, &derived);
+                        let _ = ui.add_sized([width, 21.], label).clicked();
                     }
                 });
             }
@@ -292,7 +337,7 @@ impl AZCharFourth {
                     AttrValueKind::Num => match tv.parse::<i64>() {
                         Ok(v) => val.update_value_num_by_ref(Some(v)),
                         Err(_) => continue,
-                    }
+                    },
                     // Anything is good for text.
                     AttrValueKind::Text => val.update_value_text_by_ref(Some(tv.to_string())),
                 };

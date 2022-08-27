@@ -1,7 +1,6 @@
 use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-// use eframe::egui::Widget;
 
 impl AZCharFourth {
     pub(crate) fn set_main_tables(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
@@ -36,18 +35,18 @@ impl AZCharFourth {
                         match AZCharFourth::horizontal_table(ui, rows, MAIN_W) {
                             Err(e) => println!("Error: {}", e),
                             Ok(true) => {
-                                char.name = rows[0].value.to_owned();
-                                if let Ok(n) = rows[1].value.parse() {
+                                char.name = rows[0].val.to_owned();
+                                if let Ok(n) = rows[1].val.parse() {
                                     char.speed = n;
                                 }
-                                if let Ok(n) = rows[2].value.parse() {
+                                if let Ok(n) = rows[2].val.parse() {
                                     char.weight = Some(n);
                                 }
-                                char.size = Some(rows[3].value.to_owned());
-                                if let Ok(n) = rows[4].value.parse() {
+                                char.size = Some(rows[3].val.to_owned());
+                                if let Ok(n) = rows[4].val.parse() {
                                     char.hp_current = Some(n);
                                 }
-                                if let Ok(n) = rows[5].value.parse() {
+                                if let Ok(n) = rows[5].val.parse() {
                                     char.hp_total = Some(n);
                                 }
                                 let part = char.to_bare_part();
@@ -72,10 +71,6 @@ impl AZCharFourth {
                                 if let Err(e) = res {
                                     println!("Update level/proficiency: {:?}", e);
                                 } else {
-                                    // // This is a special case for this system.
-                                    // if let Err(e) = update_all_proficiencies(&mut self.dbs, char) {
-                                    //     println!("Can't update all: {:?}", e);
-                                    // };
                                     reset = true;
                                 }
                             }

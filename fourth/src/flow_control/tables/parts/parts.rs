@@ -1,8 +1,8 @@
+use super::part_option::PartKeys;
+use super::*;
 use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-use super::part_option::PartKeys;
-use super::*;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
