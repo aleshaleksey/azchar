@@ -7,6 +7,7 @@ impl AZCharFourth {
         if let Some(cont) = self.error_dialog.as_ref() {
             egui::Area::new("error-details")
                 .default_pos(egui::pos2(100.0, 100.0))
+                .order(egui::Order::Foreground)
                 .show(ctx, |ui| {
                     ui.set_style(styles::style());
                     self.frame.show(ui, |ui| {

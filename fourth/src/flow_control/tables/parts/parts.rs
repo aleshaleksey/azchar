@@ -393,7 +393,8 @@ impl AZCharFourth {
                                                 let label =
                                                     k.key().split("_").last().unwrap_or_default();
                                                 let l = egui::SelectableLabel::new(false, label);
-                                                let _ = ui.add_sized(LABEL_SIZE, l).clicked();
+                                                let lab_clck =
+                                                    ui.add_sized(LABEL_SIZE, l).clicked();
                                                 // Deal with the numerical value.
                                                 let mut w = v.value_num().unwrap_or(0).to_string();
                                                 let l = egui::TextEdit::singleline(&mut w);
@@ -423,7 +424,14 @@ impl AZCharFourth {
                                                     .as_ref()
                                                     .unwrap_or(&default)
                                                     .to_string();
+
+                                                // Fill roller.
+                                                if lab_clck {
+                                                    let dd = &mut self.dice_dialog;
+                                                    dice_dialog::try_fill_from_str(&w, dd);
+                                                }
                                                 let l = egui::TextEdit::singleline(&mut w);
+                                                // Do update.
                                                 if ui.add_sized(LABEL_SIZE, l).changed() {
                                                     v.update_value_text_by_ref(Some(w));
                                                     if let Err(e) = dbs.create_update_attribute(

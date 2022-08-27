@@ -61,6 +61,7 @@ impl AZCharFourth {
         if let Some(dice) = self.dice_dialog.as_ref() {
             egui::Area::new("roll-details")
                 .default_pos(pos)
+                .order(egui::Order::Foreground)
                 .show(ctx, |ui| {
                     ui.set_style(styles::style());
                     self.frame.show(ui, |ui| {
@@ -84,4 +85,10 @@ impl AZCharFourth {
 pub(super) fn fill(dice: Vec<DiceGroup>, dice_container: &mut Option<RollResults>) {
     let diceroll = DiceBag::from_dice(dice).roll();
     *dice_container = Some(diceroll);
+}
+
+pub(super) fn try_fill_from_str(txt: &str, dice_container: &mut Option<RollResults>) {
+    if let Ok(bag) = libazdice::parse::parse(txt.to_owned()) {
+        *dice_container = Some(bag.roll());
+    }
 }
