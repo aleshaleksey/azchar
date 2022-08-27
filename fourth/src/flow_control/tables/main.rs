@@ -43,12 +43,6 @@ impl AZCharFourth {
                                     char.weight = Some(n);
                                 }
                                 char.size = Some(rows[3].val.to_owned());
-                                if let Ok(n) = rows[4].val.parse() {
-                                    char.hp_current = Some(n);
-                                }
-                                if let Ok(n) = rows[5].val.parse() {
-                                    char.hp_total = Some(n);
-                                }
                                 let part = char.to_bare_part();
 
                                 let res = AZCharFourth::update_main(&mut self.dbs, part);
@@ -73,13 +67,13 @@ impl AZCharFourth {
                                 } else {
                                     reset = true;
                                 }
-                                if let Ok(n) = rows[4].val.parse() {
+                                if let Ok(n) = rows[2].val.parse() {
                                     char.hp_current = Some(n);
                                 }
-                                if let Ok(n) = rows[5].val.parse() {
+                                if let Ok(n) = rows[3].val.parse() {
                                     char.hp_total = Some(n);
                                 }
-                                
+
                                 let part = char.to_bare_part();
                                 let res = AZCharFourth::update_main(&mut self.dbs, part);
                                 if let Err(e) = res {

@@ -51,7 +51,7 @@ impl AZCharFourth {
                             &mut self.dbs,
                             "d100",
                             char.attribute_map.as_mut().expect("Always set."),
-                            &mut self.d20_skill_table,
+                            &mut self.d100_skill_table,
                         );
                     }
                     _ => {}

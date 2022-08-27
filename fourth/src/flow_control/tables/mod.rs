@@ -342,9 +342,9 @@ impl AZCharFourth {
                     AttrValueKind::Text => val.update_value_text_by_ref(Some(tv.to_string())),
                 };
                 let identifier = (char.name.to_owned(), char.uuid.to_owned());
-                match dbs.create_update_attribute(key, val.to_owned(), identifier) {
+                match dbs.create_update_attribute(key.to_owned(), val.to_owned(), identifier) {
                     Err(e) => println!("Couldn't update attribute: {:?}", e),
-                    Ok(r) => println!("Updated: {:?}", r),
+                    Ok(_) => println!("Updated: {:?}", key),
                 }
             }
         }
