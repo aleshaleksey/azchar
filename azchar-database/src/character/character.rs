@@ -273,6 +273,25 @@ pub struct InputCharacter {
     pub part_type: Part,
 }
 
+/// This is used for importing foreign character parts.
+impl From<&CharacterPart> for InputCharacter {
+    fn from(p: &CharacterPart) -> Self {
+        Self {
+            name: p.name.to_owned(),
+            character_type: p.character_type.to_owned(),
+            speed: p.speed,
+            weight: p.weight,
+            size: p.size.to_owned(),
+            hp_total: p.hp_total,
+            hp_current: p.hp_current,
+            /// This may produce weird results in some systems,
+            /// but all sensible systems should use "1".
+            belongs_to: p.belongs_to,
+            part_type: p.part_type,
+        }
+    }
+}
+
 impl InputCharacter {
     pub fn test() -> Self {
         InputCharacter {

@@ -226,6 +226,7 @@ impl eframe::App for AZCharFourth {
                                 }
                             });
                         }
+                        // Import character button goes here.
                         self.delete_dialog(ctx);
                         // Create new character.
                         ui.horizontal(|ui| {
@@ -327,4 +328,5 @@ mod connection;
 mod dice_dialog;
 mod error_dialog;
 mod images;
+mod import;
 mod tables;
