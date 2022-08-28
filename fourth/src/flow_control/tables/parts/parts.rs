@@ -4,6 +4,7 @@ use crate::flow_control::error_dialog;
 use crate::flow_control::images::set_image;
 use crate::flow_control::*;
 use crate::AZCharFourth;
+use crate::flow_control::import::import_part;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
@@ -11,6 +12,13 @@ use azchar_database::shared::Part;
 
 impl AZCharFourth {
     pub(crate) fn set_parts(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        if ui.button("Import Part").clicked() {
+            let dbs = self.dbs.as_mut().expect("Dbs are loaded to get here.");
+            let current = self.current.as_mut().expect("Character is loaded to get here.");
+            if let Err(e) = import_part(dbs, current) {
+                error_dialog::fill(e, &mut self.error_dialog);
+            }
+        }
         if ui.selectable_label(false, "Character Attacks").clicked() {
             self.hidden_attacks = !self.hidden_attacks;
         }

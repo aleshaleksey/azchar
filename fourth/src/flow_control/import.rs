@@ -1,13 +1,8 @@
-use crate::AZCharFourth;
-
-use azchar_database::character::image::Image;
 use azchar_database::character::character::{InputCharacter, CharacterPart, CompleteCharacter};
 use azchar_database::character::attribute::AttributeKey;
-use azchar_database::LoadedDbs;
+use azchar_database::{LoadedDbs, CharacterDbRef};
 use azchar_error::ma;
 
-use eframe;
-use eframe::egui::Widget;
 use std::fs::File;
 
 fn get_file() -> Result<Option<File>, String> {
@@ -23,15 +18,15 @@ fn get_file() -> Result<Option<File>, String> {
         }
 }
 
-pub(super) fn import_part(
+fn import_part_inner(
     dbs: &mut LoadedDbs,
     char: &mut CompleteCharacter,
-    mut file: File,
+    file: File,
 ) -> Result<(), String> {
     let initial_part: CharacterPart = serde_json::from_reader(file).map_err(ma)?;
     let new_part:InputCharacter = (&initial_part).into();
     let keys = (char.name().to_owned(), char.uuid().to_owned());
-    let updated_character = dbs.create_part(new_part, keys.to_owned())?;
+    let mut updated_character = dbs.create_part(new_part, keys.to_owned())?;
 
     // Now we need to find the new part, because someone made a silly in'erface.
     let ids: Vec<Option<i64>> = char.parts.iter().map(|p| p.id()).collect();
@@ -48,6 +43,35 @@ pub(super) fn import_part(
         // TODO: Make some kind of reporter for failed attribute import.
         if let Err(_) = dbs.create_update_attribute(k, v, keys.to_owned()) {}
     }
+    updated_character.create_attribute_map();
     *char = updated_character;
+    Ok(())
+}
+
+fn import_character_inner(
+    dbs: &mut LoadedDbs,
+    file: File,
+) -> Result<Vec<CharacterDbRef>, String> {
+    let character: CompleteCharacter = serde_json::from_reader(file).map_err(ma)?;
+    dbs.create_or_update_character(character)?;
+    Ok(dbs.refresh_and_list()?)
+}
+
+pub(super) fn import_part(
+    dbs: &mut LoadedDbs,
+    char: &mut CompleteCharacter,
+) -> Result<(), String> {
+    if let Some(f) = get_file()? {
+        import_part_inner(dbs, char, f)?
+    }
+    Ok(())
+}
+
+pub(super) fn import_character(
+    dbs: &mut LoadedDbs,
+) -> Result<(), String> {
+    if let Some(f) = get_file()? {
+        import_character_inner(dbs, f)?;
+    }
     Ok(())
 }

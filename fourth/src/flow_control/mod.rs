@@ -227,6 +227,13 @@ impl eframe::App for AZCharFourth {
                             });
                         }
                         // Import character button goes here.
+                        if ui.button("Import Character (JSON)").clicked() {
+                            let dbs = self.dbs.as_mut().expect("Ofcourse.");
+                            if let Err(e) = import::import_character(dbs) {
+                                error_dialog::fill(e, &mut self.error_dialog);
+                                return;
+                            }
+                        }
                         self.delete_dialog(ctx);
                         // Create new character.
                         ui.horizontal(|ui| {
