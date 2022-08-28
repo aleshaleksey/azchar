@@ -465,6 +465,28 @@ impl AZCharFourth {
                         });
                         // End of basics and image horizontal.
                     });
+                    // Export character.
+                    if ui.button("Export (JSON)").clicked() {
+                        let part =
+                            &mut self.current.as_mut().expect("`current` is real.").parts
+                                [p_keys.idx];
+                        let name = format!(
+                            "{}-({})-{}.json",
+                            part.name(),
+                            part.character_type(),
+                            part.uuid()
+                        );
+                        let file = match std::fs::File::create(name) {
+                            Ok(f) => f,
+                            Err(e) => {
+                                error_dialog::fill(e, &mut self.error_dialog);
+                                return;
+                            }
+                        };
+                        if let Err(e) = serde_json::to_writer_pretty(file, &part) {
+                            error_dialog::fill(e, &mut self.error_dialog);
+                        };
+                    };
                     // End of All hope.
                 });
                 Ok::<(), String>(())
