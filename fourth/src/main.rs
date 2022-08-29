@@ -2,8 +2,9 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-use eframe;
-
+#![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::expect_fun_call)]
 use self::flow_control::AZCharFourth;
 
 fn main() {

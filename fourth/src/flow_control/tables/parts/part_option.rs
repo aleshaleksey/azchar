@@ -5,12 +5,8 @@ use azchar_database::shared::Part;
 
 type Key<'a> = (Part, Option<&'a str>);
 
-fn compare_keys<'a>(gui_part: Key<'a>, new_type: Part, new_character_type: &str) -> bool {
-    if gui_part.0 == new_type && gui_part.1.map(|t| t == new_character_type).unwrap_or(true) {
-        true
-    } else {
-        false
-    }
+fn compare_keys(gui_part: Key, new_type: Part, new_character_type: &str) -> bool {
+    gui_part.0 == new_type && gui_part.1.map(|t| t == new_character_type).unwrap_or(true)
 }
 
 fn filter_parts<'a>(dbs: &'a LoadedDbs, part: &InputCharacter) -> Vec<&'a str> {

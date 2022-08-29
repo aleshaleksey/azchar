@@ -4,6 +4,8 @@ use crate::AZCharFourth;
 use libazdice::distribution::{Bonus, Dice, DiceBag, DiceGroup, RollResults};
 use std::cmp::Ordering;
 
+// We will animate it later.
+#[allow(dead_code)]
 pub(crate) enum RollKind {
     Advantage,
     Disadvantage,
@@ -43,7 +45,7 @@ impl RollKind {
         };
         match bonus.cmp(&0) {
             Ordering::Greater => dice.push(Bonus::plus(bonus as u32).into()),
-            Ordering::Less => dice.push(Bonus::minus(bonus.abs() as u32).into()),
+            Ordering::Less => dice.push(Bonus::minus(bonus.unsigned_abs() as u32).into()),
             _ => {}
         };
         dice

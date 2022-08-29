@@ -4,6 +4,7 @@
 //! a) The main loop.
 //! b) Requests and responses.
 #![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::derive_partial_eq_without_eq)]
 extern crate serde_json;
 extern crate toml;
 #[macro_use]

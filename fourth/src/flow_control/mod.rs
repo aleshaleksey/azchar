@@ -6,7 +6,6 @@ use azchar_database::character::character::CompleteCharacter;
 use azchar_database::root_db::system_config::SystemConfig;
 use azchar_database::{CharacterDbRef, LoadedDbs};
 
-use eframe;
 use egui::containers::Frame;
 use fnv::FnvHashMap;
 use libazdice::distribution::RollResults;

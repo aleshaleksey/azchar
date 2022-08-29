@@ -1,6 +1,6 @@
 pub(crate) mod attr_option;
+pub(crate) mod part;
 pub(crate) mod part_option;
-pub(crate) mod parts;
 
 pub(crate) use attr_option::AttrOption;
 pub(crate) use part_option::PartOption;

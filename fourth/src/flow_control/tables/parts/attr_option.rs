@@ -36,7 +36,7 @@ impl AttrOption {
                     .show_ui(ui, |ui| {
                         let part_attrs = &part.attributes;
                         let permitted = dbs.permitted_attrs.iter().filter(|pa| {
-                            part_attrs.iter().all(|x| x.0.key() != &pa.key)
+                            part_attrs.iter().all(|x| x.0.key() != pa.key)
                                 && pa
                                     .part_name
                                     .as_ref()
@@ -60,7 +60,7 @@ impl AttrOption {
                     });
 
                 if let Some(p) = dbs.permitted_attrs.iter().find(|pa| {
-                    (&pa.key == &new_attr.key)
+                    (pa.key == new_attr.key)
                         && pa
                             .part_name
                             .as_ref()

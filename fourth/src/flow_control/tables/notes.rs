@@ -39,27 +39,25 @@ impl NoteOption {
                 if new.content.is_none() {
                     new.content = Some(String::with_capacity(100));
                 }
-                let finish = ui
-                    .horizontal(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut new.title));
-                        if ui.button("Save New Note").clicked() {
-                            match dbs.add_note(
-                                char.name().to_owned(),
-                                char.uuid().to_owned(),
-                                new.to_owned(),
-                            ) {
-                                Err(e) => return Err(e),
-                                Ok(n) => {
-                                    let new = NoteOption::Existing(n.id);
-                                    char.notes.push(n);
-                                    return Ok(new);
-                                }
+                ui.horizontal(|ui| {
+                    ui.add(egui::TextEdit::singleline(&mut new.title));
+                    if ui.button("Save New Note").clicked() {
+                        match dbs.add_note(
+                            char.name().to_owned(),
+                            char.uuid().to_owned(),
+                            new.to_owned(),
+                        ) {
+                            Err(e) => return Err(e),
+                            Ok(n) => {
+                                let new = NoteOption::Existing(n.id);
+                                char.notes.push(n);
+                                return Ok(new);
                             }
-                        };
-                        Ok::<_, String>(NoteOption::None)
-                    })
-                    .inner?;
-                finish
+                        }
+                    };
+                    Ok::<_, String>(NoteOption::None)
+                })
+                .inner?
             }
             _ => NoteOption::None,
         };

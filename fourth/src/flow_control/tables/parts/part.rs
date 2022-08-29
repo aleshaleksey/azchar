@@ -2,9 +2,9 @@ use super::part_option::PartKeys;
 use super::*;
 use crate::flow_control::error_dialog;
 use crate::flow_control::images::set_image;
+use crate::flow_control::import::import_part;
 use crate::flow_control::*;
 use crate::AZCharFourth;
-use crate::flow_control::import::import_part;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
@@ -14,7 +14,10 @@ impl AZCharFourth {
     pub(crate) fn set_parts(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if ui.button("Import Part").clicked() {
             let dbs = self.dbs.as_mut().expect("Dbs are loaded to get here.");
-            let current = self.current.as_mut().expect("Character is loaded to get here.");
+            let current = self
+                .current
+                .as_mut()
+                .expect("Character is loaded to get here.");
             if let Err(e) = import_part(dbs, current) {
                 error_dialog::fill(e, &mut self.error_dialog);
             }
@@ -399,7 +402,7 @@ impl AZCharFourth {
                                             ui.horizontal(|ui| {
                                                 // Deal with the label.
                                                 let label =
-                                                    k.key().split("_").last().unwrap_or_default();
+                                                    k.key().split('_').last().unwrap_or_default();
                                                 let l = egui::SelectableLabel::new(false, label);
                                                 let lab_clck =
                                                     ui.add_sized(LABEL_SIZE, l).clicked();
@@ -475,9 +478,8 @@ impl AZCharFourth {
                     });
                     // Export character.
                     if ui.button("Export (JSON)").clicked() {
-                        let part =
-                            &mut self.current.as_mut().expect("`current` is real.").parts
-                                [p_keys.idx];
+                        let part = &mut self.current.as_mut().expect("`current` is real.").parts
+                            [p_keys.idx];
                         let name = format!(
                             "{}-({})-{}.json",
                             part.name(),

@@ -2,6 +2,9 @@
 #![allow(dead_code)]
 #![allow(deprecated)]
 #![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::derive_partial_eq_without_eq)]
+#![allow(clippy::extra_unused_lifetimes)]
+#![allow(clippy::module_inception)]
 extern crate serde_json;
 #[cfg(test)]
 extern crate tempfile;

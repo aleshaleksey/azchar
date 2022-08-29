@@ -3,10 +3,10 @@ use crate::AZCharFourth;
 use azchar_database::character::image::Image;
 use azchar_database::LoadedDbs;
 
-use eframe;
 use eframe::egui::Widget;
 use fnv::FnvHashMap;
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn set_image(
     default_image: &egui_extras::RetainedImage,
     ctx: &egui::Context,
