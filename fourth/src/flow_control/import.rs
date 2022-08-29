@@ -12,7 +12,7 @@ fn get_file() -> Result<Option<File>, String> {
     {
         if !p.exists() {
             return Err(format!(
-                "Ara-Ara! The File ({:?}) doens't actually exist.",
+                "Ara-Ara! The File ({:?}) doesn't actually exist.",
                 p
             ));
         }
@@ -58,14 +58,14 @@ fn import_character_inner(dbs: &mut LoadedDbs, file: File) -> Result<Vec<Charact
     dbs.refresh_and_list()
 }
 
-pub(super) fn import_part(dbs: &mut LoadedDbs, char: &mut CompleteCharacter) -> Result<(), String> {
+pub(super) fn part(dbs: &mut LoadedDbs, char: &mut CompleteCharacter) -> Result<(), String> {
     if let Some(f) = get_file()? {
         import_part_inner(dbs, char, f)?
     }
     Ok(())
 }
 
-pub(super) fn import_character(dbs: &mut LoadedDbs) -> Result<(), String> {
+pub(super) fn character(dbs: &mut LoadedDbs) -> Result<(), String> {
     if let Some(f) = get_file()? {
         import_character_inner(dbs, f)?;
     }

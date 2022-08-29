@@ -4,7 +4,7 @@ use egui::Color32;
 
 pub(crate) fn style() -> Style {
     let mut visuals = Visuals::dark();
-    visuals.faint_bg_color = Color32::from_rgb(99, 88, 77);
+    visuals.faint_bg_color = Color32::from_rgb(110, 99, 88);
     visuals.extreme_bg_color = egui::Color32::from_rgb(55, 44, 33);
     let interaction = Interaction {
         resize_grab_radius_side: 15.,

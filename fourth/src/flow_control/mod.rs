@@ -206,21 +206,11 @@ impl eframe::App for AZCharFourth {
                                     self.char_for_deletion =
                                         Some((c_name.to_owned(), c_uuid.to_owned()));
                                 }
-                                // TODO: Do this properly.
+                                // Export button/
                                 if ui.button("Export (JSON)").clicked() {
                                     let dbs = self.dbs.as_mut().expect("DBS loaded");
-                                    if let Ok(char) = dbs.load_character((c_name, c_uuid)) {
-                                        let name = format!("{}-{}.json", char.name(), char.uuid());
-                                        let file = match std::fs::File::create(name) {
-                                            Ok(f) => f,
-                                            Err(e) => {
-                                                error_dialog::fill(e, &mut self.error_dialog);
-                                                return;
-                                            }
-                                        };
-                                        if let Err(e) = serde_json::to_writer_pretty(file, &char) {
-                                            error_dialog::fill(e, &mut self.error_dialog);
-                                        };
+                                    if let Err(e) = export::character(dbs, c_name, c_uuid) {
+                                        error_dialog::fill(e, &mut self.error_dialog);
                                     }
                                 }
                             });
@@ -228,7 +218,7 @@ impl eframe::App for AZCharFourth {
                         // Import character button goes here.
                         if ui.button("Import Character (JSON)").clicked() {
                             let dbs = self.dbs.as_mut().expect("Ofcourse.");
-                            if let Err(e) = import::import_character(dbs) {
+                            if let Err(e) = import::character(dbs) {
                                 error_dialog::fill(e, &mut self.error_dialog);
                                 return;
                             }
@@ -333,6 +323,7 @@ impl AZCharFourth {
 mod connection;
 mod dice_dialog;
 mod error_dialog;
+mod export;
 mod images;
 mod import;
 mod tables;
