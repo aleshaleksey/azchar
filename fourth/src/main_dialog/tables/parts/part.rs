@@ -1,11 +1,12 @@
 use super::part_option::PartKeys;
 use super::*;
-use crate::flow_control::error_dialog;
-use crate::flow_control::export;
-use crate::flow_control::images::set_image;
-use crate::flow_control::import;
-use crate::flow_control::*;
-use crate::AZCharFourth;
+use crate::main_dialog::error_dialog;
+use crate::main_dialog::export;
+use crate::main_dialog::images::set_image;
+use crate::main_dialog::import;
+use crate::main_dialog::AZCharFourth;
+use crate::main_dialog::*;
+use crate::separator;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::InputCharacter;
@@ -14,14 +15,7 @@ use azchar_database::shared::Part;
 impl AZCharFourth {
     pub(crate) fn set_parts(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if ui.button("Import Part").clicked() {
-            let dbs = self.dbs.as_mut().expect("Dbs are loaded to get here.");
-            let current = self
-                .current
-                .as_mut()
-                .expect("Character is loaded to get here.");
-            if let Err(e) = import::part(dbs, current) {
-                error_dialog::fill(e, &mut self.error_dialog);
-            }
+            self.file_dialog = crate::flow_control::For::ImportPart;
         }
         if ui.selectable_label(false, "Character Attacks").clicked() {
             self.hidden_attacks = !self.hidden_attacks;
@@ -479,11 +473,7 @@ impl AZCharFourth {
                     });
                     // Export character.
                     if ui.button("Export (JSON)").clicked() {
-                        let part =
-                            &self.current.as_ref().expect("`current` is real.").parts[p_keys.idx];
-                        if let Err(e) = export::part(part) {
-                            error_dialog::fill(e, &mut self.error_dialog);
-                        };
+                        self.file_dialog = crate::flow_control::For::ExportPart(p_keys.idx);
                     };
                     // End of All hope.
                 });

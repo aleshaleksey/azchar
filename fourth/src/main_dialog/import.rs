@@ -4,6 +4,7 @@ use azchar_database::{CharacterDbRef, LoadedDbs};
 use azchar_error::ma;
 
 use std::fs::File;
+use std::path::PathBuf;
 
 fn get_file() -> Result<Option<File>, String> {
     if let Some(p) = rfd::FileDialog::new()
@@ -58,15 +59,19 @@ fn import_character_inner(dbs: &mut LoadedDbs, file: File) -> Result<Vec<Charact
     dbs.refresh_and_list()
 }
 
-pub(super) fn part(dbs: &mut LoadedDbs, char: &mut CompleteCharacter) -> Result<(), String> {
-    if let Some(f) = get_file()? {
+pub(crate) fn part(
+    dbs: &mut LoadedDbs,
+    char: &mut CompleteCharacter,
+    path: PathBuf,
+) -> Result<(), String> {
+    if let Ok(f) = std::fs::File::open(path) {
         import_part_inner(dbs, char, f)?
     }
     Ok(())
 }
 
-pub(super) fn character(dbs: &mut LoadedDbs) -> Result<(), String> {
-    if let Some(f) = get_file()? {
+pub(crate) fn character(dbs: &mut LoadedDbs, path: PathBuf) -> Result<(), String> {
+    if let Ok(f) = std::fs::File::open(path) {
         import_character_inner(dbs, f)?;
     }
     Ok(())

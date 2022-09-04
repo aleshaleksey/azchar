@@ -1,4 +1,4 @@
-use crate::flow_control::*;
+use crate::main_dialog::*;
 
 use azchar_database::character::character::InputCharacter;
 use azchar_database::shared::Part;

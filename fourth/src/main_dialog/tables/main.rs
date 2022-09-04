@@ -1,6 +1,7 @@
-use crate::flow_control::images::set_image;
-use crate::flow_control::*;
-use crate::AZCharFourth;
+use crate::main_dialog::images::set_image;
+use crate::main_dialog::AZCharFourth;
+use crate::main_dialog::*;
+use crate::separator;
 
 impl AZCharFourth {
     pub(crate) fn set_main_tables(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {

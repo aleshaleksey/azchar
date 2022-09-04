@@ -1,6 +1,6 @@
 use super::part_option::PartKeys;
 use super::*;
-use crate::flow_control::*;
+use crate::main_dialog::*;
 
 use azchar_database::character::attribute::InputAttribute;
 use azchar_database::character::character::CompleteCharacter;

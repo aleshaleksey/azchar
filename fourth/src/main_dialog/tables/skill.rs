@@ -1,7 +1,8 @@
-use crate::flow_control::connection::CharIdPack;
-use crate::flow_control::error_dialog;
-use crate::flow_control::*;
-use crate::AZCharFourth;
+use crate::main_dialog::connection::CharIdPack;
+use crate::main_dialog::error_dialog;
+use crate::main_dialog::AZCharFourth;
+use crate::main_dialog::*;
+use crate::separator;
 // use eframe::egui::Widget;
 
 impl AZCharFourth {

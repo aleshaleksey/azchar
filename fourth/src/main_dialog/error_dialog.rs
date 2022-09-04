@@ -1,8 +1,8 @@
+use crate::main_dialog::AZCharFourth;
 use crate::styles;
-use crate::AZCharFourth;
 
 impl AZCharFourth {
-    pub(super) fn set_error_dialog(&mut self, ctx: &egui::Context) {
+    pub(crate) fn set_error_dialog(&mut self, ctx: &egui::Context) {
         let mut hide = false;
         if let Some(cont) = self.error_dialog.as_ref() {
             egui::Area::new("error-details")
@@ -30,6 +30,6 @@ impl AZCharFourth {
     }
 }
 
-pub(super) fn fill<D: std::fmt::Debug>(error: D, error_container: &mut Option<String>) {
+pub(crate) fn fill<D: std::fmt::Debug>(error: D, error_container: &mut Option<String>) {
     *error_container = Some(format!("{:?}", error));
 }

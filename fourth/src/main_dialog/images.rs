@@ -1,4 +1,5 @@
-use crate::AZCharFourth;
+use crate::main_dialog::AZCharFourth;
+use crate::separator;
 
 use azchar_database::character::image::Image;
 use azchar_database::LoadedDbs;

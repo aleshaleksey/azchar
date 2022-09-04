@@ -18,22 +18,23 @@ fn get_dir() -> Result<Option<PathBuf>, String> {
     }
 }
 
-pub(super) fn character(dbs: &mut LoadedDbs, c_name: String, c_uuid: String) -> Result<(), String> {
-    let dir = get_dir()?;
-    if let (Ok(char), Some(dir)) = (dbs.load_character((c_name, c_uuid)), dir) {
+pub(crate) fn character(
+    dbs: &mut LoadedDbs,
+    c_name: &str,
+    c_uuid: &str,
+    dir: PathBuf,
+) -> Result<(), String> {
+    if let Ok(char) = dbs.load_character((c_name.to_string(), c_uuid.to_string())) {
         let name = format!("{}-{}.json", char.name(), char.uuid());
         let path = dir.join(name);
+        println!("Exporting to: {:?}", path);
         let file = std::fs::File::create(path).map_err(ma)?;
         serde_json::to_writer_pretty(file, &char).map_err(ma)?;
     }
     Ok(())
 }
 
-pub(super) fn part(part: &CharacterPart) -> Result<(), String> {
-    let dir = match get_dir()? {
-        Some(d) => d,
-        None => return Ok(()),
-    };
+pub(crate) fn part(part: &CharacterPart, dir: PathBuf) -> Result<(), String> {
     let name = format!(
         "{}-({})-{}.json",
         part.name(),

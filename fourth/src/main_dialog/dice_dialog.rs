@@ -1,5 +1,5 @@
+use crate::main_dialog::AZCharFourth;
 use crate::styles;
-use crate::AZCharFourth;
 
 use libazdice::distribution::{Bonus, Dice, DiceBag, DiceGroup, RollResults};
 use std::cmp::Ordering;
