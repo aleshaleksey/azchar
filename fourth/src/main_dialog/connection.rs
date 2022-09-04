@@ -341,7 +341,7 @@ impl AZCharFourth {
     }
 
     // Reset an image.
-    pub(super) fn set_image(
+    pub(crate) fn set_image(
         dbs: &mut LoadedDbs,
         image: &mut Option<dbimg::Image>,
         imagemap: &mut FnvHashMap<Option<i64>, egui_extras::RetainedImage>,

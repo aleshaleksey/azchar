@@ -6,23 +6,6 @@ use azchar_error::ma;
 use std::fs::File;
 use std::path::PathBuf;
 
-fn get_file() -> Result<Option<File>, String> {
-    if let Some(p) = rfd::FileDialog::new()
-        .add_filter("Export", &["json", "toml"])
-        .pick_file()
-    {
-        if !p.exists() {
-            return Err(format!(
-                "Ara-Ara! The File ({:?}) doesn't actually exist.",
-                p
-            ));
-        }
-        File::open(p).map(Some).map_err(ma)
-    } else {
-        Ok(None)
-    }
-}
-
 fn import_part_inner(
     dbs: &mut LoadedDbs,
     char: &mut CompleteCharacter,

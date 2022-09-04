@@ -4,20 +4,6 @@ use azchar_error::ma;
 
 use std::path::PathBuf;
 
-fn get_dir() -> Result<Option<PathBuf>, String> {
-    if let Some(p) = rfd::FileDialog::new().pick_folder() {
-        if !p.exists() {
-            return Err(format!(
-                "Ara-Ara! The Folder ({:?}) doesn't actually exist.",
-                p
-            ));
-        }
-        Ok(Some(p))
-    } else {
-        Ok(None)
-    }
-}
-
 pub(crate) fn character(
     dbs: &mut LoadedDbs,
     c_name: &str,

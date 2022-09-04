@@ -187,6 +187,7 @@ impl AZCharFourth {
                                 char_key.clone(),
                                 p_keys.id,
                                 &mut self.images,
+                                &mut self.file_dialog,
                             ) {
                                 error_dialog::fill(e, &mut self.error_dialog);
                             };

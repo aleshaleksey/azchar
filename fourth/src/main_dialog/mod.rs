@@ -37,7 +37,7 @@ pub(crate) struct AZCharFourth {
     new_char: Option<String>,
     hidden_char_list: bool,
     pub(crate) current: Option<CompleteCharacter>,
-    images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
+    pub(crate) images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
     default_img: egui_extras::RetainedImage,
     hidden_main_tables: bool,
     main_attr_table: [Row; 4],
@@ -209,8 +209,7 @@ impl eframe::App for AZCharFourth {
                                 }
                                 // Export button/
                                 if ui.button("Export (JSON)").clicked() {
-                                    self.file_dialog =
-                                        flow_control::For::ExportCharacter(c);
+                                    self.file_dialog = flow_control::For::ExportCharacter(c);
                                 }
                             });
                         }

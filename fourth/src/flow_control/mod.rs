@@ -1,5 +1,5 @@
 use crate::file_dialog::{FileFilters, FileManager, FileSelection};
-use crate::main_dialog::{self, export, import};
+use crate::main_dialog::{self, export, import, AZCharFourth};
 use crate::separator;
 use crate::styles;
 
@@ -39,6 +39,7 @@ pub enum For {
     ExportCharacter(CharacterDbRef),
     ImportPart,
     ExportPart(usize),
+    ImportImage(i64),
     None,
 }
 
@@ -54,13 +55,22 @@ impl App for FlowController {
             FlowControllerState::Main => {
                 self.main_dialog.update(ctx, frame);
                 if !matches!(self.main_dialog.file_dialog, For::None) {
-                    self.state = FlowControllerState::FileDialog(self.main_dialog.file_dialog.clone());
+                    self.state =
+                        FlowControllerState::FileDialog(self.main_dialog.file_dialog.clone());
                 }
                 match self.state {
                     FlowControllerState::FileDialog(For::ImportCharacter)
                     | FlowControllerState::FileDialog(For::ImportPart) => {
                         let filters =
                             FileFilters::files(vec!["json".to_string(), "JSON".to_string()]);
+                        self.file_dialog.set_filters(filters);
+                    }
+                    FlowControllerState::FileDialog(For::ImportImage(_)) => {
+                        let v = vec!["png", "jpg", "jpeg", "bmp", "gif"]
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>();
+                        let filters = FileFilters::files(v);
                         self.file_dialog.set_filters(filters);
                     }
                     FlowControllerState::FileDialog(_) => {
@@ -73,7 +83,7 @@ impl App for FlowController {
                 self.file_dialog.update(ctx, frame);
                 let mut res = Ok(());
                 match self.file_dialog.selection {
-                    FileSelection::Undecided | FileSelection::Cancelled => {},
+                    FileSelection::Undecided | FileSelection::Cancelled => {}
                     FileSelection::Selected(ref path) => {
                         println!("Path:{:?}, for:{:?}", path, funct);
                         match (
@@ -104,6 +114,21 @@ impl App for FlowController {
                             }
                             (For::ExportPart(i), Some(ref mut dbs), Some(ref c)) => {
                                 res = export::part(&c.parts[*i], path.to_owned());
+                            }
+                            (For::ImportImage(i), Some(ref mut dbs), Some(ref mut c)) => {
+                            let c_name = c.name().to_owned();
+                            let c_uuid = c.uuid().to_owned();
+                            let images = &mut self.main_dialog.images;
+                            let mut p = c.parts.iter_mut().find(|p| p.id() == Some(*i));
+                            let c_image = if let Some(ref mut c) = p {
+                                &mut c.image
+                            } else {
+                                // This can also go very vey wrong...
+                                &mut c.image
+                            };
+                                res = AZCharFourth::set_image(
+                                    dbs, c_image, images, c_name, c_uuid, *i, path.to_path_buf(),
+                                );
                             }
                             _ => {}
                         }
