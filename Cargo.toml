@@ -22,12 +22,11 @@ members = [
 ]
 
 [dependencies]
-eframe = "0.18.0"
-egui = "0.18.1"
-egui_extras = { version = "0.18", features = ["image"] }
+eframe = "0.19.0"
+egui = "0.19.0"
+egui_extras = { version = "0.19", features = ["image"] }
 fnv = "*"
 image = "0.24"
-rfd = "0.10" # rusty file dialog.
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
