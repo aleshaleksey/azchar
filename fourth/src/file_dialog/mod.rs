@@ -5,6 +5,7 @@ use eframe::App;
 use fnv::FnvHashMap;
 
 use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 /// This represents a file manager.
@@ -116,7 +117,8 @@ impl FileManager {
                                         Some(n) => n.to_str().unwrap_or_default(),
                                         None => "..",
                                     };
-                                    if ui.selectable_label(false, entry_str).clicked() {
+                                    let new_dir = egui::SelectableLabel::new(false, entry_str);
+                                    if ui.add_sized([480., 21.], new_dir).clicked() {
                                         if entry.is_dir() {
                                             self.current_dir = entry.to_owned();
                                             let entries =
@@ -164,12 +166,29 @@ impl FileManager {
 }
 
 fn get_entries(current_dir: &Path, filters: &FileFilters) -> Vec<PathBuf> {
-    match std::fs::read_dir(current_dir) {
+    let mut entries = match std::fs::read_dir(current_dir) {
         Ok(ent) => ent,
         Err(_) => return vec![],
     }
     .flatten()
     .filter(|x| filters.allowed(&x.path()))
-    .map(|e| e.path().to_owned())
-    .collect::<Vec<_>>()
+    .collect::<Vec<std::fs::DirEntry>>();
+
+    entries.sort_unstable_by(|a, b| {
+        let at = a.file_type().map(|x| x.is_file()).unwrap_or(false);
+        let bt = b.file_type().map(|x| x.is_file()).unwrap_or(false);
+        match at.cmp(&bt)
+        {
+            std::cmp::Ordering::Equal => {
+                let a = a.file_name();
+                let b = b.file_name();
+                a.cmp(&b)
+            }
+            x => x,
+        }
+    });
+    entries
+        .into_iter()
+        .map(|e| e.path().to_owned())
+        .collect::<Vec<_>>()
 }
