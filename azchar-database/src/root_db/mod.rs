@@ -248,7 +248,7 @@ impl LoadedDbs {
     /// Depending on whether the character exists in the current instance.
     pub fn create_or_update_character(
         &mut self,
-        character: CompleteCharacter,
+        mut character: CompleteCharacter,
     ) -> Result<(), String> {
         let then = std::time::Instant::now();
         let key = (character.name.to_owned(), character.uuid().to_owned());
@@ -264,6 +264,8 @@ impl LoadedDbs {
             return Ok(());
         }
         let key = self.create_sheet(&key.0)?;
+        // If a new sheet is created, the character UUID must be updated.
+        character.mutate_uuid(&key.1);
         let conn = self.connections.get_mut(&key).expect("Just created");
         character.save(
             conn.connect()?,

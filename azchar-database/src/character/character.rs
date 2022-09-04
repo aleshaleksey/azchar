@@ -466,6 +466,10 @@ impl CompleteCharacter {
         &self.uuid
     }
 
+    pub fn mutate_uuid(&mut self, new_uuid: &str) {
+        self.uuid = new_uuid.to_owned();
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }
