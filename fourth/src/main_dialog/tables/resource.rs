@@ -2,7 +2,6 @@ use crate::main_dialog::connection::find_part;
 use crate::main_dialog::error_dialog;
 use crate::main_dialog::tables::{AttrValueKind, CharIdPack};
 use crate::main_dialog::AZCharFourth;
-use crate::main_dialog::*;
 use crate::separator;
 
 // use eframe::egui::Widget;

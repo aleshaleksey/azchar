@@ -1,9 +1,7 @@
 use super::part_option::PartKeys;
 use super::*;
 use crate::main_dialog::error_dialog;
-use crate::main_dialog::export;
 use crate::main_dialog::images::set_image;
-use crate::main_dialog::import;
 use crate::main_dialog::AZCharFourth;
 use crate::main_dialog::*;
 use crate::separator;
@@ -182,9 +180,6 @@ impl AZCharFourth {
                                 &self.default_img,
                                 ctx,
                                 ui,
-                                dbs,
-                                &mut part.image,
-                                char_key.clone(),
                                 p_keys.id,
                                 &mut self.images,
                                 &mut self.file_dialog,

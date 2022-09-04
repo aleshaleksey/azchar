@@ -1,6 +1,5 @@
 use self::tables::{AttrOption, DynamicTable, NoteOption, PartOption, Row};
 use super::styles;
-use crate::file_dialog::{FileManager, FileSelection};
 use crate::flow_control;
 use crate::separator;
 

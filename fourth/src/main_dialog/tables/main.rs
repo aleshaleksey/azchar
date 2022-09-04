@@ -15,7 +15,6 @@ impl AZCharFourth {
         let mut reset = false;
         if !self.hidden_main_tables {
             separator(ui);
-            let key = (char.name().to_owned(), char.uuid().to_owned());
             let cid = char.id().expect("It's been through the DB.");
             ui.horizontal(|ui| {
                 // Portrait or default for box.
@@ -23,9 +22,6 @@ impl AZCharFourth {
                     &self.default_img,
                     ctx,
                     ui,
-                    self.dbs.as_mut().expect("DBS are loaded by definiiton"),
-                    &mut char.image,
-                    key,
                     cid,
                     &mut self.images,
                     &mut self.file_dialog,

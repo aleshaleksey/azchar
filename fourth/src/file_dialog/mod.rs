@@ -1,15 +1,11 @@
 use crate::separator;
 use crate::styles;
 
-use azchar_database::LoadedDbs;
-
 use eframe::App;
-use egui::{Frame, Style};
 use fnv::FnvHashMap;
 
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver, Sender};
 
 /// This represents a file manager.
 /// It shows a list of files (so it must store them).
@@ -92,7 +88,7 @@ impl FileManager {
         self.filters = filters;
     }
 
-    pub(crate) fn set(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    pub(crate) fn set(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Select File").show(ctx, |ui| {
             ui.set_style(styles::style());
             ui.vertical(|ui| {
@@ -145,8 +141,6 @@ impl FileManager {
                 ui.horizontal(|ui| {
                     // Go up a directory.
                     if ui.button("Up.").clicked() {
-                        println!("Current: {:?}", self.current_dir);
-                        println!("Parent: {:?}", self.current_dir.parent());
                         self.current_dir = match self.current_dir.parent() {
                             Some(p) => p.to_path_buf(),
                             None => self.current_dir.to_owned(),
@@ -157,12 +151,10 @@ impl FileManager {
                     // Select current entry.
                     let use_this = ui.button("Select current entry").clicked();
                     if let (true, Some(selected)) = (use_this, &self.current_select) {
-                        println!("Returning {:?}", selected);
                         self.selection = FileSelection::Selected(selected.to_path_buf());
                     }
                     if ui.button("Cancel").clicked() {
                         self.selection = FileSelection::Cancelled;
-                        println!("Cancelling it all");
                     }
                 })
                 //End buttons.
@@ -174,7 +166,7 @@ impl FileManager {
 fn get_entries(current_dir: &Path, filters: &FileFilters) -> Vec<PathBuf> {
     match std::fs::read_dir(current_dir) {
         Ok(ent) => ent,
-        Err(e) => return vec![],
+        Err(_) => return vec![],
     }
     .flatten()
     .filter(|x| filters.allowed(&x.path()))

@@ -1,9 +1,3 @@
-use crate::main_dialog::AZCharFourth;
-use crate::separator;
-
-use azchar_database::character::image::Image;
-use azchar_database::LoadedDbs;
-
 use eframe::egui::Widget;
 use fnv::FnvHashMap;
 
@@ -12,9 +6,6 @@ pub(crate) fn set_image(
     default_image: &egui_extras::RetainedImage,
     ctx: &egui::Context,
     ui: &mut egui::Ui,
-    dbs: &mut LoadedDbs,
-    char_image: &mut Option<Image>,
-    (char_name, char_uuid): (String, String),
     part_id: i64,
     images: &mut FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
     flow_state: &mut crate::flow_control::For,
