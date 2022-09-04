@@ -1,5 +1,6 @@
 use super::tables::{AttrValueKind, DynamicTable, Label, Row};
 use super::*;
+use crate::main_dialog::images::process_image;
 
 use azchar_database::character::attribute::{AttributeKey, AttributeValue};
 use azchar_database::character::character::{CharacterPart, CompleteCharacter};
@@ -450,10 +451,4 @@ pub(super) fn find_part<'a>(
     char.parts()
         .iter()
         .find(|p| p.character_type() == part_name)
-}
-
-fn process_image(image: &dbimg::Image) -> Result<egui_extras::RetainedImage, String> {
-    let ret = egui_extras::RetainedImage::from_image_bytes(image.of.to_string(), &image.content)
-        .map_err(ma)?;
-    Ok(ret)
 }

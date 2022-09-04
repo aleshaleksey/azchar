@@ -1,11 +1,13 @@
 use crate::separator;
 use crate::styles;
 
+use azchar_error::ma;
+
 use eframe::App;
 use fnv::FnvHashMap;
 
 use std::ffi::OsStr;
-use std::ffi::OsString;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 /// This represents a file manager.
@@ -14,7 +16,7 @@ use std::path::{Path, PathBuf};
 /// It should ideally also show an image thumbnail...
 pub(crate) struct FileManager {
     filters: FileFilters,
-    images: FnvHashMap<Option<i64>, egui_extras::RetainedImage>,
+    images: FnvHashMap<PathBuf, egui_extras::RetainedImage>,
     current_dir: PathBuf,
     current_select: Option<PathBuf>,
     paths_in_dir: Vec<PathBuf>,
@@ -78,8 +80,8 @@ impl FileManager {
         Self {
             filters,
             current_dir,
-            paths_in_dir,
             current_select: None,
+            paths_in_dir,
             images: FnvHashMap::default(),
             selection: FileSelection::Undecided,
         }
@@ -103,8 +105,8 @@ impl FileManager {
                 ui.horizontal(|ui| {
                     // Display paths in dir.
                     egui::ScrollArea::vertical()
-                        .max_height(300.)
-                        .min_scrolled_height(300.)
+                        .max_height(480.)
+                        .min_scrolled_height(480.)
                         .show(ui, |ui| {
                             ui.vertical(|ui| {
                                 'paths_loop: for i in 0..self.paths_in_dir.len() {
@@ -135,6 +137,12 @@ impl FileManager {
                                 }
                             });
                         });
+                    // Set image if needed.
+                    if let Some(ref selected) = self.current_select {
+                        if let Err(e) = update_image(selected, &mut self.images, ui, ctx) {
+                            println!("Couldn't get image for \"{:?}\" because: {:?}", selected, e);
+                        };
+                    }
                     // End Display paths in dir.
                 });
                 // End Display paths in dir + thumbnail.
@@ -154,9 +162,11 @@ impl FileManager {
                     let use_this = ui.button("Select current entry").clicked();
                     if let (true, Some(selected)) = (use_this, &self.current_select) {
                         self.selection = FileSelection::Selected(selected.to_path_buf());
+                        self.images = FnvHashMap::default();
                     }
                     if ui.button("Cancel").clicked() {
                         self.selection = FileSelection::Cancelled;
+                        self.images = FnvHashMap::default();
                     }
                 })
                 //End buttons.
@@ -177,8 +187,7 @@ fn get_entries(current_dir: &Path, filters: &FileFilters) -> Vec<PathBuf> {
     entries.sort_unstable_by(|a, b| {
         let at = a.file_type().map(|x| x.is_file()).unwrap_or(false);
         let bt = b.file_type().map(|x| x.is_file()).unwrap_or(false);
-        match at.cmp(&bt)
-        {
+        match at.cmp(&bt) {
             std::cmp::Ordering::Equal => {
                 let a = a.file_name();
                 let b = b.file_name();
@@ -191,4 +200,33 @@ fn get_entries(current_dir: &Path, filters: &FileFilters) -> Vec<PathBuf> {
         .into_iter()
         .map(|e| e.path().to_owned())
         .collect::<Vec<_>>()
+}
+
+fn update_image(
+    path: &Path,
+    map: &mut FnvHashMap<PathBuf, egui_extras::RetainedImage>,
+    ui: &mut egui::Ui,
+    ctx: &egui::Context,
+) -> Result<(), String> {
+    if ["png", "jpg", "jpeg", "bmp", "gif"]
+        .iter()
+        .any(|f| Some(OsStr::new(&f)) == path.extension())
+    {
+        let image = if let Some(e) = map.get(path) {
+            e
+        } else {
+            let mut file = std::fs::File::open(path).map_err(ma)?;
+            let mut raw = Vec::new();
+            file.read_to_end(&mut raw).map_err(ma)?;
+            let name = format!("{:?}", path);
+            map.insert(
+                path.to_path_buf(),
+                egui_extras::RetainedImage::from_image_bytes(name, &raw).map_err(ma)?
+            );
+            map.get(path).expect("Just inserted the thumb")
+        };
+        let ib = egui::ImageButton::new(image.texture_id(ctx), [256., 256.]);
+        let _ = ui.add(ib).clicked();
+    }
+    Ok(())
 }

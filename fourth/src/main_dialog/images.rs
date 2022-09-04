@@ -1,6 +1,9 @@
 use eframe::egui::Widget;
 use fnv::FnvHashMap;
 
+use azchar_database::character::image as dbimg;
+use azchar_error::ma;
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn set_image(
     default_image: &egui_extras::RetainedImage,
@@ -17,4 +20,10 @@ pub(crate) fn set_image(
     }
     super::separator(ui);
     Ok(())
+}
+
+pub(crate) fn process_image(image: &dbimg::Image) -> Result<egui_extras::RetainedImage, String> {
+    let ret = egui_extras::RetainedImage::from_image_bytes(image.of.to_string(), &image.content)
+        .map_err(ma)?;
+    Ok(ret)
 }
